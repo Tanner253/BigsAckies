@@ -67,7 +67,8 @@ router.get('/', async (req, res) => {
 router.post('/add', async (req, res) => {
   try {
     if (!req.session.user) {
-      return res.status(401).json({ error: 'Please login to add items to cart' });
+      // Redirect to login page if user is not logged in
+      return res.redirect('/login');
     }
 
     const { product_id, quantity } = req.body;

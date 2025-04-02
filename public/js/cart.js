@@ -51,10 +51,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         body: `product_id=${product_id}&quantity=${quantity}&_csrf=${csrfToken}`
                     });
+
+                    // Check if the server redirected us (likely to login)
+                    if (response.redirected) {
+                        window.location.href = response.url; // Navigate to the login page
+                        return; // Stop further processing
+                    }
                     
                     if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.error || 'Failed to add item to cart');
+                        // If it wasn't a redirect but still not ok, try parsing error JSON
+                        let error = { error: 'Failed to add item to cart. Status: ' + response.status };
+                        try {
+                            error = await response.json();
+                        } catch (parseError) {
+                            console.error('Could not parse error response as JSON:', parseError);
+                        }
+                        throw new Error(error.error || `HTTP error! status: ${response.status}`);
                     }
                     
                     const result = await response.json();
