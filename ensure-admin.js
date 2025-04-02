@@ -29,7 +29,7 @@ async function ensureAdmin() {
       ]);
       console.log('Admin user created:', adminEmail);
     } else {
-      // Update existing user to admin role
+      // Update existing user to admin role and set hashed password
       const updateQuery = `
         UPDATE users 
         SET role = 'admin', password = $1
@@ -47,5 +47,18 @@ async function ensureAdmin() {
     process.exit(1);
   }
 }
+
+// Create a direct database connection for this script
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.HEROKU_DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+    sslmode: 'require'
+  }
+});
+
+// Override the db.query function to use our direct connection
+db.query = (text, params) => pool.query(text, params);
 
 ensureAdmin(); 

@@ -26,8 +26,11 @@ const io = socketIo(server);
 
 // Database connection
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString: process.env.HEROKU_DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+    sslmode: 'require'
+  }
 });
 
 // Connect to the database
