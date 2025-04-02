@@ -737,7 +737,7 @@ router.post('/subscribe', [
 
     // Set success message
     req.session.messages = {
-      success: 'Thank you for subscribing to our newsletter!'
+      success: 'You have successfully subscribed to our newsletter! Welcome to our reptile community.'
     };
 
     // Redirect back to the previous page
