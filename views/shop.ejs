@@ -150,7 +150,7 @@
                 </div>
                 
                 <div class="mt-3">
-                  <form action="/cart/add" method="POST">
+                  <form class="add-to-cart-form">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="hidden" name="productId" value="<%= product.id %>">
                     <input type="hidden" name="quantity" value="1">
