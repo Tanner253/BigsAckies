@@ -49,13 +49,39 @@
         <!-- Newsletter -->
         <div>
           <h3 class="text-lg font-semibold mb-4">Subscribe to Our Newsletter</h3>
-          <p class="text-gray-300 mb-4">Get the latest updates, news and special offers.</p>
-          <form action="/subscribe" method="POST" class="flex">
+          <!-- Flash Messages -->
+          <% if (locals.messages && messages.success) { %>
+            <div class="mb-4 bg-green-100 rounded-lg p-4 relative shadow-sm" role="alert">
+              <div class="flex items-center mb-2">
+                <div class="bg-green-50 rounded-full p-1">
+                  <i class="fas fa-check-circle text-lg text-green-600"></i>
+                </div>
+              </div>
+              <h4 class="text-green-600 font-semibold mb-1">Thank You for Subscribing!</h4>
+              <p class="text-gray-600 text-sm"><%= messages.success %></p>
+              <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 alert-close">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          <% } %>
+          
+          <% if (locals.messages && messages.error) { %>
+            <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative" role="alert">
+              <span class="block text-sm"><%= messages.error %></span>
+              <button class="absolute top-0 bottom-0 right-0 px-3 py-2 alert-close">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          <% } %>
+
+          <p class="text-gray-300 mb-4">Get the latest updates on new arrivals, special offers, and reptile care tips.</p>
+          <form action="/subscribe" method="POST" class="flex flex-col gap-2">
+            <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
             <input type="email" name="email" placeholder="Your email address" required
-                  class="px-4 py-2 w-full text-gray-800 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                  class="px-4 py-2 w-full text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
             <button type="submit" 
-                    class="bg-green-600 text-white px-4 py-2 rounded-r-md hover:bg-green-700 transition duration-150">
-              <i class="fas fa-paper-plane"></i>
+                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-150">
+              Subscribe
             </button>
           </form>
         </div>

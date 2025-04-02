@@ -190,50 +190,6 @@
       </div>
     </div>
   </div>
-  
-  <!-- Newsletter -->
-  <div class="py-12 bg-green-600 text-white">
-    <div class="container mx-auto px-4 text-center">
-      <!-- Flash Messages -->
-      <% if (locals.messages && messages.success) { %>
-        <div class="mb-8 bg-white rounded-lg p-6 max-w-2xl mx-auto relative shadow-lg" role="alert">
-          <div class="flex items-center justify-center mb-2">
-            <div class="bg-green-100 rounded-full p-2">
-              <i class="fas fa-check-circle text-2xl text-green-600"></i>
-            </div>
-          </div>
-          <h3 class="text-green-600 font-semibold text-lg mb-1">Thank You for Subscribing!</h3>
-          <p class="text-gray-600"><%= messages.success %></p>
-          <p class="text-gray-500 text-sm mt-2">You'll receive our next newsletter with exclusive updates and offers.</p>
-          <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 alert-close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      <% } %>
-      
-      <% if (locals.messages && messages.error) { %>
-        <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <span class="block sm:inline"><%= messages.error %></span>
-          <button class="absolute top-0 bottom-0 right-0 px-4 py-3 alert-close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      <% } %>
-
-      <h2 class="text-2xl font-bold mb-4">Join Our Newsletter</h2>
-      <p class="mb-6 max-w-2xl mx-auto">Subscribe to receive updates on new arrivals, special offers, and reptile care tips.</p>
-      
-      <form action="/subscribe" method="POST" class="flex flex-col md:flex-row md:justify-center md:items-center gap-3 max-w-lg mx-auto">
-        <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
-        <input type="email" name="email" placeholder="Your email address" required
-              class="px-4 py-2 w-full md:w-96 rounded-md border-0 focus:ring-2 focus:ring-green-300 text-gray-800">
-        <button type="submit" 
-                class="bg-white text-green-600 hover:bg-green-50 px-6 py-2 rounded-md font-medium transition">
-          Subscribe
-        </button>
-      </form>
-    </div>
-  </div>
 </div>
 
 <%- include('partials/footer') %> 
