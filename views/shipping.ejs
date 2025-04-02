@@ -1,0 +1,78 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-8">Shipping & Returns</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Shipping Information -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-semibold mb-6">Shipping Information</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-lg font-medium mb-2">Shipping Methods</h3>
+          <ul class="list-disc list-inside text-gray-600 space-y-2">
+            <li>Standard Shipping (3-5 business days)</li>
+            <li>Express Shipping (1-2 business days)</li>
+            <li>International Shipping (5-10 business days)</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-medium mb-2">Shipping Costs</h3>
+          <ul class="list-disc list-inside text-gray-600 space-y-2">
+            <li>Free shipping on orders over $100</li>
+            <li>Standard shipping: $5.99</li>
+            <li>Express shipping: $12.99</li>
+            <li>International shipping: Calculated at checkout</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-medium mb-2">Order Processing</h3>
+          <p class="text-gray-600">Orders are typically processed within 24-48 hours of placement. You will receive a confirmation email with tracking information once your order ships.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Returns Information -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-semibold mb-6">Returns Policy</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-lg font-medium mb-2">Return Window</h3>
+          <p class="text-gray-600">We offer a 30-day return window for most items. Items must be unused and in their original packaging.</p>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-medium mb-2">Return Process</h3>
+          <ol class="list-decimal list-inside text-gray-600 space-y-2">
+            <li>Log into your account and select the order</li>
+            <li>Click "Return Item" and select the items to return</li>
+            <li>Print the provided return shipping label</li>
+            <li>Package the items securely</li>
+            <li>Drop off the package at any authorized shipping location</li>
+          </ol>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-medium mb-2">Refund Process</h3>
+          <p class="text-gray-600">Refunds will be processed within 5-7 business days of receiving your return. The refund will be issued to the original payment method used for the purchase.</p>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-medium mb-2">Non-Returnable Items</h3>
+          <ul class="list-disc list-inside text-gray-600 space-y-2">
+            <li>Live animals</li>
+            <li>Perishable items</li>
+            <li>Personal care items</li>
+            <li>Items marked as "Final Sale"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %> 

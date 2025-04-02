@@ -194,6 +194,11 @@ router.get('/shop', async (req, res) => {
   }
 });
 
+// Redirect old product URLs to new shop URLs
+router.get('/products/:id', (req, res) => {
+  res.redirect(`/shop/${req.params.id}`);
+});
+
 // Product detail page
 router.get('/shop/:id', async (req, res) => {
   try {
@@ -758,6 +763,38 @@ router.post('/subscribe', [
 
     res.redirect('back');
   }
+});
+
+// FAQ page
+router.get('/faq', (req, res) => {
+  res.render('faq', { 
+    title: 'Frequently Asked Questions',
+    user: req.session.user || null
+  });
+});
+
+// Shipping & Returns page
+router.get('/shipping', (req, res) => {
+  res.render('shipping', { 
+    title: 'Shipping & Returns',
+    user: req.session.user || null
+  });
+});
+
+// Privacy Policy page
+router.get('/privacy', (req, res) => {
+  res.render('privacy', { 
+    title: 'Privacy Policy',
+    user: req.session.user || null
+  });
+});
+
+// Terms & Conditions page
+router.get('/terms', (req, res) => {
+  res.render('terms', { 
+    title: 'Terms & Conditions',
+    user: req.session.user || null
+  });
 });
 
 module.exports = router; 
