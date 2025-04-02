@@ -37,9 +37,10 @@ router.get('/', async (req, res) => {
 
     const cartItems = itemsResult.rows.map(item => ({
       ...item,
-      price: parseFloat(item.price)
+      price: parseFloat(item.price),
+      total: parseFloat(item.price) * item.quantity
     }));
-    const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalPrice = cartItems.reduce((sum, item) => sum + item.total, 0);
     const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     res.render('cart', {
@@ -382,9 +383,10 @@ router.get('/checkout', async (req, res) => {
 
     const cartItems = itemsResult.rows.map(item => ({
       ...item,
-      price: parseFloat(item.price)
+      price: parseFloat(item.price),
+      total: parseFloat(item.price) * item.quantity
     }));
-    const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalPrice = cartItems.reduce((sum, item) => sum + item.total, 0);
     const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     // Get user's saved addresses
@@ -394,6 +396,7 @@ router.get('/checkout', async (req, res) => {
       ORDER BY is_default DESC, created_at DESC
     `;
     const addressesResult = await db.query(addressesQuery, [req.session.user.id]);
+    const addresses = addressesResult.rows;
 
     // Get user's saved payment methods
     const paymentMethodsQuery = `
@@ -402,17 +405,18 @@ router.get('/checkout', async (req, res) => {
       ORDER BY is_default DESC, created_at DESC
     `;
     const paymentMethodsResult = await db.query(paymentMethodsQuery, [req.session.user.id]);
+    const paymentMethods = paymentMethodsResult.rows;
 
     res.render('checkout', {
       title: 'Checkout',
+      user: req.session.user,
       cart: {
         items: cartItems,
         totalQty,
         totalPrice
       },
-      addresses: addressesResult.rows,
-      paymentMethods: paymentMethodsResult.rows,
-      user: req.session.user,
+      addresses,
+      paymentMethods,
       csrfToken: req.csrfToken(),
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY
     });
