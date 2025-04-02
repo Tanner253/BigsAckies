@@ -38,56 +38,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 
                 const formData = new FormData(form);
-                const product_id = formData.get('product_id');
-                const quantity = formData.get('quantity') || 1;
                 const csrfToken = formData.get('_csrf');
                 
                 try {
                     const response = await fetch('/cart/add', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'CSRF-Token': csrfToken
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken
                         },
-                        body: `product_id=${product_id}&quantity=${quantity}&_csrf=${csrfToken}`
+                        body: JSON.stringify({
+                            product_id: formData.get('product_id'),
+                            quantity: formData.get('quantity')
+                        })
                     });
-
-                    // Check if the server redirected us (likely to login)
-                    if (response.redirected) {
-                        window.location.href = response.url; // Navigate to the login page
-                        return; // Stop further processing
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Update cart count in header
+                        updateCartCount(data.cartItemCount);
+                        showNotification('Item added to cart', 'success');
+                    } else {
+                        showNotification(data.error || 'Failed to add item to cart', 'error');
                     }
-                    
-                    if (!response.ok) {
-                        // If it wasn't a redirect but still not ok, try parsing error JSON
-                        let error = { error: 'Failed to add item to cart. please sign in. Status: ' + response.status };
-                        try {
-                            error = await response.json();
-                        } catch (parseError) {
-                            console.error('Could not parse error response as JSON:', parseError);
-                        }
-                        // In production, redirect to login instead of showing alert
-                        if (window.location.hostname.includes('herokuapp.com') || process.env.NODE_ENV === 'production') {
-                            window.location.href = '/login';
-                            return;
-                        }
-                        throw new Error(error.error || `HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const result = await response.json();
-                    
-                    // Update cart badge
-                    const cartBadge = document.querySelector('.cart-count');
-                    if (cartBadge) {
-                        cartBadge.textContent = result.cartItemCount;
-                        cartBadge.classList.remove('hidden');
-                    }
-                    
-                    // Only show success message in development
-                    if (!window.location.hostname.includes('herokuapp.com') && process.env.NODE_ENV !== 'production') {
-                        alert('Item added to cart successfully!');
-                    }
-                    
                 } catch (error) {
                     console.error('Error adding item to cart:', error);
                     // In production, redirect to login instead of showing alert
@@ -148,22 +122,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Remove from cart functionality
-    const removeItemForms = document.querySelectorAll('.remove-item-form');
+    // Remove item functionality
+    const removeItemButtons = document.querySelectorAll('.remove-item-btn');
     
-    if (removeItemForms) {
-        removeItemForms.forEach(form => {
-            form.addEventListener('submit', async function(e) {
+    if (removeItemButtons) {
+        removeItemButtons.forEach(button => {
+            button.addEventListener('click', async (e) => {
                 e.preventDefault();
                 
-                const productId = this.querySelector('[name="product_id"]').value;
+                const productId = button.getAttribute('data-product-id');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 
                 try {
                     const response = await fetch('/cart/remove', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            'X-CSRF-Token': csrfToken
                         },
                         body: JSON.stringify({
                             product_id: productId
@@ -173,9 +148,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const data = await response.json();
                     
                     if (data.success) {
-                        // Remove the row
-                        const row = this.closest('tr');
-                        row.remove();
+                        // Remove the item row from the table
+                        const itemRow = button.closest('tr');
+                        itemRow.remove();
                         
                         // Update cart totals
                         updateCartTotals(data);
@@ -184,18 +159,56 @@ document.addEventListener('DOMContentLoaded', function() {
                         updateCartCount(data.cartItemCount);
                         
                         showNotification('Item removed from cart', 'success');
+                        
+                        // If no items left, reload the page to show empty cart message
+                        if (data.cartItemCount === 0) {
+                            window.location.reload();
+                        }
                     } else {
-                        showNotification(data.error || 'Failed to remove item', 'error');
+                        showNotification(data.error || 'Failed to remove item from cart', 'error');
                     }
                 } catch (error) {
-                    console.error('Error removing item:', error);
-                    showNotification('An error occurred while removing the item', 'error');
+                    console.error('Error removing item from cart:', error);
+                    showNotification('Failed to remove item from cart', 'error');
                 }
             });
         });
     }
     
-    // Helper functions
+    // Clear cart functionality
+    const clearCartForm = document.getElementById('clear-cart-form');
+    if (clearCartForm) {
+        clearCartForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!confirm('Are you sure you want to clear your cart?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/cart/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload the page to show empty cart
+                    window.location.reload();
+                } else {
+                    showNotification(data.error || 'Failed to clear cart', 'error');
+                }
+            } catch (error) {
+                console.error('Error clearing cart:', error);
+                showNotification('An error occurred while clearing the cart', 'error');
+            }
+        });
+    }
+    
     async function updateCartItem(productId, quantity, form) {
         try {
             const csrfToken = form.querySelector('[name="_csrf"]').value;
@@ -204,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'CSRF-Token': csrfToken,
+                    'X-CSRF-Token': csrfToken,
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
@@ -250,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update cart count in header
         const cartCount = document.querySelector('.text-lg.font-semibold.text-white');
         if (cartCount) {
-            cartCount.textContent = `Cart Items (${data.cartCount})`;
+            cartCount.textContent = `Cart Items (${data.cartItemCount})`;
         }
     }
     

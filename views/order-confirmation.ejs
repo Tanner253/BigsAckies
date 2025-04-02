@@ -36,10 +36,10 @@
                 <div class="flex-grow">
                   <div class="flex justify-between">
                     <div>
-                      <h3 class="text-base font-medium"><%= item.name %></h3>
+                      <h3 class="text-base font-medium"><%= item.product_name %></h3>
                       <p class="text-sm text-gray-500">Qty: <%= item.quantity %></p>
                     </div>
-                    <p class="text-base font-medium">$<%= ((item.price || 0) * (item.quantity || 1)).toFixed(2) %></p>
+                    <p class="text-base font-medium">$<%= ((parseFloat(item.price_at_time) || 0) * (parseInt(item.quantity) || 1)).toFixed(2) %></p>
                   </div>
                 </div>
               </div>
@@ -54,24 +54,24 @@
         <div class="mt-6 space-y-2">
           <div class="flex justify-between">
             <span class="text-gray-600">Subtotal</span>
-            <span class="font-medium">$<%= (order && order.subtotal) ? order.subtotal.toFixed(2) : '0.00' %></span>
+            <span class="font-medium">$<%= (order && order.items) ? order.items.reduce((sum, item) => sum + ((parseFloat(item.price_at_time) || 0) * (parseInt(item.quantity) || 1)), 0).toFixed(2) : '0.00' %></span>
           </div>
           
           <div class="flex justify-between">
             <span class="text-gray-600">Shipping</span>
-            <span class="font-medium">$<%= (order && order.shipping_cost) ? order.shipping_cost.toFixed(2) : '0.00' %></span>
+            <span class="font-medium">$<%= (order && order.shipping_cost) ? parseFloat(order.shipping_cost).toFixed(2) : '0.00' %></span>
           </div>
           
           <% if (order && order.discount && order.discount > 0) { %>
           <div class="flex justify-between">
             <span class="text-gray-600">Discount</span>
-            <span class="font-medium text-green-600">-$<%= order.discount.toFixed(2) %></span>
+            <span class="font-medium text-green-600">-$<%= parseFloat(order.discount).toFixed(2) %></span>
           </div>
           <% } %>
           
           <div class="flex justify-between border-t border-gray-200 pt-2 mt-2 text-lg font-bold">
             <span>Total</span>
-            <span>$<%= (order && order.total) ? order.total.toFixed(2) : '0.00' %></span>
+            <span>$<%= (order && order.total_amount) ? parseFloat(order.total_amount).toFixed(2) : '0.00' %></span>
           </div>
         </div>
       </div>
