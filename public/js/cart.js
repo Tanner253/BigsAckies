@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (!response.ok) {
                         // If it wasn't a redirect but still not ok, try parsing error JSON
-                        let error = { error: 'Failed to add item to cart. Status: ' + response.status };
+                        let error = { error: 'Failed to add item to cart. please sign in. Status: ' + response.status };
                         try {
                             error = await response.json();
                         } catch (parseError) {
