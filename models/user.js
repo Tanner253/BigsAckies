@@ -84,11 +84,19 @@ const createInitialAdmin = async () => {
   }
 };
 
+// Get total number of users
+const getTotalUsers = async () => {
+  const query = 'SELECT COUNT(*) FROM users WHERE role = $1';
+  const result = await db.query(query, ['customer']);
+  return parseInt(result.rows[0].count);
+};
+
 module.exports = {
   getUserByEmail,
   getUserById,
   createUser,
   verifyPassword,
   authenticateUser,
-  createInitialAdmin
+  createInitialAdmin,
+  getTotalUsers
 }; 

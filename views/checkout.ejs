@@ -9,6 +9,9 @@
       <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="p-6">
           <form id="checkout-form" class="space-y-6">
+            <!-- CSRF Token -->
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            
             <!-- Shipping Information -->
             <div>
               <h2 class="text-xl font-semibold mb-4">Shipping Information</h2>
@@ -71,7 +74,14 @@
             
             <!-- Payment Information -->
             <div>
-              <h2 class="text-xl font-semibold mb-4">Payment Information</h2>
+              <h2 class="text-xl font-semibold mb-2">Payment Information</h2>
+              <p class="text-sm text-gray-600 mb-4">
+                <strong class="font-semibold">Demo Payment Details:</strong><br>
+                Use the Stripe test card:<br>
+                Card Number: 4242 4242 4242 4242<br>
+                Expiry Date: Any future date (e.g., 12/25)<br>
+                CVC: Any 3 digits (e.g., 123)
+              </p>
               
               <div id="card-element" class="p-4 border border-gray-300 rounded-md mb-4">
                 <!-- Stripe Card Element will be inserted here -->
@@ -248,27 +258,38 @@
             state: document.getElementById('state').value,
             zip: document.getElementById('zip').value,
             country: document.getElementById('country').value,
-            payment_method_id: result.paymentMethod.id
+            payment_method_id: result.paymentMethod.id,
+            _csrf: document.querySelector('input[name="_csrf"]').value
           };
           
-          // Send the data to the server
-          const response = await fetch('/checkout', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-          });
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            // Redirect to success page
-            window.location.href = data.redirect;
-          } else {
-            // Display error message
+          try {
+            // Send the data to the server
+            const response = await fetch('/checkout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('input[name="_csrf"]').value
+              },
+              body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              // Redirect to success page
+              window.location.href = data.redirect;
+            } else {
+              // Display error message
+              const errorElement = document.getElementById('card-errors');
+              errorElement.textContent = data.error || 'An error occurred during checkout. Please try again.';
+              submitButton.disabled = false;
+              submitButton.textContent = 'Place Order';
+              loadingOverlay.classList.add('hidden');
+            }
+          } catch (error) {
+            console.error('Error:', error);
             const errorElement = document.getElementById('card-errors');
-            errorElement.textContent = data.error || 'An error occurred during checkout. Please try again.';
+            errorElement.textContent = 'An unexpected error occurred. Please try again later.';
             submitButton.disabled = false;
             submitButton.textContent = 'Place Order';
             loadingOverlay.classList.add('hidden');

@@ -361,7 +361,8 @@ router.get('/cart', async (req, res) => {
 
     const cartItems = itemsResult.rows.map(item => ({
       ...item,
-      price: parseFloat(item.price)
+      price: parseFloat(item.price),
+      total: parseFloat(item.price) * item.quantity
     }));
     const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -604,7 +605,11 @@ router.get('/checkout', async (req, res) => {
       WHERE ci.cart_id = $1
     `, [cart.id]);
 
-    const cartItems = itemsResult.rows;
+    const cartItems = itemsResult.rows.map(item => ({
+      ...item,
+      price: parseFloat(item.price),
+      total: parseFloat(item.price) * item.quantity
+    }));
     
     // Redirect to cart if empty
     if (cartItems.length === 0) {
@@ -639,7 +644,8 @@ router.get('/checkout', async (req, res) => {
         totalQty,
         totalPrice
       },
-      stripePublicKey: process.env.STRIPE_PUBLIC_KEY
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+      csrfToken: req.csrfToken()
     });
   } catch (error) {
     console.error('Error loading checkout:', error);
@@ -800,7 +806,7 @@ router.get('/checkout/success', async (req, res) => {
     
     // If no order ID, show generic success
     if (!orderId) {
-      return res.render('order-success', {
+      return res.render('order-confirmation', {
         title: 'Order Successful',
         order: null
       });
@@ -810,22 +816,33 @@ router.get('/checkout/success', async (req, res) => {
     const order = await orderModel.getOrderById(orderId);
     
     if (!order) {
-      return res.render('order-success', {
+      return res.render('order-confirmation', {
         title: 'Order Successful',
-        order: null
+        order: null,
+        error: 'Order not found or access denied.'
       });
     }
-    
-    res.render('order-success', {
+
+    // Optional: Check if the order belongs to the logged-in user
+    if (req.session.user && order.user_id !== req.session.user.id) {
+       return res.status(403).render('error', {
+           title: 'Access Denied',
+           status: 403,
+           message: 'You do not have permission to view this order.'
+       });
+    }
+
+    res.render('order-confirmation', {
       title: 'Order Successful',
       order
     });
   } catch (error) {
     console.error('Error rendering success page:', error);
-    res.render('order-success', {
+    // Render the confirmation page even on error, but indicate an issue
+    res.render('order-confirmation', {
       title: 'Order Successful',
       order: null,
-      error: 'Could not retrieve order details'
+      error: 'An unexpected error occurred while retrieving order details.'
     });
   }
 });

@@ -294,6 +294,13 @@ const getFeaturedProducts = async (limit = 4) => {
   }
 };
 
+// Get total number of products
+const getTotalProducts = async () => {
+  const query = 'SELECT COUNT(*) FROM products';
+  const result = await db.query(query);
+  return parseInt(result.rows[0].count);
+};
+
 module.exports = {
   getAllProducts,
   getProductById,
@@ -303,5 +310,6 @@ module.exports = {
   updateProductStock,
   checkProductStock,
   getLowStockProducts,
-  getFeaturedProducts
+  getFeaturedProducts,
+  getTotalProducts
 }; 

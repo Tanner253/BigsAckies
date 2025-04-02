@@ -342,4 +342,197 @@ router.post('/clear', async (req, res) => {
   }
 });
 
+// Checkout route
+router.get('/checkout', async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.redirect('/login');
+    }
+
+    // Get user's cart
+    const cartResult = await db.query(
+      'SELECT * FROM carts WHERE user_id = $1',
+      [req.session.user.id]
+    );
+
+    if (cartResult.rows.length === 0) {
+      return res.redirect('/cart');
+    }
+
+    const cart = cartResult.rows[0];
+
+    // Get cart items with product details
+    const itemsResult = await db.query(`
+      SELECT ci.*, p.name, p.price, p.image_url 
+      FROM cart_items ci
+      JOIN products p ON ci.product_id = p.id
+      WHERE ci.cart_id = $1
+    `, [cart.id]);
+
+    const cartItems = itemsResult.rows.map(item => ({
+      ...item,
+      price: parseFloat(item.price)
+    }));
+    const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    res.render('checkout', {
+      title: 'Checkout',
+      cart: {
+        items: cartItems,
+        totalQty,
+        totalPrice
+      },
+      user: req.session.user,
+      csrfToken: req.csrfToken(),
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY
+    });
+  } catch (error) {
+    console.error('Error loading checkout:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      status: 500,
+      message: 'An error occurred while loading checkout',
+      error: process.env.NODE_ENV !== 'production' ? error : null
+    });
+  }
+});
+
+// Handle checkout submission
+router.post('/checkout', async (req, res) => {
+  // ---> ADDED: CSRF Debugging <---
+  console.log('--- CSRF Debug ---');
+  console.log('Session CSRF Secret:', req.session.csrfSecret); // Log the secret stored in session
+  console.log('Received CSRF Token (Header):', req.headers['x-csrf-token']); // Log token from header
+  console.log('Received CSRF Token (Body):', req.body._csrf);       // Log token from body (if any)
+  console.log('--------------------');
+  // ---> END ADDED <---
+
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Please login to checkout' });
+    }
+
+    // Log the request headers for debugging
+    console.log('Request headers:', req.headers);
+    console.log('CSRF token from body:', req.body._csrf);
+    console.log('CSRF token from header:', req.headers['x-csrf-token']);
+
+    const { 
+      name, 
+      email, 
+      address, 
+      city, 
+      state, 
+      zip, 
+      country, 
+      payment_method_id 
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !address || !city || !state || !zip || !country || !payment_method_id) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Get user's cart
+    const cartResult = await db.query(
+      'SELECT * FROM carts WHERE user_id = $1',
+      [req.session.user.id]
+    );
+
+    if (cartResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Cart not found' });
+    }
+
+    const cart = cartResult.rows[0];
+
+    // Get cart items with product details
+    const itemsResult = await db.query(`
+      SELECT ci.*, p.name, p.price 
+      FROM cart_items ci
+      JOIN products p ON ci.product_id = p.id
+      WHERE ci.cart_id = $1
+    `, [cart.id]);
+
+    const cartItems = itemsResult.rows.map(item => ({
+      ...item,
+      price: parseFloat(item.price)
+    }));
+    const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // Create Stripe payment intent
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalAmount * 100), // Convert to cents
+      currency: 'usd',
+      payment_method: payment_method_id,
+      confirm: true,
+      return_url: `${process.env.BASE_URL}/order/success`,
+      metadata: {
+        user_id: req.session.user.id,
+        cart_id: cart.id
+      }
+    });
+
+    if (paymentIntent.status === 'succeeded') {
+      // Create order in database
+      const orderResult = await db.query(
+        `INSERT INTO orders (
+          user_id, 
+          total_amount, 
+          shipping_address, 
+          shipping_city, 
+          shipping_state, 
+          shipping_zip, 
+          shipping_country,
+          payment_intent_id,
+          status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+        [
+          req.session.user.id,
+          totalAmount,
+          address,
+          city,
+          state,
+          zip,
+          country,
+          paymentIntent.id,
+          'completed'
+        ]
+      );
+
+      const orderId = orderResult.rows[0].id;
+
+      // Move items from cart to order_items
+      for (const item of cartItems) {
+        await db.query(
+          `INSERT INTO order_items (
+            order_id, 
+            product_id, 
+            quantity, 
+            price
+          ) VALUES ($1, $2, $3, $4)`,
+          [orderId, item.product_id, item.quantity, item.price]
+        );
+      }
+
+      // Clear the cart
+      await db.query(
+        'DELETE FROM cart_items WHERE cart_id = $1',
+        [cart.id]
+      );
+
+      res.json({
+        success: true,
+        redirect: `/order/success?id=${orderId}`
+      });
+    } else {
+      res.status(400).json({ error: 'Payment failed' });
+    }
+  } catch (error) {
+    console.error('Error processing checkout:', error);
+    res.status(500).json({ error: 'An error occurred during checkout' });
+  }
+});
+
 module.exports = router; 

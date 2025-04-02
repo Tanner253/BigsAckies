@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Orders - Admin</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="flex h-screen bg-gray-100">
+  <!-- Sidebar Navigation -->
+  <div class="w-64 bg-gray-900 text-white">
+    <div class="p-4 bg-green-700">
+      <h1 class="text-xl font-bold">Reptile E-Commerce Admin</h1>
+    </div>
+    
+    <nav class="mt-4">
+      <a href="/admin/dashboard" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/dashboard' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-tachometer-alt w-6"></i>
+        <span>Dashboard</span>
+      </a>
+      
+      <a href="/admin/products" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/products' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-box w-6"></i>
+        <span>Products</span>
+      </a>
+      
+      <a href="/admin/categories" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/categories' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-tags w-6"></i>
+        <span>Categories</span>
+      </a>
+      
+      <a href="/admin/orders" class="flex items-center px-4 py-3 bg-green-700 hover:bg-green-800 <%= locals.currentPath === '/admin/orders' ? 'bg-green-700' : '' %>">
+        <i class="fas fa-shopping-cart w-6"></i>
+        <span>Orders</span>
+      </a>
+      
+      <a href="/admin/messages" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/messages' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-envelope w-6"></i>
+        <span>Messages</span>
+      </a>
+      
+      <a href="/admin/logout" class="flex items-center px-4 py-3 hover:bg-gray-800 mt-auto">
+        <i class="fas fa-sign-out-alt w-6"></i>
+        <span>Logout</span>
+      </a>
+    </nav>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="flex-1 overflow-auto">
+    <header class="bg-white shadow">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold text-gray-900">Manage Orders</h1>
+      </div>
+    </header>
+    
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <!-- Filters -->
+      <div class="bg-white shadow rounded-lg mb-6 p-4">
+        <form action="/admin/orders" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+            <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
+              <option value="">All Statuses</option>
+              <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="processing" <%= filters.status === 'processing' ? 'selected' : '' %>>Processing</option>
+              <option value="shipped" <%= filters.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+              <option value="delivered" <%= filters.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+              <option value="cancelled" <%= filters.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+            <input type="date" id="start_date" name="start_date" value="<%= filters.startDate || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+          </div>
+          
+          <div>
+            <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+            <input type="date" id="end_date" name="end_date" value="<%= filters.endDate || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+          </div>
+          
+          <div class="flex items-end">
+            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+              <i class="fas fa-filter mr-2"></i> Apply Filters
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Orders Table -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% if (orders && orders.length > 0) { %>
+              <% orders.forEach(order => { %>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#<%= order.id %></td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= order.user_email || 'Guest' %></td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= new Date(order.created_at).toLocaleDateString() %></td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$<%= parseFloat(order.total_amount || 0).toFixed(2) %></td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                      <%= order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                         order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
+                         order.status === 'shipped' ? 'bg-purple-100 text-purple-800' : 
+                         order.status === 'delivered' ? 'bg-green-100 text-green-800' : 
+                         'bg-red-100 text-red-800' %>">
+                      <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="/admin/orders/<%= order.id %>" class="text-green-600 hover:text-green-900 mr-3">
+                      <i class="fas fa-eye"></i> View
+                    </a>
+                    <button type="button" class="text-blue-600 hover:text-blue-900" onclick="openModal('updateStatusModal<%= order.id %>')">
+                      <i class="fas fa-edit"></i> Update Status
+                    </button>
+                  </td>
+                </tr>
+                
+                <!-- Update Status Modal -->
+                <div id="updateStatusModal<%= order.id %>" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+                  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <div class="mt-3">
+                      <h3 class="text-lg leading-6 font-medium text-gray-900">Update Order Status</h3>
+                      <form action="/admin/orders/<%= order.id %>/status" method="POST" class="mt-4">
+                        <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
+                        <div class="mb-4">
+                          <label for="status<%= order.id %>" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                          <select id="status<%= order.id %>" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md" required>
+                            <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                            <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                            <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                            <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                            <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                          </select>
+                        </div>
+                        <div class="flex items-center justify-end mt-4 space-x-3">
+                          <button type="button" onclick="closeModal('updateStatusModal<%= order.id %>')" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Cancel
+                          </button>
+                          <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Update Status
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No orders found</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg">
+          <div class="flex-1 flex justify-between sm:hidden">
+            <% if (pagination.currentPage > 1) { %>
+              <a href="/admin/orders?page=<%= pagination.currentPage - 1 %>&status=<%= filters.status || '' %>&start_date=<%= filters.startDate || '' %>&end_date=<%= filters.endDate || '' %>" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Previous
+              </a>
+            <% } %>
+            <% if (pagination.currentPage < pagination.totalPages) { %>
+              <a href="/admin/orders?page=<%= pagination.currentPage + 1 %>&status=<%= filters.status || '' %>&start_date=<%= filters.startDate || '' %>&end_date=<%= filters.endDate || '' %>" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Next
+              </a>
+            <% } %>
+          </div>
+          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm text-gray-700">
+                Showing
+                <span class="font-medium"><%= pagination.startItem %></span>
+                to
+                <span class="font-medium"><%= pagination.endItem %></span>
+                of
+                <span class="font-medium"><%= pagination.totalItems %></span>
+                results
+              </p>
+            </div>
+            <div>
+              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <% if (pagination.currentPage > 1) { %>
+                  <a href="/admin/orders?page=<%= pagination.currentPage - 1 %>&status=<%= filters.status || '' %>&start_date=<%= filters.startDate || '' %>&end_date=<%= filters.endDate || '' %>" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Previous</span>
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                <% } %>
+                
+                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                  <a href="/admin/orders?page=<%= i %>&status=<%= filters.status || '' %>&start_date=<%= filters.startDate || '' %>&end_date=<%= filters.endDate || '' %>" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium <%= i === pagination.currentPage ? 'text-green-600 bg-green-50' : 'text-gray-700 hover:bg-gray-50' %>">
+                    <%= i %>
+                  </a>
+                <% } %>
+                
+                <% if (pagination.currentPage < pagination.totalPages) { %>
+                  <a href="/admin/orders?page=<%= pagination.currentPage + 1 %>&status=<%= filters.status || '' %>&start_date=<%= filters.startDate || '' %>&end_date=<%= filters.endDate || '' %>" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Next</span>
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                <% } %>
+              </nav>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </main>
+  </div>
+  
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <script>
+    // Modal functions
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.remove('hidden');
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+      const modals = document.querySelectorAll('[id^="updateStatusModal"]');
+      modals.forEach(modal => {
+        if (event.target === modal) {
+          closeModal(modal.id);
+        }
+      });
+    });
+  </script>
+</body>
+</html> 

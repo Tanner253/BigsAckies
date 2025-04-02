@@ -63,10 +63,10 @@ app.use(session({
     tableName: 'sessions'
   }),
   secret: process.env.SESSION_SECRET,
-  resave: true, // Changed to true to ensure session is saved
-  saveUninitialized: true, // Changed to true to ensure session is created
+  resave: false,
+  saveUninitialized: false,
   cookie: {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'lax'
@@ -76,10 +76,13 @@ app.use(session({
 // Add user data to response locals - MUST be before CSRF
 app.use(auth.setUserLocals);
 
-// CSRF protection for all routes except /api
-const csrfProtection = csrf({ 
-  cookie: false, // Changed to false to use session instead of cookie
-  ignoreMethods: ['GET', 'HEAD', 'OPTIONS']  // Only verify on state-changing methods
+// CSRF protection
+const csrfProtection = csrf({
+  cookie: false, // Use session instead of cookie
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+  value: (req) => {
+    return req.body._csrf || req.headers['x-csrf-token'] || req.query._csrf;
+  }
 });
 
 // Apply CSRF protection to all routes except API and file uploads
@@ -90,49 +93,16 @@ app.use((req, res, next) => {
       (req.path.startsWith('/admin/products/') && req.method === 'POST' && req.is('multipart/form-data'))) {
     next();
   } else {
-    csrfProtection(req, res, (err) => {
-      if (err) {
-        console.error('CSRF Error:', err);
-        // For AJAX requests, return JSON response
-        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-          return res.status(403).json({
-            error: 'Invalid CSRF token. Please refresh the page and try again.'
-          });
-        }
-        
-        // Ensure csrfToken is available for error page rendering
-        res.locals.csrfToken = 'error-page-token';
-        
-        // For regular requests, render error page
-        return res.status(403).render('error', {
-          title: 'Error',
-          status: 403,
-          message: 'Invalid request. Please refresh the page and try again.',
-          error: process.env.NODE_ENV !== 'production' ? err : null
-        });
-      }
-      next();
-    });
+    csrfProtection(req, res, next);
   }
 });
 
 // Add CSRF token to all rendered views
 app.use((req, res, next) => {
-  try {
-    // Only try to get the token if the CSRF middleware was applied
-    if (req.csrfToken) {
-      const token = req.csrfToken();
-      res.locals.csrfToken = token;
-    } else {
-      // For routes where CSRF is skipped, generate a token manually
-      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      res.locals.csrfToken = token;
-    }
-    next();
-  } catch (error) {
-    console.error('CSRF Token Generation Error:', error);
-    next(error);
+  if (req.csrfToken) {
+    res.locals.csrfToken = req.csrfToken();
   }
+  next();
 });
 
 // Middleware to make current path available to all templates

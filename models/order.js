@@ -1,5 +1,6 @@
 const db = require('./database');
 const productModel = require('./product');
+const userModel = require('./user');
 
 // Get all orders with optional pagination and filters
 const getAllOrders = async (options = {}) => {
@@ -105,7 +106,11 @@ const getOrderById = async (id) => {
   
   // Get order items
   const itemsQuery = `
-    SELECT oi.*, p.name as product_name, p.image_url
+    SELECT 
+      oi.*,
+      p.name as product_name,
+      p.image_url as product_image,
+      oi.price_at_time
     FROM order_items oi
     JOIN products p ON oi.product_id = p.id
     WHERE oi.order_id = $1
@@ -212,13 +217,17 @@ const getOrderStats = async () => {
     `;
     const recentResult = await db.query(recentQuery);
     
+    // Get total products and customers
+    const totalProducts = await productModel.getTotalProducts();
+    const totalCustomers = await userModel.getTotalUsers();
+    
     return {
       total: parseInt(totalResult.rows[0].count) || 0,
       pending: parseInt(pendingResult.rows[0].count) || 0,
       revenue: parseFloat(revenueResult.rows[0].total_revenue) || 0,
       recentOrders: recentResult.rows || [],
-      products: 0, // We'll add this later when we implement product counting
-      customers: 0 // We'll add this later when we implement customer counting
+      products: totalProducts,
+      customers: totalCustomers
     };
   } catch (error) {
     console.error('Error getting order stats:', error);
