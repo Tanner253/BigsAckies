@@ -14,10 +14,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Configure multer for temporary local storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     // Create unique filename
@@ -48,6 +54,9 @@ const upload = multer({
 // Upload image to Cloudinary
 const uploadToCloudinary = async (filePath, folder = 'reptile-ecommerce/products') => {
   try {
+    console.log('Starting Cloudinary upload for file:', filePath);
+    console.log('Using folder:', folder);
+    
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(filePath, {
       folder,
@@ -55,8 +64,11 @@ const uploadToCloudinary = async (filePath, folder = 'reptile-ecommerce/products
       use_filename: true
     });
     
+    console.log('Cloudinary upload successful:', result.secure_url);
+    
     // Delete local file
     await unlinkAsync(filePath);
+    console.log('Local file deleted successfully');
     
     return {
       success: true,
@@ -65,10 +77,16 @@ const uploadToCloudinary = async (filePath, folder = 'reptile-ecommerce/products
     };
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     
     // Try to delete local file even if upload failed
     try {
       await unlinkAsync(filePath);
+      console.log('Local file deleted after failed upload');
     } catch (unlinkError) {
       console.error('Error deleting local file:', unlinkError);
     }
