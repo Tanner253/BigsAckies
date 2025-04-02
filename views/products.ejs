@@ -66,10 +66,10 @@
         <div class="flex items-center">
           <span class="mr-2 text-sm text-gray-600">Sort by:</span>
           <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-            <option value="name_asc">Name: A-Z</option>
-            <option value="name_desc">Name: Z-A</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
+            <option value="name_asc" <%= currentSort === 'name_asc' ? 'selected' : '' %>>Name: A-Z</option>
+            <option value="name_desc" <%= currentSort === 'name_desc' ? 'selected' : '' %>>Name: Z-A</option>
+            <option value="price_asc" <%= currentSort === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
+            <option value="price_desc" <%= currentSort === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
           </select>
         </div>
       </div>

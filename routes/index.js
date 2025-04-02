@@ -64,6 +64,7 @@ router.get('/products', async (req, res) => {
     const categoryParam = req.query.category;
     const min_price = req.query.min_price;
     const max_price = req.query.max_price;
+    const sort = req.query.sort || 'name_asc'; // Default to name ascending if not specified
     
     // Handle category filtering by name or ID
     if (categoryParam) {
@@ -102,7 +103,23 @@ router.get('/products', async (req, res) => {
       params.push(parseFloat(max_price));
     }
     
-    query += ' ORDER BY p.name ASC';
+    // Handle sorting
+    switch (sort) {
+      case 'name_asc':
+        query += ' ORDER BY p.name ASC';
+        break;
+      case 'name_desc':
+        query += ' ORDER BY p.name DESC';
+        break;
+      case 'price_asc':
+        query += ' ORDER BY p.price ASC';
+        break;
+      case 'price_desc':
+        query += ' ORDER BY p.price DESC';
+        break;
+      default:
+        query += ' ORDER BY p.name ASC'; // Default sorting
+    }
     
     // Execute query
     const result = await db.query(query, params);
@@ -115,6 +132,7 @@ router.get('/products', async (req, res) => {
       selectedCategoryName: categoryParam,
       min_price: min_price || '',
       max_price: max_price || '',
+      currentSort: sort,
       user: req.session.user || null
     });
   } catch (error) {
