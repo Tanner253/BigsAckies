@@ -52,51 +52,59 @@
                   <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200">
-                <% cart.items.forEach(item => { %>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <% if (cart.items && cart.items.length > 0) { %>
+                  <% cart.items.forEach(function(item) { %>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          <div class="flex-shrink-0 h-16 w-16">
+                            <img class="h-16 w-16 object-cover rounded" src="<%= item.image_url %>" alt="<%= item.name %>">
+                          </div>
+                          <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900"><%= item.name %></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <div class="text-sm text-gray-900">$<%= item.price.toFixed(2) %></div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <form class="update-quantity-form">
+                          <input type="hidden" name="product_id" value="<%= item.product_id %>">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <div class="quantity-input mx-auto flex items-center justify-center space-x-2">
+                            <button type="button" class="quantity-decrement bg-gray-200 hover:bg-gray-300 rounded-l px-3 py-1">
+                              <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.stock %>" 
+                                   class="quantity-value w-16 text-center border-gray-300 rounded">
+                            <button type="button" class="quantity-increment bg-gray-200 hover:bg-gray-300 rounded-r px-3 py-1">
+                              <i class="fas fa-plus"></i>
+                            </button>
+                          </div>
+                        </form>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <div class="text-sm font-medium text-gray-900 item-total">$<%= (item.price * item.quantity).toFixed(2) %></div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <form class="remove-item-form">
+                          <input type="hidden" name="product_id" value="<%= item.product_id %>">
+                          <button type="submit" class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
                   <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div class="flex-shrink-0 h-16 w-16 rounded overflow-hidden">
-                          <% if (item.image_url) { %>
-                            <img src="<%= item.image_url %>" alt="<%= item.name %>" class="h-full w-full object-cover">
-                          <% } else { %>
-                            <div class="h-full w-full bg-gray-200 flex items-center justify-center">
-                              <i class="fas fa-image text-gray-400"></i>
-                            </div>
-                          <% } %>
-                        </div>
-                        <div class="ml-4">
-                          <div class="text-sm font-medium text-gray-900"><%= item.name %></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                      <div class="text-sm text-gray-900">$<%= item.price.toFixed(2) %></div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                      <form class="update-quantity-form">
-                        <input type="hidden" name="productId" value="<%= item.id %>">
-                        <div class="quantity-input mx-auto">
-                          <button type="button" class="quantity-decrement"><i class="fas fa-minus"></i></button>
-                          <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="99" class="quantity-value">
-                          <button type="button" class="quantity-increment"><i class="fas fa-plus"></i></button>
-                        </div>
-                      </form>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                      <div class="text-sm font-medium text-gray-900 item-total">$<%= item.total.toFixed(2) %></div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                      <form class="remove-item-form">
-                        <input type="hidden" name="productId" value="<%= item.id %>">
-                        <button type="submit" class="text-red-600 hover:text-red-900">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </form>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                      Your cart is empty
                     </td>
                   </tr>
-                <% }); %>
+                <% } %>
               </tbody>
             </table>
           </div>
@@ -113,44 +121,135 @@
       
       <!-- Order Summary -->
       <div class="md:w-1/3">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-          <div class="bg-green-600 py-3 px-6">
-            <h2 class="text-lg font-semibold text-white">Order Summary</h2>
-          </div>
-          
-          <div class="p-6 space-y-6">
-            <div class="flex justify-between text-gray-700">
-              <span>Subtotal:</span>
-              <span>$<%= cart.totalPrice.toFixed(2) %></span>
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Subtotal</span>
+              <span class="text-gray-900">$<%= cart.totalPrice.toFixed(2) %></span>
             </div>
-            
-            <div class="flex justify-between text-gray-700">
-              <span>Shipping:</span>
-              <span>Calculated at checkout</span>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Shipping</span>
+              <span class="text-gray-900">Free</span>
             </div>
-            
             <div class="border-t pt-4">
-              <div class="flex justify-between font-bold text-lg">
-                <span>Total:</span>
-                <span id="cart-total">$<%= cart.totalPrice.toFixed(2) %></span>
+              <div class="flex justify-between">
+                <span class="text-lg font-semibold text-gray-900">Total</span>
+                <span class="text-lg font-semibold text-gray-900">$<%= cart.totalPrice.toFixed(2) %></span>
               </div>
-              <p class="text-xs text-gray-500 mt-1">Tax will be calculated at checkout</p>
             </div>
-            
-            <a href="/checkout" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 px-4 rounded-md transition-colors duration-300">
+            <button class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors checkout-button">
               Proceed to Checkout
-            </a>
-            
-            <div class="mt-4 text-center">
-              <a href="/products" class="text-green-600 hover:text-green-700 inline-flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
-              </a>
-            </div>
+            </button>
           </div>
         </div>
       </div>
     </div>
   <% } %>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Remove item
+  document.querySelectorAll('.remove-item-form').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      
+      try {
+        const response = await fetch('/cart/remove', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            product_id: formData.get('product_id')
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Remove the row
+          const row = form.closest('tr');
+          row.remove();
+          
+          // Update cart totals
+          const cartTotal = document.querySelector('.text-lg.font-semibold.text-gray-900:last-child');
+          if (cartTotal) {
+            cartTotal.textContent = `$${data.cartTotal}`;
+          }
+          
+          // Update cart count in header
+          const cartItemCount = document.querySelector('.text-lg.font-semibold.text-white');
+          if (cartItemCount) {
+            cartItemCount.textContent = `Cart Items (${data.cartItemCount})`;
+          }
+          
+          // Update cart badge
+          const cartBadge = document.querySelector('.cart-count');
+          if (cartBadge) {
+            cartBadge.textContent = data.cartItemCount;
+            if (data.cartItemCount > 0) {
+              cartBadge.classList.remove('hidden');
+            } else {
+              cartBadge.classList.add('hidden');
+            }
+          }
+          
+          // If cart is empty, reload to show empty cart message
+          if (data.cartItemCount === 0) {
+            window.location.reload();
+          }
+        } else {
+          alert(data.error || 'Failed to remove item');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while removing the item');
+      }
+    });
+  });
+
+  // Clear cart
+  const clearCartForm = document.getElementById('clear-cart-form');
+  if (clearCartForm) {
+    clearCartForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!confirm('Are you sure you want to clear your cart?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/cart/clear', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Reload the page to show empty cart
+          window.location.reload();
+        } else {
+          alert(data.error || 'Failed to clear cart');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while clearing the cart');
+      }
+    });
+  }
+
+  // Checkout button
+  document.querySelector('.checkout-button').addEventListener('click', () => {
+    window.location.href = '/checkout';
+  });
+});
+</script>
 
 <%- include('partials/footer') %> 

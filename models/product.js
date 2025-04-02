@@ -100,6 +100,11 @@ const getAllProducts = async (options = {}) => {
 
 // Get a single product by ID
 const getProductById = async (id) => {
+  // Validate id parameter
+  if (!id || isNaN(id)) {
+    throw new Error('Invalid product ID');
+  }
+  
   const query = `
     SELECT p.*, c.name as category_name
     FROM products p

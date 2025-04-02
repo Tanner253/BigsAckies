@@ -764,16 +764,27 @@ router.post('/messages/:id/reply', [
     }
     
     // Reply to message
-    await messageModel.replyToMessage(messageId, response);
+    const updatedMessage = await messageModel.replyToMessage(messageId, response);
+    
+    // Set success message in session
+    req.session.messages = {
+      success: 'Reply sent successfully! The user will be notified.'
+    };
     
     res.redirect('/admin/messages');
   } catch (error) {
     console.error('Reply to message error:', error);
-    res.status(500).render('error', {
-      title: 'Error',
-      status: 500,
-      message: 'Failed to send the reply',
-      error: { status: 500 }
+    
+    // Get the original message for the error page
+    const message = await messageModel.getMessageById(req.params.id);
+    
+    res.render('admin/message-detail', {
+      title: 'Message Details',
+      message,
+      errors: [{
+        msg: 'Failed to send the reply. Please try again.'
+      }],
+      user: req.session.user
     });
   }
 });

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= locals.csrfToken || 'error-page-token' %>">
   <title><%= title ? `${title} - Biggs Ackies` : 'Biggs Ackies - Premium Ackie Monitor Lizards' %></title>
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/images/favicon.png">
@@ -62,6 +63,8 @@
             <i class="fas fa-shopping-cart"></i>
             <% if (locals.cart && cart.totalQty > 0) { %>
               <span class="cart-count absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"><%= cart.totalQty %></span>
+            <% } else { %>
+              <span class="cart-count absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
             <% } %>
           </a>
           

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Admin Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+</head>
+<body class="flex h-screen bg-gray-100">
+  <!-- Sidebar Navigation -->
+  <div class="w-64 bg-gray-900 text-white">
+    <div class="p-4 bg-green-700">
+      <h1 class="text-xl font-bold">Reptile E-Commerce Admin</h1>
+    </div>
+    
+    <nav class="mt-4">
+      <a href="/admin/dashboard" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/dashboard' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-tachometer-alt w-6"></i>
+        <span>Dashboard</span>
+      </a>
+      
+      <a href="/admin/products" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/products' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-box w-6"></i>
+        <span>Products</span>
+      </a>
+      
+      <a href="/admin/categories" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/categories' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-tags w-6"></i>
+        <span>Categories</span>
+      </a>
+      
+      <a href="/admin/orders" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/orders' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-shopping-cart w-6"></i>
+        <span>Orders</span>
+      </a>
+      
+      <a href="/admin/customers" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/customers' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-users w-6"></i>
+        <span>Customers</span>
+      </a>
+      
+      <a href="/admin/messages" class="flex items-center px-4 py-3 bg-green-700 hover:bg-green-800">
+        <i class="fas fa-envelope w-6"></i>
+        <span>Messages</span>
+      </a>
+      
+      <a href="/admin/settings" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/settings' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-cog w-6"></i>
+        <span>Settings</span>
+      </a>
+      
+      <div class="border-t border-gray-700 my-4"></div>
+      
+      <a href="/" class="flex items-center px-4 py-3 hover:bg-gray-800">
+        <i class="fas fa-home w-6"></i>
+        <span>Visit Website</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+    <div class="container mx-auto px-6 py-8">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold text-gray-900">Customer Messages</h1>
+        
+        <!-- Status Filter -->
+        <div class="flex space-x-2">
+          <a href="/admin/messages" class="px-4 py-2 rounded-md <%= !locals.activeStatus ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' %>">
+            All
+          </a>
+          <a href="/admin/messages?status=Unread" class="px-4 py-2 rounded-md <%= locals.activeStatus === 'Unread' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' %>">
+            Unread
+          </a>
+          <a href="/admin/messages?status=Read" class="px-4 py-2 rounded-md <%= locals.activeStatus === 'Read' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' %>">
+            Read
+          </a>
+          <a href="/admin/messages?status=Replied" class="px-4 py-2 rounded-md <%= locals.activeStatus === 'Replied' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' %>">
+            Replied
+          </a>
+        </div>
+      </div>
+
+      <!-- Messages Table -->
+      <div class="mt-8 bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% if (messages && messages.length > 0) { %>
+              <% messages.forEach(message => { %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900"><%= message.user_email %></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900 truncate max-w-md"><%= message.message %></div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                      <%= message.status === 'Unread' ? 'bg-red-100 text-red-800' : 
+                         message.status === 'Read' ? 'bg-blue-100 text-blue-800' : 
+                         'bg-green-100 text-green-800' %>">
+                      <%= message.status %>
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <%= new Date(message.created_at).toLocaleDateString() %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="/admin/messages/<%= message.id %>" class="text-green-600 hover:text-green-900 mr-3">View</a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                  No messages found
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="mt-4 flex justify-center">
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <% if (pagination.page > 1) { %>
+              <a href="/admin/messages?page=<%= pagination.page - 1 %><%= locals.activeStatus ? `&status=${activeStatus}` : '' %>" 
+                 class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Previous
+              </a>
+            <% } %>
+            
+            <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+              <a href="/admin/messages?page=<%= i %><%= locals.activeStatus ? `&status=${activeStatus}` : '' %>" 
+                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium 
+                        <%= i === pagination.page ? 'text-green-600 bg-green-50' : 'text-gray-700 hover:bg-gray-50' %>">
+                <%= i %>
+              </a>
+            <% } %>
+            
+            <% if (pagination.page < pagination.totalPages) { %>
+              <a href="/admin/messages?page=<%= pagination.page + 1 %><%= locals.activeStatus ? `&status=${activeStatus}` : '' %>" 
+                 class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Next
+              </a>
+            <% } %>
+          </nav>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // Add any JavaScript functionality here if needed
+  </script>
+</body>
+</html> 

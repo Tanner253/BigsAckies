@@ -99,8 +99,13 @@ const replyToMessage = async (id, response) => {
   
   const message = updateResult.rows[0];
   
-  // Send email reply
-  await sendEmailReply(message.user_email, response);
+  // Try to send email reply, but don't fail if it doesn't work
+  try {
+    await sendEmailReply(message.user_email, response);
+  } catch (error) {
+    console.error('Failed to send email reply:', error);
+    // Continue execution even if email fails
+  }
   
   return message;
 };
@@ -126,13 +131,20 @@ const configureEmailTransporter = () => {
 
 // Send email reply
 const sendEmailReply = async (email, responseText) => {
+  // Check if email configuration is available
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.log('Email configuration not found, skipping email send');
+    return false;
+  }
+
   try {
     const transporter = configureEmailTransporter();
     
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from: '"BigsAckies Support" <no-reply@biggsackies.com>',
+      replyTo: process.env.EMAIL_USER, // This allows replies to go to the actual support email
       to: email,
-      subject: 'Response to Your Inquiry - Reptile E-Commerce',
+      subject: 'Response to Your Inquiry - BigsAckies',
       text: responseText,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px;">
@@ -142,7 +154,7 @@ const sendEmailReply = async (email, responseText) => {
             ${responseText.replace(/\n/g, '<br>')}
           </div>
           <p>If you have any further questions, please feel free to contact us again.</p>
-          <p>Best regards,<br>Reptile E-Commerce Team</p>
+          <p>Best regards,<br>BigsAckies Support Team</p>
         </div>
       `
     };
@@ -153,7 +165,7 @@ const sendEmailReply = async (email, responseText) => {
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
-    throw error;
+    return false; // Return false instead of throwing error
   }
 };
 

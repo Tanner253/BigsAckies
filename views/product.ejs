@@ -66,17 +66,18 @@
           </div>
         <% } %>
         
-        <form action="/cart/add" method="POST" class="add-to-cart-form mb-6">
-          <input type="hidden" name="productId" value="<%= product.id %>">
+        <form class="add-to-cart-form mb-6">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="product_id" value="<%= product.id %>">
           
           <div class="flex items-center mb-4">
             <label for="quantity" class="mr-4 font-medium text-gray-700">Quantity:</label>
             <div class="flex items-center border border-gray-300 rounded-md">
-              <button type="button" id="decrease-qty" class="px-3 py-2 text-gray-600 hover:bg-gray-100">-</button>
+              <button type="button" class="quantity-decrement px-3 py-2 text-gray-600 hover:bg-gray-100">-</button>
               <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= product.stock %>"
                      class="w-16 text-center border-x border-gray-300 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                      <%= product.stock === 0 ? 'disabled' : '' %>>
-              <button type="button" id="increase-qty" class="px-3 py-2 text-gray-600 hover:bg-gray-100">+</button>
+              <button type="button" class="quantity-increment px-3 py-2 text-gray-600 hover:bg-gray-100">+</button>
             </div>
           </div>
           
@@ -119,12 +120,12 @@
               </a>
               <div class="flex justify-between items-center mt-2">
                 <span class="font-bold">$<%= related.price.toFixed(2) %></span>
-                <form action="/cart/add" method="POST" class="add-to-cart-form">
-                  <input type="hidden" name="productId" value="<%= related.id %>">
+                <form class="add-to-cart-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="product_id" value="<%= related.id %>">
                   <input type="hidden" name="quantity" value="1">
-                  <button type="submit" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md transition"
-                          <%= related.stock === 0 ? 'disabled' : '' %>>
-                    <i class="fas fa-cart-plus"></i>
+                  <button type="submit" class="w-full bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition-colors">
+                    Add to Cart
                   </button>
                 </form>
               </div>
@@ -140,8 +141,8 @@
   // Quantity input handlers
   document.addEventListener('DOMContentLoaded', function() {
     const quantityInput = document.getElementById('quantity');
-    const decreaseBtn = document.getElementById('decrease-qty');
-    const increaseBtn = document.getElementById('increase-qty');
+    const decreaseBtn = document.querySelector('.quantity-decrement');
+    const increaseBtn = document.querySelector('.quantity-increment');
     
     const maxStock = parseInt('<%= product.stock %>');
     

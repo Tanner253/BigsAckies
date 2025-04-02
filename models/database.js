@@ -4,116 +4,21 @@ const { Pool } = require('pg');
 const pool = new Pool({
   connectionString: process.env.HEROKU_DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false,
-    sslmode: 'require'
+    rejectUnauthorized: false
   }
 });
 
 // Helper for executing queries
 const query = (text, params) => pool.query(text, params);
 
-// Database initialization script
+// Database initialization function
 const initializeDatabase = async () => {
-  const client = await pool.connect();
   try {
-    // Start transaction
-    await client.query('BEGIN');
-    
-    // Create tables
-    
-    // Users table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255),
-        role VARCHAR(50) DEFAULT 'customer',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Categories table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) UNIQUE NOT NULL,
-        description TEXT
-      )
-    `);
-    
-    // Products table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS products (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        price DECIMAL(10, 2) NOT NULL,
-        stock INTEGER NOT NULL DEFAULT 0,
-        category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-        image_url VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Orders table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        total_amount DECIMAL(10, 2) NOT NULL,
-        status VARCHAR(20) NOT NULL DEFAULT 'pending',
-        shipping_address TEXT,
-        payment_id VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Order Items table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS order_items (
-        id SERIAL PRIMARY KEY,
-        order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-        product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
-        quantity INTEGER NOT NULL,
-        price_at_time DECIMAL(10, 2) NOT NULL
-      )
-    `);
-    
-    // Messages table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        user_email VARCHAR(255),
-        message TEXT NOT NULL,
-        status VARCHAR(50) DEFAULT 'Unread',
-        response TEXT,
-        responded_at TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Sessions table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS sessions (
-        sid VARCHAR(255) PRIMARY KEY,
-        data JSONB NOT NULL,
-        expires TIMESTAMP NOT NULL
-      )
-    `);
-    
-    // Commit transaction
-    await client.query('COMMIT');
-    
-    console.log('Database initialized successfully');
+    // Database initialization is now handled by a separate secure script
+    console.log('Database connection established');
   } catch (e) {
-    // Rollback in case of error
-    await client.query('ROLLBACK');
-    console.error('Error initializing database:', e);
+    console.error('Error connecting to database:', e);
     throw e;
-  } finally {
-    client.release();
   }
 };
 
@@ -209,6 +114,29 @@ async function setupDatabase() {
       )
     `);
     
+    // Create cart table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS carts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create cart_items table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS cart_items (
+        id SERIAL PRIMARY KEY,
+        cart_id INTEGER REFERENCES carts(id),
+        product_id INTEGER REFERENCES products(id),
+        quantity INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(cart_id, product_id)
+      )
+    `);
+    
     // Add 'name' column to users table if it doesn't exist
     try {
       // Check if the column exists
@@ -236,6 +164,7 @@ async function setupDatabase() {
   }
 }
 
+// Export the pool and initialization function
 module.exports = {
   query,
   pool,

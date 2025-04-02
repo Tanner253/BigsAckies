@@ -151,7 +151,8 @@
                 
                 <div class="mt-3">
                   <form action="/cart/add" method="POST">
-                    <input type="hidden" name="product_id" value="<%= product.id %>">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="productId" value="<%= product.id %>">
                     <input type="hidden" name="quantity" value="1">
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition flex items-center justify-center" <%= product.stock === 0 ? 'disabled' : '' %>>
                       <i class="fas fa-cart-plus mr-2"></i> Add to Cart

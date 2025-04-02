@@ -125,7 +125,7 @@
                 <div class="flex justify-between items-center">
                   <span class="text-lg font-bold text-green-600">$<%= typeof product.price === 'number' ? product.price.toFixed(2) : Number(product.price).toFixed(2) %></span>
                   <form action="/cart/add" method="POST" class="add-to-cart-form">
-                    <input type="hidden" name="productId" value="<%= product.id %>">
+                    <input type="hidden" name="product_id" value="<%= product.id %>">
                     <input type="hidden" name="quantity" value="1">
                     <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
                     <button type="submit" class="add-to-cart-btn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm transition">

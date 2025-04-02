@@ -90,7 +90,29 @@ app.use((req, res, next) => {
       (req.path.startsWith('/admin/products/') && req.method === 'POST' && req.is('multipart/form-data'))) {
     next();
   } else {
-    csrfProtection(req, res, next);
+    csrfProtection(req, res, (err) => {
+      if (err) {
+        console.error('CSRF Error:', err);
+        // For AJAX requests, return JSON response
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+          return res.status(403).json({
+            error: 'Invalid CSRF token. Please refresh the page and try again.'
+          });
+        }
+        
+        // Ensure csrfToken is available for error page rendering
+        res.locals.csrfToken = 'error-page-token';
+        
+        // For regular requests, render error page
+        return res.status(403).render('error', {
+          title: 'Error',
+          status: 403,
+          message: 'Invalid request. Please refresh the page and try again.',
+          error: process.env.NODE_ENV !== 'production' ? err : null
+        });
+      }
+      next();
+    });
   }
 });
 
@@ -129,12 +151,49 @@ app.use((req, res, next) => {
   // Make cart available to all views
   res.locals.cart = req.session.cart;
   
-  // Initialize messages object to make it available to all views
-  res.locals.messages = req.session.messages || {};
-  // Clear flash messages after setting them in locals
-  req.session.messages = {};
-  
-  next();
+  // If user is logged in, fetch cart data from database
+  if (req.session.user) {
+    db.query(
+      'SELECT ci.*, p.price FROM cart_items ci JOIN products p ON ci.product_id = p.id JOIN carts c ON ci.cart_id = c.id WHERE c.user_id = $1',
+      [req.session.user.id]
+    )
+    .then(result => {
+      const cartItems = result.rows.map(item => ({
+        ...item,
+        price: parseFloat(item.price)
+      }));
+      const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+      const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      // Update session cart with database data
+      req.session.cart = {
+        items: cartItems,
+        totalQty,
+        totalPrice
+      };
+      
+      // Update locals cart
+      res.locals.cart = req.session.cart;
+      
+      // Initialize messages object to make it available to all views
+      res.locals.messages = req.session.messages || {};
+      // Clear flash messages after setting them in locals
+      req.session.messages = {};
+      
+      next();
+    })
+    .catch(err => {
+      console.error('Error fetching cart data:', err);
+      next();
+    });
+  } else {
+    // Initialize messages object to make it available to all views
+    res.locals.messages = req.session.messages || {};
+    // Clear flash messages after setting them in locals
+    req.session.messages = {};
+    
+    next();
+  }
 });
 
 // Socket.IO connection handler
@@ -173,6 +232,12 @@ app.use('/cart', cartRoutes);
 app.use((err, req, res, next) => {
   console.error(err.stack);
   const statusCode = err.statusCode || 500;
+  
+  // Ensure csrfToken is available for error page rendering
+  if (!res.locals.csrfToken) {
+    res.locals.csrfToken = 'error-page-token';
+  }
+  
   res.status(statusCode).render('error', {
     title: `Error ${statusCode}`,
     status: statusCode,
