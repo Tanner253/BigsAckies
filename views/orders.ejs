@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders - Reptile E-Commerce</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-gray-100">
+  <%- include('partials/header') %>
+
+  <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+      <h1 class="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
+      
+      <% if (orders && orders.length > 0) { %>
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+          <ul class="divide-y divide-gray-200">
+            <% orders.forEach(order => { %>
+              <li>
+                <div class="px-4 py-4 sm:px-6">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0">
+                        <i class="fas fa-shopping-bag text-gray-400 text-xl"></i>
+                      </div>
+                      <div class="ml-4">
+                        <h2 class="text-lg font-medium text-gray-900">Order #<%= order.id %></h2>
+                        <p class="text-sm text-gray-500">Placed on <%= new Date(order.created_at).toLocaleDateString() %></p>
+                      </div>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        <%= order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                           order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
+                           order.status === 'shipped' ? 'bg-purple-100 text-purple-800' : 
+                           order.status === 'delivered' ? 'bg-green-100 text-green-800' : 
+                           'bg-red-100 text-red-800' %>">
+                        <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="border-t border-gray-200">
+                  <div class="px-4 py-4 sm:px-6">
+                    <div class="flex justify-between items-center">
+                      <div class="text-sm text-gray-500">
+                        Total Amount: <span class="font-medium text-gray-900">$<%= parseFloat(order.total_amount).toFixed(2) %></span>
+                      </div>
+                      <a href="/orders/<%= order.id %>" class="text-green-600 hover:text-green-900">
+                        View Details <i class="fas fa-chevron-right ml-1"></i>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } else { %>
+        <div class="bg-white shadow sm:rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="text-center">
+              <i class="fas fa-shopping-bag text-gray-400 text-4xl mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-900">No orders yet</h3>
+              <p class="mt-1 text-sm text-gray-500">You haven't placed any orders yet.</p>
+              <div class="mt-6">
+                <a href="/shop" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                  <i class="fas fa-shopping-cart mr-2"></i>
+                  Start Shopping
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    // Add any necessary JavaScript here
+  </script>
+</body>
+</html> 

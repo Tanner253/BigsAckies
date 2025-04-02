@@ -797,4 +797,96 @@ router.get('/terms', (req, res) => {
   });
 });
 
+// User orders page (requires authentication)
+router.get('/orders', async (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user) {
+    req.session.returnTo = '/orders';
+    req.session.messages = {
+      error: 'Please sign in to view your orders'
+    };
+    return res.redirect('/login');
+  }
+
+  try {
+    // Get user's orders
+    const query = `
+      SELECT o.*, u.email as user_email
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE o.user_id = $1
+      ORDER BY o.created_at DESC
+    `;
+    
+    const result = await db.query(query, [req.session.user.id]);
+    const orders = result.rows;
+
+    res.render('orders', {
+      title: 'My Orders',
+      user: req.session.user,
+      orders: orders
+    });
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      status: 500,
+      message: 'Failed to load your orders',
+      error: { status: 500 }
+    });
+  }
+});
+
+// View individual order details (requires authentication)
+router.get('/orders/:id', async (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user) {
+    req.session.returnTo = `/orders/${req.params.id}`;
+    req.session.messages = {
+      error: 'Please sign in to view order details'
+    };
+    return res.redirect('/login');
+  }
+
+  try {
+    const orderId = req.params.id;
+    
+    // Get order with items
+    const order = await orderModel.getOrderById(orderId);
+    
+    if (!order) {
+      return res.status(404).render('error', {
+        title: 'Order Not Found',
+        status: 404,
+        message: 'The requested order does not exist',
+        error: { status: 404 }
+      });
+    }
+
+    // Check if the order belongs to the logged-in user
+    if (order.user_id !== req.session.user.id) {
+      return res.status(403).render('error', {
+        title: 'Access Denied',
+        status: 403,
+        message: 'You do not have permission to view this order',
+        error: { status: 403 }
+      });
+    }
+    
+    res.render('order-detail', {
+      title: `Order #${order.id}`,
+      order,
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Error fetching order details:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      status: 500,
+      message: 'Failed to load order details',
+      error: { status: 500 }
+    });
+  }
+});
+
 module.exports = router; 
