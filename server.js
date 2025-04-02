@@ -21,15 +21,20 @@ const cartRoutes = require('./routes/cart');
 
 // Create Express app
 const app = express();
+
+// Trust the first proxy hop (common for Heroku)
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const io = socketIo(server);
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Database connection
 const pool = new Pool({
   connectionString: process.env.HEROKU_DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-    sslmode: 'require'
+  ssl: { // Always require SSL for the remote database
+    rejectUnauthorized: false
   }
 });
 
