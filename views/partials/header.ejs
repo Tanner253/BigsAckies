@@ -79,7 +79,6 @@
               <div class="hidden absolute right-0 w-48 py-2 mt-2 bg-white rounded-md shadow-xl z-50" id="user-dropdown">
                 <a href="/account" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Account</a>
                 <a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Orders</a>
-                <a href="/wishlist" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wishlist</a>
                 <% if (user.role === 'admin') { %>
                   <a href="/admin" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Dashboard</a>
                 <% } %>
@@ -141,7 +140,6 @@
             <% if (locals.user) { %>
               <a href="/account" class="block py-2 text-gray-700">My Account</a>
               <a href="/orders" class="block py-2 text-gray-700">My Orders</a>
-              <a href="/wishlist" class="block py-2 text-gray-700">Wishlist</a>
               <% if (user.role === 'admin') { %>
                 <a href="/admin" class="block py-2 text-gray-700">Admin Dashboard</a>
               <% } %>
