@@ -108,15 +108,32 @@ body {
 
 /* Mobile menu */
 .mobile-menu {
-  @apply fixed inset-0 z-50 bg-white transform transition-transform duration-300 ease-in-out;
-}
-
-.mobile-menu.closed {
-  @apply translate-x-full;
+  @apply fixed transform transition-transform duration-300 ease-in-out;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 300px;
+  transform: translateX(100%);
+  will-change: transform;
+  background-color: white;
+  box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 50;
 }
 
 .mobile-menu.open {
-  @apply translate-x-0;
+  transform: translateX(0);
+}
+
+.mobile-menu.closed {
+  transform: translateX(100%);
+}
+
+/* Mobile menu overlay */
+#mobile-menu-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
 }
 
 /* Cart indicator */

@@ -148,38 +148,58 @@ const createProduct = async (productData) => {
 
 // Update a product
 const updateProduct = async (id, productData) => {
-  const {
-    name,
-    description,
-    price,
-    stock,
-    category_id,
-    image_url
-  } = productData;
-  
+  // Build the SET clause dynamically based on provided fields
+  const updates = [];
+  const values = [];
+  let paramCount = 1;
+
+  // Only include fields that are provided and not undefined
+  if (productData.name !== undefined) {
+    updates.push(`name = $${paramCount}`);
+    values.push(productData.name);
+    paramCount++;
+  }
+  if (productData.description !== undefined) {
+    updates.push(`description = $${paramCount}`);
+    values.push(productData.description);
+    paramCount++;
+  }
+  if (productData.price !== undefined) {
+    updates.push(`price = $${paramCount}`);
+    values.push(productData.price);
+    paramCount++;
+  }
+  if (productData.stock !== undefined) {
+    updates.push(`stock = $${paramCount}`);
+    values.push(productData.stock);
+    paramCount++;
+  }
+  if (productData.category_id !== undefined) {
+    updates.push(`category_id = $${paramCount}`);
+    values.push(productData.category_id);
+    paramCount++;
+  }
+  if (productData.image_url !== undefined) {
+    updates.push(`image_url = $${paramCount}`);
+    values.push(productData.image_url);
+    paramCount++;
+  }
+
+  // If no fields to update, return the current product
+  if (updates.length === 0) {
+    const currentProduct = await getProductById(id);
+    return currentProduct;
+  }
+
   const query = `
     UPDATE products
-    SET
-      name = $1,
-      description = $2,
-      price = $3,
-      stock = $4,
-      category_id = $5,
-      image_url = $6
-    WHERE id = $7
+    SET ${updates.join(', ')}
+    WHERE id = $${paramCount}
     RETURNING *
   `;
-  
-  const result = await db.query(query, [
-    name,
-    description,
-    price,
-    stock,
-    category_id,
-    image_url,
-    id
-  ]);
-  
+
+  values.push(id);
+  const result = await db.query(query, values);
   return result.rows[0];
 };
 

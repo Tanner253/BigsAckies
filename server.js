@@ -53,30 +53,38 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session middleware
+// Session middleware - MUST be before CSRF
 app.use(session({
   store: new pgSession({
     pool,
     tableName: 'sessions'
   }),
   secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
+  resave: true, // Changed to true to ensure session is saved
+  saveUninitialized: true, // Changed to true to ensure session is created
   cookie: {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    secure: process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax'
   }
 }));
 
+// Add user data to response locals - MUST be before CSRF
+app.use(auth.setUserLocals);
+
 // CSRF protection for all routes except /api
 const csrfProtection = csrf({ 
-  cookie: true,  // Use cookies instead of session for CSRF
+  cookie: false, // Changed to false to use session instead of cookie
   ignoreMethods: ['GET', 'HEAD', 'OPTIONS']  // Only verify on state-changing methods
 });
 
+// Apply CSRF protection to all routes except API and file uploads
 app.use((req, res, next) => {
-  // Skip CSRF for API routes or Socket.IO
-  if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io/')) {
+  // Skip CSRF for API routes, Socket.IO, or file uploads
+  if (req.path.startsWith('/api/') || 
+      req.path.startsWith('/socket.io/') || 
+      (req.path.startsWith('/admin/products/') && req.method === 'POST' && req.is('multipart/form-data'))) {
     next();
   } else {
     csrfProtection(req, res, next);
@@ -85,12 +93,22 @@ app.use((req, res, next) => {
 
 // Add CSRF token to all rendered views
 app.use((req, res, next) => {
-  res.locals.csrfToken = req.csrfToken();
-  next();
+  try {
+    // Only try to get the token if the CSRF middleware was applied
+    if (req.csrfToken) {
+      const token = req.csrfToken();
+      res.locals.csrfToken = token;
+    } else {
+      // For routes where CSRF is skipped, generate a token manually
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      res.locals.csrfToken = token;
+    }
+    next();
+  } catch (error) {
+    console.error('CSRF Token Generation Error:', error);
+    next(error);
+  }
 });
-
-// Add user data to response locals
-app.use(auth.setUserLocals);
 
 // Middleware to make current path available to all templates
 app.use((req, res, next) => {

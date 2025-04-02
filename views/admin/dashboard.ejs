@@ -240,7 +240,7 @@
                     <tr class="hover:bg-gray-50">
                       <td class="px-4 py-3 text-sm"><%= product.name %></td>
                       <td class="px-4 py-3 text-sm"><%= product.category_name || 'Uncategorized' %></td>
-                      <td class="px-4 py-3 text-sm">$<%= product.price.toFixed(2) %></td>
+                      <td class="px-4 py-3 text-sm">$<%= typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2) %></td>
                       <td class="px-4 py-3 text-sm">
                         <span class="px-2 py-1 rounded-full text-xs <%= product.stock === 0 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' %>">
                           <%= product.stock %>

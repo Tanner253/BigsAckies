@@ -18,7 +18,13 @@ router.use((req, res, next) => {
   }
   
   // Check authentication for all other routes
-  auth.isAuthenticated(req, res, next);
+  if (!req.session || !req.session.user) {
+    // Store the original URL they were trying to access
+    req.session.returnTo = req.originalUrl;
+    return res.redirect('/admin/login');
+  }
+  
+  next();
 });
 
 // Apply admin role check to all admin routes except login
@@ -28,8 +34,17 @@ router.use((req, res, next) => {
     return next();
   }
   
-  // Check admin role for all other routes
-  auth.isAdmin(req, res, next);
+  // Check if user is admin
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.status(403).render('error', {
+      title: 'Access Denied',
+      status: 403,
+      message: 'You do not have permission to access this page.',
+      error: { status: 403 }
+    });
+  }
+  
+  next();
 });
 
 // Redirect root admin path to dashboard
@@ -194,79 +209,115 @@ router.get('/products/add', async (req, res) => {
 });
 
 // Process add product
-router.post('/products/add', uploadService.upload.single('image'), [
-  body('name').notEmpty().withMessage('Product name is required'),
-  body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
-  body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer'),
-  body('category_id').notEmpty().withMessage('Category is required')
-], async (req, res) => {
-  try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    
-    // Get categories for the form (in case of error)
-    const categories = await categoryModel.getAllCategories();
-    
-    if (!errors.isEmpty()) {
-      return res.render('admin/product-form', {
-        title: 'Add New Product',
-        product: req.body,
-        categories,
-        errors: errors.array(),
-        isEdit: false,
-        user: req.session.user
-      });
-    }
-    
-    let imageUrl = null;
-    
-    // Upload image to Cloudinary if provided
-    if (req.file) {
-      const uploadResult = await uploadService.uploadToCloudinary(req.file.path);
+router.post('/products/add', 
+  uploadService.upload.single('image'),
+  [
+    body('name').notEmpty().withMessage('Product name is required'),
+    body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer'),
+    body('category_id').notEmpty().withMessage('Category is required')
+  ],
+  async (req, res, next) => {
+    try {
+      // Check for validation errors
+      const errors = validationResult(req);
       
-      if (!uploadResult.success) {
+      // Get categories for the form (in case of error)
+      const categories = await categoryModel.getAllCategories();
+      
+      if (!errors.isEmpty()) {
+        // Create a product object with the submitted data
+        const productData = {
+          name: req.body.name || '',
+          description: req.body.description || '',
+          price: req.body.price || '',
+          stock: req.body.stock || '',
+          category_id: req.body.category_id || ''
+        };
+        
         return res.render('admin/product-form', {
           title: 'Add New Product',
-          product: req.body,
+          product: productData,
           categories,
-          errors: [{ msg: 'Failed to upload image: ' + uploadResult.error }],
+          errors: errors.array(),
           isEdit: false,
-          user: req.session.user
+          user: req.session.user,
+          validationError: true // Add a flag to indicate validation error
         });
       }
       
-      imageUrl = uploadResult.url;
+      let imageUrl = null;
+      
+      // Upload image to Cloudinary if provided
+      if (req.file) {
+        const uploadResult = await uploadService.uploadToCloudinary(req.file.path);
+        
+        if (!uploadResult.success) {
+          // Create a product object with the submitted data
+          const productData = {
+            name: req.body.name || '',
+            description: req.body.description || '',
+            price: req.body.price || '',
+            stock: req.body.stock || '',
+            category_id: req.body.category_id || ''
+          };
+          
+          return res.render('admin/product-form', {
+            title: 'Add New Product',
+            product: productData,
+            categories,
+            errors: [{ msg: 'Failed to upload image: ' + uploadResult.error }],
+            isEdit: false,
+            user: req.session.user,
+            validationError: true // Add a flag to indicate validation error
+          });
+        }
+        
+        imageUrl = uploadResult.url;
+      }
+      
+      // Create product
+      const productData = {
+        name: req.body.name,
+        description: req.body.description,
+        price: parseFloat(req.body.price),
+        stock: parseInt(req.body.stock),
+        category_id: req.body.category_id,
+        image_url: imageUrl
+      };
+      
+      const newProduct = await productModel.createProduct(productData);
+      
+      // Set success message
+      req.session.messages = { success: 'Product added successfully' };
+      res.redirect('/admin/products');
+    } catch (error) {
+      console.error('Add product error:', error);
+      
+      // Get categories again for the form
+      const categories = await categoryModel.getAllCategories();
+      
+      // Create a product object with the submitted data
+      const productData = {
+        name: req.body.name || '',
+        description: req.body.description || '',
+        price: req.body.price || '',
+        stock: req.body.stock || '',
+        category_id: req.body.category_id || ''
+      };
+      
+      res.render('admin/product-form', {
+        title: 'Add New Product',
+        product: productData,
+        categories,
+        errors: [{ msg: 'An error occurred while adding the product: ' + error.message }],
+        isEdit: false,
+        user: req.session.user,
+        validationError: true // Add a flag to indicate validation error
+      });
     }
-    
-    // Create product
-    const productData = {
-      name: req.body.name,
-      description: req.body.description,
-      price: parseFloat(req.body.price),
-      stock: parseInt(req.body.stock),
-      category_id: req.body.category_id,
-      image_url: imageUrl
-    };
-    
-    const newProduct = await productModel.createProduct(productData);
-    
-    res.redirect('/admin/products');
-  } catch (error) {
-    console.error('Add product error:', error);
-    
-    // Get categories again for the form
-    const categories = await categoryModel.getAllCategories();
-    
-    res.render('admin/product-form', {
-      title: 'Add New Product',
-      product: req.body,
-      categories,
-      errors: [{ msg: 'An error occurred while adding the product: ' + error.message }],
-      isEdit: false,
-      user: req.session.user
-    });
   }
-});
+);
 
 // Edit product form
 router.get('/products/edit/:id', async (req, res) => {
@@ -308,10 +359,11 @@ router.get('/products/edit/:id', async (req, res) => {
 
 // Process edit product
 router.post('/products/edit/:id', uploadService.upload.single('image'), [
-  body('name').notEmpty().withMessage('Product name is required'),
-  body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
-  body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer'),
-  body('category_id').notEmpty().withMessage('Category is required')
+  // Make all validations optional by using optional() chain
+  body('name').optional().notEmpty().withMessage('Product name cannot be empty if provided'),
+  body('price').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number if provided'),
+  body('stock').optional().isInt({ min: 0 }).withMessage('Stock must be a non-negative integer if provided'),
+  body('category_id').optional().notEmpty().withMessage('Category cannot be empty if provided')
 ], async (req, res) => {
   try {
     const productId = req.params.id;
@@ -345,9 +397,8 @@ router.post('/products/edit/:id', uploadService.upload.single('image'), [
       });
     }
     
-    let imageUrl = currentProduct.image_url;
-    
-    // Upload new image to Cloudinary if provided
+    // Only update image if a new one is provided
+    let imageUrl = undefined; // Default to undefined so it won't update if no new image
     if (req.file) {
       const uploadResult = await uploadService.uploadToCloudinary(req.file.path);
       
@@ -365,18 +416,21 @@ router.post('/products/edit/:id', uploadService.upload.single('image'), [
       imageUrl = uploadResult.url;
     }
     
-    // Update product
-    const productData = {
-      name: req.body.name,
-      description: req.body.description,
-      price: parseFloat(req.body.price),
-      stock: parseInt(req.body.stock),
-      category_id: req.body.category_id,
-      image_url: imageUrl
-    };
+    // Build productData object with only the fields that were submitted
+    const productData = {};
     
+    if (req.body.name) productData.name = req.body.name;
+    if (req.body.description !== undefined) productData.description = req.body.description;
+    if (req.body.price) productData.price = parseFloat(req.body.price);
+    if (req.body.stock) productData.stock = parseInt(req.body.stock);
+    if (req.body.category_id) productData.category_id = req.body.category_id;
+    if (imageUrl !== undefined) productData.image_url = imageUrl;
+    
+    // Update product with only the changed fields
     await productModel.updateProduct(productId, productData);
     
+    // Set success message
+    req.session.messages = { success: 'Product updated successfully' };
     res.redirect('/admin/products');
   } catch (error) {
     console.error('Edit product error:', error);
@@ -443,6 +497,12 @@ router.post('/categories/add', [
   body('name').notEmpty().withMessage('Category name is required')
 ], async (req, res) => {
   try {
+    // Debug CSRF token
+    console.log('Category Add - CSRF Token from form:', req.body._csrf);
+    console.log('Category Add - Session ID:', req.session.id);
+    console.log('Category Add - Request headers:', req.headers);
+    console.log('Category Add - Request body:', req.body);
+    
     // Check for validation errors
     const errors = validationResult(req);
     

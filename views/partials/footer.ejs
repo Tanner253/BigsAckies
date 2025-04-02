@@ -77,20 +77,49 @@
     // Mobile menu toggle
     const mobileMenuButton = document.getElementById('mobile-menu-button');
     const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
     const closeMobileMenu = document.getElementById('close-mobile-menu');
     
     if (mobileMenuButton && mobileMenu) {
-      mobileMenuButton.addEventListener('click', () => {
-        mobileMenu.classList.remove('closed');
-        mobileMenu.classList.add('open');
+      // Ensure menu starts in closed state
+      mobileMenu.classList.add('closed');
+      
+      const toggleMenu = (shouldOpen) => {
+        if (shouldOpen) {
+          mobileMenu.classList.remove('closed');
+          mobileMenu.classList.add('open');
+          mobileMenuOverlay.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+        } else {
+          mobileMenu.classList.remove('open');
+          mobileMenu.classList.add('closed');
+          mobileMenuOverlay.classList.add('hidden');
+          document.body.style.overflow = '';
+        }
+      };
+
+      mobileMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isCurrentlyOpen = mobileMenu.classList.contains('open');
+        toggleMenu(!isCurrentlyOpen);
       });
       
       if (closeMobileMenu) {
-        closeMobileMenu.addEventListener('click', () => {
-          mobileMenu.classList.remove('open');
-          mobileMenu.classList.add('closed');
+        closeMobileMenu.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleMenu(false);
         });
       }
+
+      // Close menu when clicking overlay
+      mobileMenuOverlay.addEventListener('click', () => {
+        toggleMenu(false);
+      });
+
+      // Prevent clicks inside the menu from closing it
+      mobileMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
     }
     
     // User dropdown toggle

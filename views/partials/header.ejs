@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title ? `${title} - Reptile E-Commerce` : 'Reptile E-Commerce' %></title>
+  <title><%= title ? `${title} - Biggs Ackies` : 'Biggs Ackies - Premium Ackie Monitor Lizards' %></title>
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/images/favicon.png">
   
@@ -37,8 +37,8 @@
         <!-- Logo -->
         <div class="flex items-center">
           <a href="/" class="flex items-center">
-            <span class="text-2xl font-bold text-green-600">Reptile</span>
-            <span class="ml-1 text-2xl font-bold text-gray-800">Shop</span>
+            <span class="text-2xl font-bold text-green-600">Biggs</span>
+            <span class="ml-1 text-2xl font-bold text-gray-800">Ackies</span>
           </a>
         </div>
         
@@ -114,37 +114,43 @@
   </header>
   
   <!-- Mobile Navigation Menu (Hidden by default) -->
-  <div id="mobile-menu" class="mobile-menu closed md:hidden">
-    <div class="flex justify-between items-center p-4 border-b">
-      <h3 class="text-xl font-bold text-gray-800">Menu</h3>
-      <button id="close-mobile-menu" class="text-gray-600 hover:text-green-600 focus:outline-none">
-        <i class="fas fa-times text-xl"></i>
-      </button>
-    </div>
+  <div class="md:hidden">
+    <!-- Backdrop overlay -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden pointer-events-auto"></div>
     
-    <nav class="p-4">
-      <ul class="space-y-4">
-        <li><a href="/" class="block py-2 text-gray-700 <%= locals.currentPath === '/' ? 'text-green-600 font-medium' : '' %>">Home</a></li>
-        <li><a href="/products" class="block py-2 text-gray-700 <%= locals.currentPath && locals.currentPath.startsWith('/products') ? 'text-green-600 font-medium' : '' %>">Products</a></li>
-        <li><a href="/about" class="block py-2 text-gray-700 <%= locals.currentPath === '/about' ? 'text-green-600 font-medium' : '' %>">About</a></li>
-        <li><a href="/contact" class="block py-2 text-gray-700 <%= locals.currentPath === '/contact' ? 'text-green-600 font-medium' : '' %>">Contact</a></li>
-        
-        <li class="border-t border-gray-200 pt-4 mt-4">
-          <% if (locals.user) { %>
-            <a href="/account" class="block py-2 text-gray-700">My Account</a>
-            <a href="/orders" class="block py-2 text-gray-700">My Orders</a>
-            <a href="/wishlist" class="block py-2 text-gray-700">Wishlist</a>
-            <% if (user.role === 'admin') { %>
-              <a href="/admin" class="block py-2 text-gray-700">Admin Dashboard</a>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="mobile-menu closed z-50">
+      <div class="flex justify-between items-center p-4 border-b bg-white">
+        <h3 class="text-xl font-bold text-gray-800">Menu</h3>
+        <button id="close-mobile-menu" class="text-gray-600 hover:text-green-600 focus:outline-none p-2" aria-label="Close menu">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <nav class="p-4">
+        <ul class="space-y-4">
+          <li><a href="/" class="block py-2 text-gray-700 <%= locals.currentPath === '/' ? 'text-green-600 font-medium' : '' %>">Home</a></li>
+          <li><a href="/products" class="block py-2 text-gray-700 <%= locals.currentPath && locals.currentPath.startsWith('/products') ? 'text-green-600 font-medium' : '' %>">Products</a></li>
+          <li><a href="/about" class="block py-2 text-gray-700 <%= locals.currentPath === '/about' ? 'text-green-600 font-medium' : '' %>">About</a></li>
+          <li><a href="/contact" class="block py-2 text-gray-700 <%= locals.currentPath === '/contact' ? 'text-green-600 font-medium' : '' %>">Contact</a></li>
+          
+          <li class="border-t border-gray-200 pt-4 mt-4">
+            <% if (locals.user) { %>
+              <a href="/account" class="block py-2 text-gray-700">My Account</a>
+              <a href="/orders" class="block py-2 text-gray-700">My Orders</a>
+              <a href="/wishlist" class="block py-2 text-gray-700">Wishlist</a>
+              <% if (user.role === 'admin') { %>
+                <a href="/admin" class="block py-2 text-gray-700">Admin Dashboard</a>
+              <% } %>
+              <a href="/logout" class="block py-2 text-red-600">Sign Out</a>
+            <% } else { %>
+              <a href="/login" class="block py-2 text-green-600 font-medium">Sign In</a>
+              <a href="/register" class="block py-2 text-gray-700">Create Account</a>
             <% } %>
-            <a href="/logout" class="block py-2 text-red-600">Sign Out</a>
-          <% } else { %>
-            <a href="/login" class="block py-2 text-green-600 font-medium">Sign In</a>
-            <a href="/register" class="block py-2 text-gray-700">Create Account</a>
-          <% } %>
-        </li>
-      </ul>
-    </nav>
+          </li>
+        </ul>
+      </nav>
+    </div>
   </div>
   
   <!-- Flash Messages -->
