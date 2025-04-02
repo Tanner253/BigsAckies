@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title ? `${title} - Reptile E-Commerce` : 'Reptile E-Commerce' %></title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/styles.css">
+  
+  <% if (typeof stripePublicKey !== 'undefined') { %>
+    <!-- Stripe JS -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+      const stripe = Stripe('<%= stripePublicKey %>');
+    </script>
+  <% } %>
+</head>
+<body class="flex flex-col min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-md">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between py-4">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <a href="/" class="flex items-center">
+            <span class="text-2xl font-bold text-green-600">Reptile</span>
+            <span class="ml-1 text-2xl font-bold text-gray-800">Shop</span>
+          </a>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center space-x-6">
+          <a href="/" class="nav-link <%= locals.currentPath === '/' ? 'active' : '' %>">Home</a>
+          <a href="/products" class="nav-link <%= locals.currentPath && locals.currentPath.startsWith('/products') ? 'active' : '' %>">Products</a>
+          <a href="/about" class="nav-link <%= locals.currentPath === '/about' ? 'active' : '' %>">About</a>
+          <a href="/contact" class="nav-link <%= locals.currentPath === '/contact' ? 'active' : '' %>">Contact</a>
+        </nav>
+        
+        <!-- User Actions -->
+        <div class="flex items-center space-x-4">
+          <!-- Search Button -->
+          <button id="search-toggle" class="text-gray-600 hover:text-green-600 transition duration-150" aria-label="Search">
+            <i class="fas fa-search"></i>
+          </button>
+          
+          <!-- Cart -->
+          <a href="/cart" class="text-gray-600 hover:text-green-600 transition duration-150 relative" aria-label="Cart">
+            <i class="fas fa-shopping-cart"></i>
+            <% if (locals.cart && cart.totalQty > 0) { %>
+              <span class="cart-count absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"><%= cart.totalQty %></span>
+            <% } %>
+          </a>
+          
+          <!-- Account -->
+          <% if (locals.user) { %>
+            <div class="relative" id="user-menu">
+              <button class="flex items-center text-gray-600 hover:text-green-600 focus:outline-none" id="user-menu-button" aria-label="User menu" aria-haspopup="true">
+                <span class="mr-1 hidden sm:inline-block"><%= user.name.split(' ')[0] %></span>
+                <i class="fas fa-user-circle text-xl"></i>
+              </button>
+              
+              <div class="hidden absolute right-0 w-48 py-2 mt-2 bg-white rounded-md shadow-xl z-50" id="user-dropdown">
+                <a href="/account" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Account</a>
+                <a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Orders</a>
+                <a href="/wishlist" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wishlist</a>
+                <% if (user.role === 'admin') { %>
+                  <a href="/admin" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Dashboard</a>
+                <% } %>
+                <div class="border-t border-gray-100 my-1"></div>
+                <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Sign Out</a>
+              </div>
+            </div>
+          <% } else { %>
+            <a href="/login" class="text-gray-600 hover:text-green-600 transition duration-150" aria-label="Login">
+              <i class="fas fa-sign-in-alt"></i>
+              <span class="ml-1 hidden sm:inline-block">Sign In</span>
+            </a>
+          <% } %>
+          
+          <!-- Mobile Menu Button -->
+          <button id="mobile-menu-button" class="md:hidden text-gray-600 hover:text-green-600 focus:outline-none" aria-label="Menu">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Search Bar (Hidden by default) -->
+    <div id="search-bar" class="hidden border-t border-gray-200 py-4 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <form action="/shop" method="GET" class="flex">
+          <input type="text" name="q" placeholder="Search for products..." 
+                class="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-r-md hover:bg-green-700 transition duration-150">
+            <i class="fas fa-search mr-2"></i> Search
+          </button>
+        </form>
+      </div>
+    </div>
+  </header>
+  
+  <!-- Mobile Navigation Menu (Hidden by default) -->
+  <div id="mobile-menu" class="mobile-menu closed md:hidden">
+    <div class="flex justify-between items-center p-4 border-b">
+      <h3 class="text-xl font-bold text-gray-800">Menu</h3>
+      <button id="close-mobile-menu" class="text-gray-600 hover:text-green-600 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    
+    <nav class="p-4">
+      <ul class="space-y-4">
+        <li><a href="/" class="block py-2 text-gray-700 <%= locals.currentPath === '/' ? 'text-green-600 font-medium' : '' %>">Home</a></li>
+        <li><a href="/products" class="block py-2 text-gray-700 <%= locals.currentPath && locals.currentPath.startsWith('/products') ? 'text-green-600 font-medium' : '' %>">Products</a></li>
+        <li><a href="/about" class="block py-2 text-gray-700 <%= locals.currentPath === '/about' ? 'text-green-600 font-medium' : '' %>">About</a></li>
+        <li><a href="/contact" class="block py-2 text-gray-700 <%= locals.currentPath === '/contact' ? 'text-green-600 font-medium' : '' %>">Contact</a></li>
+        
+        <li class="border-t border-gray-200 pt-4 mt-4">
+          <% if (locals.user) { %>
+            <a href="/account" class="block py-2 text-gray-700">My Account</a>
+            <a href="/orders" class="block py-2 text-gray-700">My Orders</a>
+            <a href="/wishlist" class="block py-2 text-gray-700">Wishlist</a>
+            <% if (user.role === 'admin') { %>
+              <a href="/admin" class="block py-2 text-gray-700">Admin Dashboard</a>
+            <% } %>
+            <a href="/logout" class="block py-2 text-red-600">Sign Out</a>
+          <% } else { %>
+            <a href="/login" class="block py-2 text-green-600 font-medium">Sign In</a>
+            <a href="/register" class="block py-2 text-gray-700">Create Account</a>
+          <% } %>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  
+  <!-- Flash Messages -->
+  <% if (locals.messages && (messages.success || messages.error || messages.info)) { %>
+    <div class="container mx-auto px-4 my-4">
+      <% if (messages.success) { %>
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+          <span class="block sm:inline"><%= messages.success %></span>
+          <button class="absolute top-0 bottom-0 right-0 px-4 py-3 alert-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      <% } %>
+      
+      <% if (messages.error) { %>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span class="block sm:inline"><%= messages.error %></span>
+          <button class="absolute top-0 bottom-0 right-0 px-4 py-3 alert-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      <% } %>
+      
+      <% if (messages.info) { %>
+        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
+          <span class="block sm:inline"><%= messages.info %></span>
+          <button class="absolute top-0 bottom-0 right-0 px-4 py-3 alert-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      <% } %>
+    </div>
+  <% } %>
+  
+  <main class="flex-grow">
+    <!-- Main content will be rendered here -->
+  </main>
+</body>
+</html> 

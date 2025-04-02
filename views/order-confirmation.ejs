@@ -1,0 +1,114 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="p-6 text-center border-b border-gray-200">
+      <div class="flex justify-center mb-4">
+        <span class="inline-flex items-center justify-center h-20 w-20 rounded-full bg-green-100">
+          <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </span>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900">Order Confirmed!</h1>
+      <p class="text-lg text-gray-600 mt-2">Thank you for your purchase.</p>
+      <p class="text-md text-gray-500 mt-1">Order #<%= order.order_id %></p>
+      <p class="text-md text-gray-500 mt-1">A confirmation email has been sent to <%= order.email %></p>
+    </div>
+    
+    <div class="p-6">
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+        
+        <div class="divide-y divide-gray-200">
+          <% order.items.forEach(item => { %>
+            <div class="py-4 flex items-start">
+              <div class="flex-shrink-0 mr-4">
+                <% if (item.image_url) { %>
+                  <img src="<%= item.image_url %>" alt="<%= item.name %>" class="w-16 h-16 object-cover rounded">
+                <% } else { %>
+                  <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded">
+                    <i class="fas fa-image text-gray-400"></i>
+                  </div>
+                <% } %>
+              </div>
+              <div class="flex-grow">
+                <div class="flex justify-between">
+                  <div>
+                    <h3 class="text-base font-medium"><%= item.name %></h3>
+                    <p class="text-sm text-gray-500">Qty: <%= item.quantity %></p>
+                  </div>
+                  <p class="text-base font-medium">$<%= (item.price * item.quantity).toFixed(2) %></p>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+        
+        <div class="mt-6 space-y-2">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Subtotal</span>
+            <span class="font-medium">$<%= order.subtotal.toFixed(2) %></span>
+          </div>
+          
+          <div class="flex justify-between">
+            <span class="text-gray-600">Shipping</span>
+            <span class="font-medium">$<%= order.shipping_cost.toFixed(2) %></span>
+          </div>
+          
+          <% if (order.discount > 0) { %>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Discount</span>
+            <span class="font-medium text-green-600">-$<%= order.discount.toFixed(2) %></span>
+          </div>
+          <% } %>
+          
+          <div class="flex justify-between border-t border-gray-200 pt-2 mt-2 text-lg font-bold">
+            <span>Total</span>
+            <span>$<%= order.total.toFixed(2) %></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h3 class="text-base font-semibold mb-2">Shipping Information</h3>
+          <div class="bg-gray-50 p-4 rounded">
+            <p><%= order.shipping.name %></p>
+            <p><%= order.shipping.address %></p>
+            <p><%= order.shipping.city %>, <%= order.shipping.state %> <%= order.shipping.zip %></p>
+            <p><%= order.shipping.country %></p>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-base font-semibold mb-2">Payment Information</h3>
+          <div class="bg-gray-50 p-4 rounded">
+            <p>Payment Method: Credit Card</p>
+            <p>
+              <span class="font-medium"><%= order.payment.card_brand %></span> ending in <%= order.payment.last4 %>
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-200 pt-6">
+        <h3 class="text-base font-semibold mb-2">Estimated Delivery</h3>
+        <p class="text-gray-600">
+          Your order is expected to arrive in <%= order.shipping.estimated_days %> business days.
+        </p>
+        
+        <div class="mt-6 flex flex-col md:flex-row gap-4">
+          <a href="/orders/<%= order.order_id %>" class="inline-flex justify-center items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            View Order Details
+          </a>
+          <a href="/products" class="inline-flex justify-center items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+            Continue Shopping
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %> 

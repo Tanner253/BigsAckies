@@ -1,0 +1,137 @@
+  </main>
+  
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white mt-10">
+    <div class="container mx-auto px-4 py-10">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <!-- Company Info -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Biggs Ackies</h3>
+          <p class="text-gray-300 mb-4">Your premium source for reptiles, supplies, and expert advice. Serving reptile enthusiasts since 2010.</p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-300 hover:text-white transition">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="text-gray-300 hover:text-white transition">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="text-gray-300 hover:text-white transition">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="text-gray-300 hover:text-white transition">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Quick Links -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+          <ul class="space-y-2">
+            <li><a href="/" class="text-gray-300 hover:text-white transition">Home</a></li>
+            <li><a href="/products" class="text-gray-300 hover:text-white transition">Products</a></li>
+            <li><a href="/about" class="text-gray-300 hover:text-white transition">About Us</a></li>
+            <li><a href="/contact" class="text-gray-300 hover:text-white transition">Contact</a></li>
+          </ul>
+        </div>
+        
+        <!-- Customer Service -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Customer Service</h3>
+          <ul class="space-y-2">
+            <li><a href="/faq" class="text-gray-300 hover:text-white transition">FAQ</a></li>
+            <li><a href="/shipping" class="text-gray-300 hover:text-white transition">Shipping & Returns</a></li>
+            <li><a href="/privacy" class="text-gray-300 hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="/terms" class="text-gray-300 hover:text-white transition">Terms & Conditions</a></li>
+          </ul>
+        </div>
+        
+        <!-- Newsletter -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Subscribe to Our Newsletter</h3>
+          <p class="text-gray-300 mb-4">Get the latest updates, news and special offers.</p>
+          <form action="/subscribe" method="POST" class="flex">
+            <input type="email" name="email" placeholder="Your email address" required
+                  class="px-4 py-2 w-full text-gray-800 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500">
+            <button type="submit" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-r-md hover:bg-green-700 transition duration-150">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <p class="text-gray-400">&copy; <%= new Date().getFullYear() %> Reptile Shop. All rights reserved.</p>
+        
+        <div class="mt-4 md:mt-0">
+          <img src="/images/payment-methods.png" alt="Payment Methods" class="h-6">
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- JavaScript -->
+  <script src="/js/cart.js"></script>
+  <script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const closeMobileMenu = document.getElementById('close-mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+      mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.remove('closed');
+        mobileMenu.classList.add('open');
+      });
+      
+      if (closeMobileMenu) {
+        closeMobileMenu.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
+          mobileMenu.classList.add('closed');
+        });
+      }
+    }
+    
+    // User dropdown toggle
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    if (userMenuButton && userDropdown) {
+      userMenuButton.addEventListener('click', () => {
+        userDropdown.classList.toggle('hidden');
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (event) => {
+        if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
+          userDropdown.classList.add('hidden');
+        }
+      });
+    }
+    
+    // Search toggle
+    const searchToggle = document.getElementById('search-toggle');
+    const searchBar = document.getElementById('search-bar');
+    
+    if (searchToggle && searchBar) {
+      searchToggle.addEventListener('click', () => {
+        searchBar.classList.toggle('hidden');
+      });
+    }
+    
+    // Alert close buttons
+    const alertCloseButtons = document.querySelectorAll('.alert-close');
+    
+    alertCloseButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const alert = button.closest('[role="alert"]');
+        alert.classList.add('opacity-0');
+        setTimeout(() => {
+          alert.style.display = 'none';
+        }, 300);
+      });
+    });
+  </script>
+</body>
+</html> 

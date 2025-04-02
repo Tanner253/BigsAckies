@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Admin</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="flex h-screen bg-gray-100">
+  <!-- Sidebar Navigation -->
+  <div class="w-64 bg-gray-900 text-white">
+    <div class="p-4 bg-green-700">
+      <h1 class="text-xl font-bold">Reptile E-Commerce Admin</h1>
+    </div>
+    
+    <nav class="mt-4">
+      <a href="/admin/dashboard" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/dashboard' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-tachometer-alt w-6"></i>
+        <span>Dashboard</span>
+      </a>
+      
+      <a href="/admin/products" class="flex items-center px-4 py-3 bg-green-700 hover:bg-green-800 <%= locals.currentPath === '/admin/products' ? 'bg-green-700' : '' %>">
+        <i class="fas fa-box w-6"></i>
+        <span>Products</span>
+      </a>
+      
+      <a href="/admin/categories" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/categories' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-tags w-6"></i>
+        <span>Categories</span>
+      </a>
+      
+      <a href="/admin/orders" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/orders' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-shopping-cart w-6"></i>
+        <span>Orders</span>
+      </a>
+      
+      <a href="/admin/customers" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/customers' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-users w-6"></i>
+        <span>Customers</span>
+      </a>
+      
+      <a href="/admin/messages" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/messages' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-envelope w-6"></i>
+        <span>Messages</span>
+      </a>
+      
+      <a href="/admin/settings" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/settings' ? 'bg-gray-800' : '' %>">
+        <i class="fas fa-cog w-6"></i>
+        <span>Settings</span>
+      </a>
+      
+      <div class="border-t border-gray-700 my-4"></div>
+      
+      <a href="/" class="flex items-center px-4 py-3 hover:bg-gray-800">
+        <i class="fas fa-home w-6"></i>
+        <span>Visit Website</span>
+      </a>
+    </nav>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Top Header -->
+    <header class="bg-green-700 text-white p-4 flex justify-between items-center">
+      <h2 class="text-xl font-bold"><%= isEdit ? 'Edit Product' : 'Add New Product' %></h2>
+      <div class="flex items-center space-x-4">
+        <span>Welcome, Admin</span>
+        <a href="/admin/logout" class="flex items-center hover:text-gray-200">
+          <i class="fas fa-sign-out-alt mr-1"></i> Logout
+        </a>
+      </div>
+    </header>
+    
+    <!-- Content Area -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+      <div class="mb-6">
+        <a href="/admin/products" class="text-blue-600 hover:text-blue-800 flex items-center">
+          <i class="fas fa-arrow-left mr-2"></i> Back to Products
+        </a>
+      </div>
+
+      <!-- Form Card -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6">
+          <h1 class="text-2xl font-bold text-gray-800 mb-6"><%= isEdit ? 'Edit Product' : 'Add New Product' %></h1>
+
+          <% if (locals.errors && errors.length > 0) { %>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+              <ul class="list-disc pl-5">
+                <% errors.forEach(error => { %>
+                  <li><%= error.msg %></li>
+                <% }); %>
+              </ul>
+            </div>
+          <% } %>
+          
+          <form action="<%= isEdit ? `/admin/products/edit/${product.id}` : '/admin/products/add' %>" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Left Column -->
+              <div class="space-y-4">
+                <!-- Product Name -->
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+                  <input type="text" id="name" name="name" value="<%= product ? product.name : '' %>" required
+                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <!-- Price -->
+                <div>
+                  <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price ($) *</label>
+                  <input type="number" id="price" name="price" value="<%= product ? product.price : '' %>" step="0.01" min="0" required
+                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <!-- Stock -->
+                <div>
+                  <label for="stock" class="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                  <input type="number" id="stock" name="stock" value="<%= product ? product.stock : '0' %>" min="0" required
+                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <!-- Category -->
+                <div>
+                  <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                  <select id="category_id" name="category_id" required
+                          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <option value="">Select a category</option>
+                    <% categories.forEach(category => { %>
+                      <option value="<%= category.id %>" <%= product && product.category_id == category.id ? 'selected' : '' %>>
+                        <%= category.name %>
+                      </option>
+                    <% }); %>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Right Column -->
+              <div class="space-y-4">
+                <!-- Description -->
+                <div>
+                  <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea id="description" name="description" rows="6"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"><%= product ? product.description : '' %></textarea>
+                </div>
+                
+                <!-- Image Upload -->
+                <div>
+                  <label for="image" class="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+                  <input type="file" id="image" name="image" accept="image/*"
+                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  <p class="text-sm text-gray-500 mt-1">Recommended size: 800x800px. Max size: 2MB.</p>
+                  
+                  <% if (product && product.image_url) { %>
+                    <div class="mt-3">
+                      <p class="text-sm font-medium text-gray-700 mb-1">Current Image</p>
+                      <img src="<%= product.image_url %>" alt="<%= product.name %>" class="h-32 object-cover rounded border border-gray-300">
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="mt-8 flex justify-end">
+              <a href="/admin/products" class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition duration-150 mr-3">
+                Cancel
+              </a>
+              <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-150">
+                <%= isEdit ? 'Update Product' : 'Create Product' %>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html> 

@@ -1,0 +1,149 @@
+/* Tailwind base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Variables */
+:root {
+  --primary-color: #16a34a;  /* green-600 */
+  --secondary-color: #065f46; /* green-800 */
+  --accent-color: #f59e0b;   /* amber-500 */
+  --text-color: #1f2937;     /* gray-800 */
+  --light-bg: #f9fafb;       /* gray-50 */
+}
+
+/* Global styles */
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-color);
+  background-color: var(--light-bg);
+}
+
+/* Custom component styles */
+.btn-primary {
+  @apply px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-white text-green-600 border border-green-600 rounded-md hover:bg-green-50 transition duration-200;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md overflow-hidden;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+/* Header styles */
+.nav-link {
+  @apply px-3 py-2 text-gray-700 hover:text-green-600 transition duration-200;
+}
+
+.nav-link.active {
+  @apply text-green-600 font-medium;
+}
+
+/* Product card styles */
+.product-card {
+  @apply flex flex-col h-full bg-white rounded-lg shadow-md overflow-hidden transition duration-300 hover:shadow-lg;
+}
+
+.product-card img {
+  @apply w-full h-48 object-cover object-center;
+}
+
+.product-badge {
+  @apply absolute top-2 right-2 px-2 py-1 text-xs rounded font-semibold;
+}
+
+.badge-out-of-stock {
+  @apply bg-red-500 text-white;
+}
+
+.badge-on-sale {
+  @apply bg-yellow-500 text-white;
+}
+
+.badge-new {
+  @apply bg-green-500 text-white;
+}
+
+/* Category styling */
+.category-card {
+  @apply relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition duration-300;
+}
+
+.category-card img {
+  @apply w-full h-32 object-cover transition duration-500 hover:scale-105;
+}
+
+.category-name {
+  @apply absolute bottom-0 w-full bg-black bg-opacity-60 text-white text-center py-2;
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-in {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Mobile menu */
+.mobile-menu {
+  @apply fixed inset-0 z-50 bg-white transform transition-transform duration-300 ease-in-out;
+}
+
+.mobile-menu.closed {
+  @apply translate-x-full;
+}
+
+.mobile-menu.open {
+  @apply translate-x-0;
+}
+
+/* Cart indicator */
+.cart-indicator {
+  @apply absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs text-white bg-green-600 rounded-full;
+}
+
+/* Cart Styles */
+.cart-count {
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+/* Quantity input styling */
+.quantity-input {
+  @apply flex items-center border rounded-md overflow-hidden;
+}
+
+.quantity-input button {
+  @apply bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-2 focus:outline-none;
+}
+
+.quantity-input input {
+  @apply w-12 text-center border-none focus:outline-none text-gray-700;
+}
+
+/* Notification */
+.notification {
+  z-index: 9999;
+} 
