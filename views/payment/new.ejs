@@ -1,0 +1,107 @@
+<%- include('../partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Add New Payment Method</h1>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="mb-6">
+        <p class="text-sm text-gray-600">
+          <strong class="font-semibold">Demo Payment Details:</strong><br>
+          Use the Stripe test card:<br>
+          Card Number: 4242 4242 4242 4242<br>
+          Expiry Date: Any future date (e.g., 12/25)<br>
+          CVC: Any 3 digits (e.g., 123)
+        </p>
+      </div>
+      
+      <form id="payment-form" class="space-y-6">
+        <!-- CSRF Token -->
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        
+        <div id="card-element" class="p-4 border border-gray-300 rounded-md">
+          <!-- Stripe Card Element will be inserted here -->
+        </div>
+        
+        <div id="card-errors" class="text-red-600" role="alert"></div>
+        
+        <div class="flex justify-end space-x-4">
+          <a href="/account" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+            Cancel
+          </a>
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Add Payment Method
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe('<%= stripePublicKey %>');
+const elements = stripe.elements();
+const card = elements.create('card', {
+  style: {
+    base: {
+      fontSize: '16px',
+      color: '#424770',
+      '::placeholder': {
+        color: '#aab7c4'
+      }
+    },
+    invalid: {
+      color: '#9e2146'
+    }
+  }
+});
+card.mount('#card-element');
+
+card.on('change', function(event) {
+  const displayError = document.getElementById('card-errors');
+  if (event.error) {
+    displayError.textContent = event.error.message;
+  } else {
+    displayError.textContent = '';
+  }
+});
+
+document.getElementById('payment-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const { token, error } = await stripe.createToken(card);
+  
+  if (error) {
+    const errorElement = document.getElementById('card-errors');
+    errorElement.textContent = error.message;
+  } else {
+    try {
+      const response = await fetch('/account/payment-methods/new', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CSRF-Token': document.querySelector('input[name="_csrf"]').value
+        },
+        body: JSON.stringify({
+          payment_method_id: token.id,
+          _csrf: document.querySelector('input[name="_csrf"]').value
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        window.location.href = '/account';
+      } else {
+        alert(result.error || 'Failed to add payment method');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to add payment method. Please try again.');
+    }
+  }
+});
+</script>
+
+<%- include('../partials/footer') %> 

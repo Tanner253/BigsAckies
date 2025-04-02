@@ -387,6 +387,22 @@ router.get('/checkout', async (req, res) => {
     const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+    // Get user's saved addresses
+    const addressesQuery = `
+      SELECT * FROM addresses 
+      WHERE user_id = $1 
+      ORDER BY is_default DESC, created_at DESC
+    `;
+    const addressesResult = await db.query(addressesQuery, [req.session.user.id]);
+
+    // Get user's saved payment methods
+    const paymentMethodsQuery = `
+      SELECT * FROM payment_methods 
+      WHERE user_id = $1 
+      ORDER BY is_default DESC, created_at DESC
+    `;
+    const paymentMethodsResult = await db.query(paymentMethodsQuery, [req.session.user.id]);
+
     res.render('checkout', {
       title: 'Checkout',
       cart: {
@@ -394,6 +410,8 @@ router.get('/checkout', async (req, res) => {
         totalQty,
         totalPrice
       },
+      addresses: addressesResult.rows,
+      paymentMethods: paymentMethodsResult.rows,
       user: req.session.user,
       csrfToken: req.csrfToken(),
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY

@@ -702,7 +702,7 @@ router.get('/logout', (req, res) => {
 });
 
 // Account page (requires authentication)
-router.get('/account', (req, res) => {
+router.get('/account', async (req, res) => {
   // Check if user is logged in
   if (!req.session.user) {
     req.session.returnTo = '/account';
@@ -712,13 +712,57 @@ router.get('/account', (req, res) => {
     return res.redirect('/login');
   }
   
-  res.render('account', {
-    title: 'My Account',
-    user: req.session.user,
-    orders: [],         // Initialize orders as empty array
-    addresses: [],      // Initialize addresses as empty array
-    paymentMethods: []  // Initialize paymentMethods as empty array
-  });
+  try {
+    // Get user's orders
+    const ordersQuery = `
+      SELECT o.*, o.total_amount as total, u.email as user_email
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE o.user_id = $1
+      ORDER BY o.created_at DESC
+    `;
+    const ordersResult = await db.query(ordersQuery, [req.session.user.id]);
+    
+    // Get user's addresses
+    const addressesQuery = `
+      SELECT * FROM addresses 
+      WHERE user_id = $1 
+      ORDER BY is_default DESC, created_at DESC
+    `;
+    const addressesResult = await db.query(addressesQuery, [req.session.user.id]);
+    
+    // Get user's payment methods
+    const paymentMethodsQuery = `
+      SELECT * FROM payment_methods 
+      WHERE user_id = $1 
+      ORDER BY is_default DESC, created_at DESC
+    `;
+    const paymentMethodsResult = await db.query(paymentMethodsQuery, [req.session.user.id]);
+    
+    res.render('account', {
+      title: 'My Account',
+      user: req.session.user,
+      orders: ordersResult.rows,
+      addresses: addressesResult.rows,
+      paymentMethods: paymentMethodsResult.rows,
+      messages: req.session.messages || {}
+    });
+    
+    // Clear any flash messages
+    req.session.messages = {};
+  } catch (error) {
+    console.error('Error loading account page:', error);
+    res.render('account', {
+      title: 'My Account',
+      user: req.session.user,
+      orders: [],
+      addresses: [],
+      paymentMethods: [],
+      messages: {
+        error: 'Failed to load account information. Please try again.'
+      }
+    });
+  }
 });
 
 // Newsletter subscription
@@ -811,7 +855,7 @@ router.get('/orders', async (req, res) => {
   try {
     // Get user's orders
     const query = `
-      SELECT o.*, u.email as user_email
+      SELECT o.*, o.total_amount as total, u.email as user_email
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       WHERE o.user_id = $1
@@ -887,6 +931,270 @@ router.get('/orders/:id', async (req, res) => {
       error: { status: 500 }
     });
   }
+});
+
+// Address management routes
+router.post('/account/addresses/new', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Please sign in to continue' });
+  }
+
+  try {
+    const { name, street, city, state, zip, country, phone } = req.body;
+    
+    // Check if this is the first address (make it default)
+    const addressCount = await db.query('SELECT COUNT(*) FROM addresses WHERE user_id = $1', [req.session.user.id]);
+    const isDefault = parseInt(addressCount.rows[0].count) === 0;
+    
+    const query = `
+      INSERT INTO addresses (
+        user_id, name, street, city, state, zip, country, phone, is_default
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `;
+    
+    const result = await db.query(query, [
+      req.session.user.id,
+      name,
+      street,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      isDefault
+    ]);
+
+    res.json({ success: true, address: result.rows[0] });
+  } catch (error) {
+    console.error('Error adding address:', error);
+    res.status(500).json({ error: 'Failed to add address' });
+  }
+});
+
+router.post('/account/addresses/:id/set-default', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Please sign in to continue' });
+  }
+
+  try {
+    const addressId = req.params.id;
+    
+    // First, remove default from all addresses
+    await db.query(
+      'UPDATE addresses SET is_default = false WHERE user_id = $1',
+      [req.session.user.id]
+    );
+    
+    // Set the selected address as default
+    await db.query(
+      'UPDATE addresses SET is_default = true WHERE id = $1 AND user_id = $2',
+      [addressId, req.session.user.id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error setting default address:', error);
+    res.status(500).json({ error: 'Failed to set default address' });
+  }
+});
+
+router.delete('/account/addresses/:id', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Please sign in to continue' });
+  }
+
+  try {
+    const addressId = req.params.id;
+    
+    // Check if this is the default address
+    const addressResult = await db.query(
+      'SELECT is_default FROM addresses WHERE id = $1 AND user_id = $2',
+      [addressId, req.session.user.id]
+    );
+    
+    if (addressResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Address not found' });
+    }
+    
+    // Delete the address
+    await db.query(
+      'DELETE FROM addresses WHERE id = $1 AND user_id = $2',
+      [addressId, req.session.user.id]
+    );
+    
+    // If this was the default address, set a new default if other addresses exist
+    if (addressResult.rows[0].is_default) {
+      const remainingAddresses = await db.query(
+        'SELECT id FROM addresses WHERE user_id = $1 ORDER BY created_at ASC LIMIT 1',
+        [req.session.user.id]
+      );
+      
+      if (remainingAddresses.rows.length > 0) {
+        await db.query(
+          'UPDATE addresses SET is_default = true WHERE id = $1',
+          [remainingAddresses.rows[0].id]
+        );
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting address:', error);
+    res.status(500).json({ error: 'Failed to delete address' });
+  }
+});
+
+// Payment method management routes
+router.post('/account/payment-methods/new', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Please sign in to continue' });
+  }
+
+  try {
+    const { payment_method_id } = req.body;
+    
+    // Retrieve payment method details from Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const paymentMethod = await stripe.paymentMethods.retrieve(payment_method_id);
+    
+    // Check if this is the first payment method (make it default)
+    const methodCount = await db.query('SELECT COUNT(*) FROM payment_methods WHERE user_id = $1', [req.session.user.id]);
+    const isDefault = parseInt(methodCount.rows[0].count) === 0;
+    
+    const query = `
+      INSERT INTO payment_methods (
+        user_id, stripe_payment_method_id, brand, last4, exp_month, exp_year, is_default
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `;
+    
+    const result = await db.query(query, [
+      req.session.user.id,
+      payment_method_id,
+      paymentMethod.card.brand,
+      paymentMethod.card.last4,
+      paymentMethod.card.exp_month,
+      paymentMethod.card.exp_year,
+      isDefault
+    ]);
+
+    res.json({ success: true, paymentMethod: result.rows[0] });
+  } catch (error) {
+    console.error('Error adding payment method:', error);
+    res.status(500).json({ error: 'Failed to add payment method' });
+  }
+});
+
+router.post('/account/payment-methods/:id/set-default', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Please sign in to continue' });
+  }
+
+  try {
+    const methodId = req.params.id;
+    
+    // First, remove default from all payment methods
+    await db.query(
+      'UPDATE payment_methods SET is_default = false WHERE user_id = $1',
+      [req.session.user.id]
+    );
+    
+    // Set the selected payment method as default
+    await db.query(
+      'UPDATE payment_methods SET is_default = true WHERE id = $1 AND user_id = $2',
+      [methodId, req.session.user.id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error setting default payment method:', error);
+    res.status(500).json({ error: 'Failed to set default payment method' });
+  }
+});
+
+router.delete('/account/payment-methods/:id', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Please sign in to continue' });
+  }
+
+  try {
+    const methodId = req.params.id;
+    
+    // Check if this is the default payment method
+    const methodResult = await db.query(
+      'SELECT is_default, stripe_payment_method_id FROM payment_methods WHERE id = $1 AND user_id = $2',
+      [methodId, req.session.user.id]
+    );
+    
+    if (methodResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Payment method not found' });
+    }
+    
+    // Delete the payment method from Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    await stripe.paymentMethods.detach(methodResult.rows[0].stripe_payment_method_id);
+    
+    // Delete from database
+    await db.query(
+      'DELETE FROM payment_methods WHERE id = $1 AND user_id = $2',
+      [methodId, req.session.user.id]
+    );
+    
+    // If this was the default method, set a new default if other methods exist
+    if (methodResult.rows[0].is_default) {
+      const remainingMethods = await db.query(
+        'SELECT id FROM payment_methods WHERE user_id = $1 ORDER BY created_at ASC LIMIT 1',
+        [req.session.user.id]
+      );
+      
+      if (remainingMethods.rows.length > 0) {
+        await db.query(
+          'UPDATE payment_methods SET is_default = true WHERE id = $1',
+          [remainingMethods.rows[0].id]
+        );
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting payment method:', error);
+    res.status(500).json({ error: 'Failed to delete payment method' });
+  }
+});
+
+// Address management routes
+router.get('/account/addresses/new', async (req, res) => {
+  if (!req.session.user) {
+    req.session.returnTo = '/account/addresses/new';
+    req.session.messages = {
+      error: 'Please sign in to add a new address'
+    };
+    return res.redirect('/login');
+  }
+
+  res.render('address/new', {
+    title: 'Add New Address',
+    user: req.session.user,
+    messages: req.session.messages || {}
+  });
+});
+
+router.get('/account/payment-methods/new', async (req, res) => {
+  if (!req.session.user) {
+    req.session.returnTo = '/account/payment-methods/new';
+    req.session.messages = {
+      error: 'Please sign in to add a new payment method'
+    };
+    return res.redirect('/login');
+  }
+
+  res.render('payment/new', {
+    title: 'Add New Payment Method',
+    user: req.session.user,
+    stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+    messages: req.session.messages || {}
+  });
 });
 
 module.exports = router; 

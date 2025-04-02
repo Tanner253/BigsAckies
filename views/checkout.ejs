@@ -16,59 +16,90 @@
             <div>
               <h2 class="text-xl font-semibold mb-4">Shipping Information</h2>
               
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="name" class="block text-gray-700 mb-2">Full Name*</label>
-                  <input type="text" id="name" name="name" required
-                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+              <% if (addresses && addresses.length > 0) { %>
+                <div class="mb-6">
+                  <label class="block text-gray-700 mb-2">Select a Saved Address</label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <% addresses.forEach(address => { %>
+                      <div class="border rounded-lg p-4 cursor-pointer hover:border-green-500 transition-colors relative <%= address.is_default ? 'border-green-500' : 'border-gray-300' %>"
+                           onclick="selectAddress('<%= address.id %>', '<%= address.name %>', '<%= address.street %>', '<%= address.city %>', '<%= address.state %>', '<%= address.zip %>', '<%= address.country %>', '<%= address.phone %>')">
+                        <% if (address.is_default) { %>
+                          <span class="absolute top-2 right-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Default</span>
+                        <% } %>
+                        <h3 class="font-medium"><%= address.name %></h3>
+                        <p class="text-sm text-gray-600 mt-1"><%= address.street %></p>
+                        <p class="text-sm text-gray-600"><%= address.city %>, <%= address.state %> <%= address.zip %></p>
+                        <p class="text-sm text-gray-600"><%= address.country %></p>
+                        <p class="text-sm text-gray-600 mt-1">Phone: <%= address.phone %></p>
+                      </div>
+                    <% }); %>
+                  </div>
+                  <div class="mt-4">
+                    <button type="button" onclick="showNewAddressForm()" class="text-green-600 hover:text-green-700">
+                      <i class="fas fa-plus-circle"></i> Use a Different Address
+                    </button>
+                  </div>
+                </div>
+              <% } %>
+              
+              <div id="new-address-form" class="<%= addresses && addresses.length > 0 ? 'hidden' : '' %>">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label for="name" class="block text-gray-700 mb-2">Full Name*</label>
+                    <input type="text" id="name" name="name" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
+                  
+                  <div>
+                    <label for="email" class="block text-gray-700 mb-2">Email Address*</label>
+                    <input type="email" id="email" name="email" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
+                  
+                  <div>
+                    <label for="address" class="block text-gray-700 mb-2">Street Address*</label>
+                    <input type="text" id="address" name="address" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
+                  
+                  <div>
+                    <label for="city" class="block text-gray-700 mb-2">City*</label>
+                    <input type="text" id="city" name="city" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
+                  
+                  <div>
+                    <label for="state" class="block text-gray-700 mb-2">State/Province*</label>
+                    <input type="text" id="state" name="state" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
+                  
+                  <div>
+                    <label for="zip" class="block text-gray-700 mb-2">ZIP/Postal Code*</label>
+                    <input type="text" id="zip" name="zip" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
+                  
+                  <div>
+                    <label for="country" class="block text-gray-700 mb-2">Country*</label>
+                    <input type="text" id="country" name="country" required value="USA"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
+                  
+                  <div>
+                    <label for="phone" class="block text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" id="phone" name="phone"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  </div>
                 </div>
                 
-                <div>
-                  <label for="email" class="block text-gray-700 mb-2">Email Address*</label>
-                  <input type="email" id="email" name="email" required
-                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                </div>
-                
-                <div>
-                  <label for="address" class="block text-gray-700 mb-2">Street Address*</label>
-                  <input type="text" id="address" name="address" required
-                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                </div>
-                
-                <div>
-                  <label for="city" class="block text-gray-700 mb-2">City*</label>
-                  <input type="text" id="city" name="city" required
-                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                </div>
-                
-                <div>
-                  <label for="state" class="block text-gray-700 mb-2">State/Province*</label>
-                  <input type="text" id="state" name="state" required
-                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                </div>
-                
-                <div>
-                  <label for="zip" class="block text-gray-700 mb-2">ZIP/Postal Code*</label>
-                  <input type="text" id="zip" name="zip" required
-                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                </div>
-                
-                <div>
-                  <label for="country" class="block text-gray-700 mb-2">Country*</label>
-                  <select id="country" name="country"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                    <option value="USA">United States</option>
-                    <option value="CAN">Canada</option>
-                    <option value="UK">United Kingdom</option>
-                    <option value="AUS">Australia</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label for="phone" class="block text-gray-700 mb-2">Phone Number</label>
-                  <input type="tel" id="phone" name="phone"
-                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                </div>
+                <% if (addresses && addresses.length > 0) { %>
+                  <div class="mt-4">
+                    <button type="button" onclick="showSavedAddresses()" class="text-green-600 hover:text-green-700">
+                      <i class="fas fa-arrow-left"></i> Back to Saved Addresses
+                    </button>
+                  </div>
+                <% } %>
               </div>
             </div>
             
@@ -83,11 +114,59 @@
                 CVC: Any 3 digits (e.g., 123)
               </p>
               
-              <div id="card-element" class="p-4 border border-gray-300 rounded-md mb-4">
-                <!-- Stripe Card Element will be inserted here -->
-              </div>
+              <% if (paymentMethods && paymentMethods.length > 0) { %>
+                <div class="mb-6">
+                  <label class="block text-gray-700 mb-2">Select a Saved Payment Method</label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <% paymentMethods.forEach(method => { %>
+                      <div class="border rounded-lg p-4 cursor-pointer hover:border-green-500 transition-colors relative <%= method.is_default ? 'border-green-500' : 'border-gray-300' %>"
+                           onclick="selectPaymentMethod('<%= method.stripe_payment_method_id %>')">
+                        <% if (method.is_default) { %>
+                          <span class="absolute top-2 right-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Default</span>
+                        <% } %>
+                        <div class="flex items-center">
+                          <% if (method.brand === 'visa') { %>
+                            <i class="fab fa-cc-visa text-2xl text-blue-700 mr-2"></i>
+                          <% } else if (method.brand === 'mastercard') { %>
+                            <i class="fab fa-cc-mastercard text-2xl text-red-500 mr-2"></i>
+                          <% } else if (method.brand === 'amex') { %>
+                            <i class="fab fa-cc-amex text-2xl text-blue-500 mr-2"></i>
+                          <% } else if (method.brand === 'discover') { %>
+                            <i class="fab fa-cc-discover text-2xl text-orange-500 mr-2"></i>
+                          <% } else { %>
+                            <i class="fas fa-credit-card text-2xl text-gray-600 mr-2"></i>
+                          <% } %>
+                          <div>
+                            <h3 class="font-medium"><%= method.brand.charAt(0).toUpperCase() + method.brand.slice(1) %> ending in <%= method.last4 %></h3>
+                            <p class="text-sm text-gray-500">Expires <%= method.exp_month %>/<%= method.exp_year %></p>
+                          </div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                  <div class="mt-4">
+                    <button type="button" onclick="showNewPaymentForm()" class="text-green-600 hover:text-green-700">
+                      <i class="fas fa-plus-circle"></i> Use a Different Payment Method
+                    </button>
+                  </div>
+                </div>
+              <% } %>
               
-              <div id="card-errors" class="text-red-600 mb-4" role="alert"></div>
+              <div id="new-payment-form" class="<%= paymentMethods && paymentMethods.length > 0 ? 'hidden' : '' %>">
+                <div id="card-element" class="p-4 border border-gray-300 rounded-md mb-4">
+                  <!-- Stripe Card Element will be inserted here -->
+                </div>
+                
+                <div id="card-errors" class="text-red-600 mb-4" role="alert"></div>
+                
+                <% if (paymentMethods && paymentMethods.length > 0) { %>
+                  <div class="mt-4">
+                    <button type="button" onclick="showSavedPaymentMethods()" class="text-green-600 hover:text-green-700">
+                      <i class="fas fa-arrow-left"></i> Back to Saved Payment Methods
+                    </button>
+                  </div>
+                <% } %>
+              </div>
               
               <input type="hidden" id="payment_method_id" name="payment_method_id">
             </div>
@@ -305,6 +384,48 @@
       }
     });
   });
+
+  // Address selection functions
+  function selectAddress(id, name, street, city, state, zip, country, phone) {
+    document.getElementById('name').value = name;
+    document.getElementById('address').value = street;
+    document.getElementById('city').value = city;
+    document.getElementById('state').value = state;
+    document.getElementById('zip').value = zip;
+    document.getElementById('country').value = country;
+    document.getElementById('phone').value = phone;
+  }
+  
+  function showNewAddressForm() {
+    document.querySelectorAll('.saved-addresses').forEach(el => el.classList.add('hidden'));
+    document.getElementById('new-address-form').classList.remove('hidden');
+  }
+  
+  function showSavedAddresses() {
+    document.querySelectorAll('.saved-addresses').forEach(el => el.classList.remove('hidden'));
+    document.getElementById('new-address-form').classList.add('hidden');
+  }
+  
+  // Payment method selection functions
+  function selectPaymentMethod(paymentMethodId) {
+    document.getElementById('payment_method_id').value = paymentMethodId;
+    document.querySelectorAll('.payment-method').forEach(el => {
+      el.classList.remove('border-green-500');
+      el.classList.add('border-gray-300');
+    });
+    event.currentTarget.classList.remove('border-gray-300');
+    event.currentTarget.classList.add('border-green-500');
+  }
+  
+  function showNewPaymentForm() {
+    document.querySelectorAll('.saved-payment-methods').forEach(el => el.classList.add('hidden'));
+    document.getElementById('new-payment-form').classList.remove('hidden');
+  }
+  
+  function showSavedPaymentMethods() {
+    document.querySelectorAll('.saved-payment-methods').forEach(el => el.classList.remove('hidden'));
+    document.getElementById('new-payment-form').classList.add('hidden');
+  }
 </script>
 
 <%- include('partials/footer') %> 
