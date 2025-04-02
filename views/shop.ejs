@@ -126,14 +126,14 @@
               
               <div class="p-5 flex-grow flex flex-col">
                 <a href="/shop/<%= product.id %>" class="block mb-1">
-                  <h3 class="text-lg font-semibold hover:text-green-700 transition"><%= product.name %></h3>
+                  <h3 class="text-lg font-semibold hover:text-green-700 transition line-clamp-1"><%= product.name %></h3>
                 </a>
                 
-                <p class="text-sm text-gray-500 mb-2"><%= product.category_name %></p>
+                <p class="text-sm text-gray-500 mb-2 line-clamp-1"><%= product.category_name %></p>
                 
-                <div class="text-gray-700 flex-grow text-sm mb-4">
+                <div class="text-gray-700 flex-grow text-sm mb-4 line-clamp-2">
                   <% if (product.description) { %>
-                    <%= product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description %>
+                    <%= product.description %>
                   <% } %>
                 </div>
                 
