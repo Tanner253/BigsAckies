@@ -194,6 +194,25 @@
   <!-- Newsletter -->
   <div class="py-12 bg-green-600 text-white">
     <div class="container mx-auto px-4 text-center">
+      <!-- Flash Messages -->
+      <% if (locals.messages && messages.success) { %>
+        <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+          <span class="block sm:inline"><%= messages.success %></span>
+          <button class="absolute top-0 bottom-0 right-0 px-4 py-3 alert-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      <% } %>
+      
+      <% if (locals.messages && messages.error) { %>
+        <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span class="block sm:inline"><%= messages.error %></span>
+          <button class="absolute top-0 bottom-0 right-0 px-4 py-3 alert-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      <% } %>
+
       <h2 class="text-2xl font-bold mb-4">Join Our Newsletter</h2>
       <p class="mb-6 max-w-2xl mx-auto">Subscribe to receive updates on new arrivals, special offers, and reptile care tips.</p>
       

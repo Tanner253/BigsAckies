@@ -136,6 +136,16 @@ async function setupDatabase() {
         UNIQUE(cart_id, product_id)
       )
     `);
+
+    // Create newsletter_subscribers table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_active BOOLEAN DEFAULT true
+      )
+    `);
     
     // Add 'name' column to users table if it doesn't exist
     try {

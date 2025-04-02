@@ -7,6 +7,7 @@ const orderModel = require('../models/order');
 const messageModel = require('../models/message');
 const userModel = require('../models/user');
 const paymentService = require('../services/paymentService');
+const newsletterModel = require('../models/newsletter');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const db = require('../models/database');
 
@@ -713,6 +714,50 @@ router.get('/account', (req, res) => {
     addresses: [],      // Initialize addresses as empty array
     paymentMethods: []  // Initialize paymentMethods as empty array
   });
+});
+
+// Newsletter subscription
+router.post('/subscribe', [
+  body('email').isEmail().withMessage('Please enter a valid email address')
+], async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.session.messages = {
+        error: errors.array().map(error => error.msg).join(', ')
+      };
+      return res.redirect('back');
+    }
+
+    const { email } = req.body;
+
+    // Add subscriber to database
+    await newsletterModel.addSubscriber(email);
+
+    // Set success message
+    req.session.messages = {
+      success: 'Thank you for subscribing to our newsletter!'
+    };
+
+    // Redirect back to the previous page
+    res.redirect('back');
+  } catch (error) {
+    console.error('Newsletter subscription error:', error);
+
+    // Handle duplicate subscription error
+    if (error.message.includes('already subscribed')) {
+      req.session.messages = {
+        error: 'This email is already subscribed to our newsletter'
+      };
+    } else {
+      req.session.messages = {
+        error: 'An error occurred while subscribing. Please try again.'
+      };
+    }
+
+    res.redirect('back');
+  }
 });
 
 module.exports = router; 
