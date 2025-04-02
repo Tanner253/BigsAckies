@@ -67,7 +67,17 @@ router.get('/', async (req, res) => {
 router.post('/add', async (req, res) => {
   try {
     if (!req.session.user) {
-      // Redirect to login page if user is not logged in
+      // In production, always redirect to login
+      if (process.env.NODE_ENV === 'production') {
+        return res.redirect('/login');
+      }
+      
+      // In development, return JSON error for AJAX requests
+      if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        return res.status(401).json({ error: 'Please login to add items to cart' });
+      }
+      
+      // For regular form submissions in development
       return res.redirect('/login');
     }
 

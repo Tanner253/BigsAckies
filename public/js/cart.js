@@ -66,6 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         } catch (parseError) {
                             console.error('Could not parse error response as JSON:', parseError);
                         }
+                        // In production, redirect to login instead of showing alert
+                        if (window.location.hostname.includes('herokuapp.com') || process.env.NODE_ENV === 'production') {
+                            window.location.href = '/login';
+                            return;
+                        }
                         throw new Error(error.error || `HTTP error! status: ${response.status}`);
                     }
                     
@@ -78,11 +83,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         cartBadge.classList.remove('hidden');
                     }
                     
-                    // Show success message
-                    alert('Item added to cart successfully!');
+                    // Only show success message in development
+                    if (!window.location.hostname.includes('herokuapp.com') && process.env.NODE_ENV !== 'production') {
+                        alert('Item added to cart successfully!');
+                    }
                     
                 } catch (error) {
                     console.error('Error adding item to cart:', error);
+                    // In production, redirect to login instead of showing alert
+                    if (window.location.hostname.includes('herokuapp.com') || process.env.NODE_ENV === 'production') {
+                        window.location.href = '/login';
+                        return;
+                    }
                     alert(error.message || 'Failed to add item to cart');
                 }
             });
