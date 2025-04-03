@@ -190,4 +190,4 @@ Distributed under the MIT License. See `LICENSE` file for more information.
 <!-- TODO: Verify license -->
 
 
-Project Link: [https://github.com/your_username/reptile-ecommerce](https://github.com/your_username/reptile-ecommerce) <!-- TODO: Update with actual repo URL --> 
+Project Link: [https://github.com/Tanner253/reptile-ecommerce](https://github.com/Tanner253/reptile-ecommerce) <!-- TODO: Update with actual repo URL --> 
