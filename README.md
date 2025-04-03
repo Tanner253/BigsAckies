@@ -8,6 +8,7 @@ E-commerce platform for reptiles and supplies.
 
 *   [About the Project](#about-the-project)
     *   [Built With](#built-with)
+*   [Features Showcase](#features-showcase)
 *   [Getting Started](#getting-started)
     *   [Prerequisites](#prerequisites)
     *   [Installation](#installation)
@@ -46,6 +47,42 @@ This project utilizes the following core technologies:
     *   `stripe`: Payment Processing
     *   `uuid`: UUID Generation
 
+## Features Showcase
+
+Here's a glimpse of the platform's key features:
+
+**Homepage:**
+![Homepage Screenshot](./documentation/home.jpg)
+*The main landing page showcasing featured products or categories.*
+
+**Product Listings:**
+![Products Page Screenshot](./documentation/Products.jpg)
+*Browse the available reptile products with images and details.*
+
+**Shopping Cart:**
+![Shopping Cart Screenshot](./documentation/cart.jpg)
+*Review items added to the cart before proceeding to checkout.*
+
+**Checkout Process:**
+![Checkout Screenshot](./documentation/checkout.jpg)
+*Secure checkout page for entering shipping and payment information.*
+
+**Contact Form:**
+![Contact Page Screenshot](./documentation/contact.jpg)
+*A dedicated page for users to send inquiries or feedback.*
+
+**Admin Dashboard:**
+![Admin Dashboard Screenshot](./documentation/admin-dashboard.jpg)
+*Overview dashboard for administrators to monitor site activity.*
+
+**Product Management (Admin):**
+![Manage Products Screenshot](./documentation/Manage%20products.jpg)
+*Admin interface for adding, editing, or removing products.*
+
+**Order Management (Admin):**
+![Orders Screenshot](./documentation/orders.jpg)
+*Admin view for managing customer orders.*
+
 ## Getting Started
 
 To get a local copy up and running, follow these simple steps.
@@ -68,7 +105,7 @@ Make sure you have the following installed on your system:
 
 1.  **Clone the repo:**
     ```sh
-    git clone https://github.com/your_username/reptile-ecommerce.git # TODO: Update with actual repo URL
+    git clone https://github.com/Tanner253/reptile-ecommerce.git # TODO: Update with actual repo URL
     cd reptile-ecommerce
     ```
 2.  **Install NPM packages:**
@@ -146,8 +183,5 @@ Contributions are what make the open-source community such an amazing place to l
 Distributed under the MIT License. See `LICENSE` file for more information.
 <!-- TODO: Verify license -->
 
-## Contact
-
-Your Name - your.email@example.com <!-- TODO: Add contact info -->
 
 Project Link: [https://github.com/your_username/reptile-ecommerce](https://github.com/your_username/reptile-ecommerce) <!-- TODO: Update with actual repo URL --> 
