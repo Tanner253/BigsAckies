@@ -87,7 +87,8 @@ Here's a glimpse of the platform's key features:
 
 To get a local copy up and running, follow these simple steps.
 
-### Prerequisites
+<details>
+<summary>Prerequisites</summary>
 
 Make sure you have the following installed on your system:
 
@@ -101,7 +102,10 @@ Make sure you have the following installed on your system:
     ```
 *   **PostgreSQL:** A running instance of PostgreSQL database.
 
-### Installation
+</details>
+
+<details>
+<summary>Installation</summary>
 
 1.  **Clone the repo:**
     ```sh
@@ -133,6 +137,8 @@ Make sure you have the following installed on your system:
     ```sh
     npm run build:css
     ```
+
+</details>
 
 ## Usage
 
