@@ -1,6 +1,16 @@
 # Reptile E-commerce Platform
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) <!-- TODO: Update if license is different -->
+[![GitHub last commit](https://img.shields.io/github/last-commit/Tanner253/BigsAckies)](https://github.com/Tanner253/BigsAckies/commits)
+[![GitHub issues](https://img.shields.io/github/issues/Tanner253/BigsAckies)](https://github.com/Tanner253/BigsAckies/issues)
+[![GitHub stars](https://img.shields.io/github/stars/Tanner253/BigsAckies)](https://github.com/Tanner253/BigsAckies/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Tanner253/BigsAckies)](https://github.com/Tanner253/BigsAckies/network)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fbiggs-ackies-212b598513d3.herokuapp.com)](https://biggs-ackies-212b598513d3.herokuapp.com/)
+
+[![Node](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/en/)
+[![Express](https://img.shields.io/badge/Express-4.x-blue.svg)](https://expressjs.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14.x-blue.svg)](https://www.postgresql.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-latest-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 E-commerce platform for reptiles and supplies.
 
@@ -109,8 +119,8 @@ Make sure you have the following installed on your system:
 
 1.  **Clone the repo:**
     ```sh
-    git clone https://github.com/Tanner253/reptile-ecommerce.git # TODO: Update with actual repo URL
-    cd reptile-ecommerce
+    git clone https://github.com/Tanner253/BigsAckies.git
+    cd BigsAckies
     ```
 2.  **Install NPM packages:**
     ```sh
@@ -177,7 +187,6 @@ This project relies on environment variables for configuration. Create a `.env` 
 
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-<!-- TODO: Add contribution guidelines -->
 1.  Fork the Project
 2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
@@ -187,7 +196,5 @@ Contributions are what make the open-source community such an amazing place to l
 ## License
 
 Distributed under the MIT License. See `LICENSE` file for more information.
-<!-- TODO: Verify license -->
 
-
-Project Link: [https://github.com/Tanner253/reptile-ecommerce](https://github.com/Tanner253/reptile-ecommerce) <!-- TODO: Update with actual repo URL --> 
+Project Link: [https://github.com/Tanner253/BigsAckies](https://github.com/Tanner253/BigsAckies) 
