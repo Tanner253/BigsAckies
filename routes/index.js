@@ -10,6 +10,7 @@ const paymentService = require('../services/paymentService');
 const newsletterModel = require('../models/newsletter');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const db = require('../models/database');
+const auth = require('../middleware/auth');
 
 // Home page
 router.get('/', async (req, res) => {
@@ -33,16 +34,18 @@ router.get('/', async (req, res) => {
     // Get categories for the shop by category section
     const categories = await categoryModel.getAllCategories();
     
-    res.render('index', { 
+    res.render('index', {
       title: 'Home',
+      layout: 'main-layout',
       user: req.session.user || null,
       featuredProducts,
       categories
     });
   } catch (error) {
     console.error('Error loading home page:', error);
-    res.render('index', { 
+    res.render('index', {
       title: 'Home',
+      layout: 'main-layout',
       user: req.session.user || null,
       featuredProducts: [],
       categories: []
@@ -126,6 +129,7 @@ router.get('/products', async (req, res) => {
     
     res.render('products', { 
       title: categoryId ? 'Products by Category' : 'All Products',
+      layout: 'main-layout',
       products: result.rows,
       categories: categories,
       selectedCategory: categoryId,
@@ -139,6 +143,7 @@ router.get('/products', async (req, res) => {
     console.error('Error fetching products:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'main-layout',
       status: 500,
       message: 'An error occurred while loading products',
       error: process.env.NODE_ENV !== 'production' ? error : null
@@ -150,6 +155,7 @@ router.get('/products', async (req, res) => {
 router.get('/about', (req, res) => {
   res.render('about', { 
     title: 'About Us',
+    layout: 'main-layout',
     user: req.session.user || null
   });
 });
@@ -158,6 +164,7 @@ router.get('/about', (req, res) => {
 router.get('/contact', (req, res) => {
   res.render('contact', { 
     title: 'Contact Us',
+    layout: 'main-layout',
     user: req.session.user || null
   });
 });
@@ -193,6 +200,7 @@ router.get('/shop', async (req, res) => {
     
     res.render('shop', {
       title: activeCategory ? `${activeCategory.name} - Shop` : 'Shop All Reptiles and Supplies',
+      layout: 'main-layout',
       products: productsData.products,
       pagination: productsData.pagination,
       categories,
@@ -207,7 +215,8 @@ router.get('/shop', async (req, res) => {
       title: 'Error',
       status: 500,
       message: 'Failed to load the shop page',
-      error: { status: 500 }
+      error: { status: 500 },
+      layout: 'main-layout'
     });
   }
 });
@@ -240,8 +249,11 @@ router.get('/shop/:id', async (req, res) => {
     
     res.render('product', {
       title: product.name,
+      layout: 'main-layout',
       product,
-      relatedProducts: relatedProductsData.products.filter(p => p.id !== product.id)
+      relatedProducts: relatedProductsData.products.filter(p => p.id !== product.id),
+      user: req.session.user || null,
+      csrfToken: req.csrfToken()
     });
   } catch (error) {
     console.error('Error rendering product page:', error);
@@ -249,7 +261,8 @@ router.get('/shop/:id', async (req, res) => {
       title: 'Error',
       status: 500,
       message: 'Failed to load the product page',
-      error: { status: 500 }
+      error: process.env.NODE_ENV !== 'production' ? error : null,
+      layout: 'main-layout'
     });
   }
 });
@@ -565,19 +578,15 @@ router.post('/message', [
 
 // Login page
 router.get('/login', (req, res) => {
-  // Redirect to home if already logged in
   if (req.session.user) {
-    return res.redirect('/');
+    return res.redirect('/'); // Redirect if already logged in
   }
-  
   res.render('login', {
-    title: 'Sign In',
-    user: null,
-    messages: req.session.messages || {}
+    title: 'Login',
+    layout: 'main-layout',
+    messages: req.flash(),
+    csrfToken: req.csrfToken()
   });
-  
-  // Clear messages after displaying
-  req.session.messages = {};
 });
 
 // Process login
@@ -631,19 +640,15 @@ router.post('/login', [
 
 // Registration page
 router.get('/register', (req, res) => {
-  // Redirect to home if already logged in
   if (req.session.user) {
-    return res.redirect('/');
+    return res.redirect('/'); // Redirect if already logged in
   }
-  
   res.render('register', {
-    title: 'Create Account',
-    user: null,
-    messages: req.session.messages || {}
+    title: 'Register',
+    layout: 'main-layout',
+    messages: req.flash(),
+    csrfToken: req.csrfToken()
   });
-  
-  // Clear messages after displaying
-  req.session.messages = {};
 });
 
 // Process registration
@@ -719,17 +724,8 @@ router.get('/logout', (req, res) => {
   res.redirect('/');
 });
 
-// Account page (requires authentication)
-router.get('/account', async (req, res) => {
-  // Check if user is logged in
-  if (!req.session.user) {
-    req.session.returnTo = '/account';
-    req.session.messages = {
-      error: 'Please sign in to access your account'
-    };
-    return res.redirect('/login');
-  }
-  
+// User account page (profile, orders, etc.)
+router.get('/account', auth.isAuthenticated, async (req, res) => {
   try {
     // Get user's orders
     const ordersQuery = `
@@ -757,28 +753,24 @@ router.get('/account', async (req, res) => {
     `;
     const paymentMethodsResult = await db.query(paymentMethodsQuery, [req.session.user.id]);
     
+    const flashMessages = req.flash(); // Get flash messages
+    
     res.render('account', {
       title: 'My Account',
+      layout: 'main-layout',
       user: req.session.user,
       orders: ordersResult.rows,
       addresses: addressesResult.rows,
       paymentMethods: paymentMethodsResult.rows,
-      messages: req.session.messages || {}
+      messages: flashMessages // Use flash messages
     });
-    
-    // Clear any flash messages
-    req.session.messages = {};
   } catch (error) {
     console.error('Error loading account page:', error);
-    res.render('account', {
-      title: 'My Account',
-      user: req.session.user,
-      orders: [],
-      addresses: [],
-      paymentMethods: [],
-      messages: {
-        error: 'Failed to load account information. Please try again.'
-      }
+    res.status(500).render('error', {
+      title: 'Error',
+      status: 500,
+      message: 'Failed to load account information. Please try again.',
+      layout: 'main-layout'
     });
   }
 });
@@ -831,6 +823,7 @@ router.post('/subscribe', [
 router.get('/faq', (req, res) => {
   res.render('faq', { 
     title: 'Frequently Asked Questions',
+    layout: 'main-layout',
     user: req.session.user || null
   });
 });
@@ -839,22 +832,25 @@ router.get('/faq', (req, res) => {
 router.get('/shipping', (req, res) => {
   res.render('shipping', { 
     title: 'Shipping & Returns',
+    layout: 'main-layout',
     user: req.session.user || null
   });
 });
 
 // Privacy Policy page
 router.get('/privacy', (req, res) => {
-  res.render('privacy', { 
+  res.render('privacy', {
     title: 'Privacy Policy',
+    layout: 'main-layout',
     user: req.session.user || null
   });
 });
 
 // Terms & Conditions page
 router.get('/terms', (req, res) => {
-  res.render('terms', { 
+  res.render('terms', {
     title: 'Terms & Conditions',
+    layout: 'main-layout',
     user: req.session.user || null
   });
 });
@@ -900,16 +896,7 @@ router.get('/orders', async (req, res) => {
 });
 
 // View individual order details (requires authentication)
-router.get('/orders/:id', async (req, res) => {
-  // Check if user is logged in
-  if (!req.session.user) {
-    req.session.returnTo = `/orders/${req.params.id}`;
-    req.session.messages = {
-      error: 'Please sign in to view order details'
-    };
-    return res.redirect('/login');
-  }
-
+router.get('/orders/:id', auth.isAuthenticated, async (req, res) => {
   try {
     const orderId = req.params.id;
     
@@ -937,6 +924,7 @@ router.get('/orders/:id', async (req, res) => {
     
     res.render('order-detail', {
       title: `Order #${order.id}`,
+      layout: 'main-layout',
       order,
       user: req.session.user
     });
@@ -946,7 +934,8 @@ router.get('/orders/:id', async (req, res) => {
       title: 'Error',
       status: 500,
       message: 'Failed to load order details',
-      error: { status: 500 }
+      error: { status: 500 },
+      layout: 'main-layout'
     });
   }
 });
@@ -1213,6 +1202,34 @@ router.get('/account/payment-methods/new', async (req, res) => {
     stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
     messages: req.session.messages || {}
   });
+});
+
+// Order confirmation page
+router.get('/order-confirmation/:orderId', async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    // Check if this order belongs to the logged-in user or if they are admin
+    const orderDetails = await orderModel.getOrderById(orderId);
+    
+    if (!orderDetails || (req.session.user && orderDetails.user_id !== req.session.user.id && !req.session.user.is_admin)) {
+      req.flash('error', 'You are not authorized to view this order.');
+      return res.redirect('/'); // Redirect to home or login
+    }
+    
+    res.render('order-confirmation', {
+      title: `Order Confirmation #${orderId}`,
+      layout: 'main-layout',
+      order: orderDetails,
+      user: req.session.user || null,
+      messages: req.flash()
+    });
+  } catch (error) {
+    // ... error handling ...
+    res.status(500).render('error', {
+      // ... error variables ...
+      layout: 'main-layout' // <-- Add main layout here too
+    });
+  }
 });
 
 module.exports = router; 

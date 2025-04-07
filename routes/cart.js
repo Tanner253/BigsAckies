@@ -45,6 +45,7 @@ router.get('/', async (req, res) => {
 
     res.render('cart', {
       title: 'Shopping Cart',
+      layout: 'main-layout',
       cart: {
         items: cartItems,
         totalQty,
@@ -409,6 +410,7 @@ router.get('/checkout', async (req, res) => {
 
     res.render('checkout', {
       title: 'Checkout',
+      layout: 'main-layout',
       user: req.session.user,
       cart: {
         items: cartItems,
@@ -426,7 +428,8 @@ router.get('/checkout', async (req, res) => {
       title: 'Error',
       status: 500,
       message: 'An error occurred while loading checkout',
-      error: process.env.NODE_ENV !== 'production' ? error : null
+      error: process.env.NODE_ENV !== 'production' ? error : null,
+      layout: 'main-layout'
     });
   }
 });

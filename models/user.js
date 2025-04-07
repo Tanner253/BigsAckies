@@ -91,6 +91,13 @@ const getTotalUsers = async () => {
   return parseInt(result.rows[0].count);
 };
 
+// Get all users (excluding password)
+const getAllUsers = async () => {
+  const query = 'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC';
+  const result = await db.query(query);
+  return result.rows;
+};
+
 module.exports = {
   getUserByEmail,
   getUserById,
@@ -98,5 +105,6 @@ module.exports = {
   verifyPassword,
   authenticateUser,
   createInitialAdmin,
-  getTotalUsers
+  getTotalUsers,
+  getAllUsers
 }; 

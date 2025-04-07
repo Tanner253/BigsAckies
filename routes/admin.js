@@ -128,6 +128,7 @@ router.get('/dashboard', async (req, res) => {
     
     res.render('admin/dashboard', {
       title: 'Admin Dashboard',
+      layout: 'admin/layout',
       user: req.session.user,
       orderStats,
       unreadMessages,
@@ -137,6 +138,7 @@ router.get('/dashboard', async (req, res) => {
     console.error('Dashboard error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the admin dashboard',
       error: process.env.NODE_ENV !== 'production' ? error : null
@@ -166,6 +168,7 @@ router.get('/products', async (req, res) => {
     
     res.render('admin/products', {
       title: 'Manage Products',
+      layout: 'admin/layout',
       products: productsData.products,
       pagination: productsData.pagination,
       categories,
@@ -177,6 +180,7 @@ router.get('/products', async (req, res) => {
     console.error('Products list error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the products list',
       error: { status: 500 }
@@ -192,6 +196,7 @@ router.get('/products/add', async (req, res) => {
     
     res.render('admin/product-form', {
       title: 'Add New Product',
+      layout: 'admin/layout',
       product: null,
       categories,
       isEdit: false,
@@ -201,6 +206,7 @@ router.get('/products/add', async (req, res) => {
     console.error('Add product form error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the add product form',
       error: { status: 500 }
@@ -237,6 +243,7 @@ router.post('/products/add',
         
         return res.render('admin/product-form', {
           title: 'Add New Product',
+          layout: 'admin/layout',
           product: productData,
           categories,
           errors: errors.array(),
@@ -264,6 +271,7 @@ router.post('/products/add',
           
           return res.render('admin/product-form', {
             title: 'Add New Product',
+            layout: 'admin/layout',
             product: productData,
             categories,
             errors: [{ msg: 'Failed to upload image: ' + uploadResult.error }],
@@ -308,6 +316,7 @@ router.post('/products/add',
       
       res.render('admin/product-form', {
         title: 'Add New Product',
+        layout: 'admin/layout',
         product: productData,
         categories,
         errors: [{ msg: 'An error occurred while adding the product: ' + error.message }],
@@ -330,6 +339,7 @@ router.get('/products/edit/:id', async (req, res) => {
     if (!product) {
       return res.status(404).render('error', {
         title: 'Product Not Found',
+        layout: 'admin/layout',
         status: 404,
         message: 'The requested product does not exist',
         error: { status: 404 }
@@ -341,6 +351,7 @@ router.get('/products/edit/:id', async (req, res) => {
     
     res.render('admin/product-form', {
       title: 'Edit Product',
+      layout: 'admin/layout',
       product,
       categories,
       isEdit: true,
@@ -350,6 +361,7 @@ router.get('/products/edit/:id', async (req, res) => {
     console.error('Edit product form error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the edit product form',
       error: { status: 500 }
@@ -377,6 +389,7 @@ router.post('/products/edit/:id', uploadService.upload.single('image'), [
     if (!errors.isEmpty()) {
       return res.render('admin/product-form', {
         title: 'Edit Product',
+        layout: 'admin/layout',
         product: { ...req.body, id: productId },
         categories,
         errors: errors.array(),
@@ -391,6 +404,7 @@ router.post('/products/edit/:id', uploadService.upload.single('image'), [
     if (!currentProduct) {
       return res.status(404).render('error', {
         title: 'Product Not Found',
+        layout: 'admin/layout',
         status: 404,
         message: 'The requested product does not exist',
         error: { status: 404 }
@@ -405,6 +419,7 @@ router.post('/products/edit/:id', uploadService.upload.single('image'), [
       if (!uploadResult.success) {
         return res.render('admin/product-form', {
           title: 'Edit Product',
+          layout: 'admin/layout',
           product: { ...req.body, id: productId, image_url: currentProduct.image_url },
           categories,
           errors: [{ msg: 'Failed to upload image: ' + uploadResult.error }],
@@ -440,6 +455,7 @@ router.post('/products/edit/:id', uploadService.upload.single('image'), [
     
     res.render('admin/product-form', {
       title: 'Edit Product',
+      layout: 'admin/layout',
       product: { ...req.body, id: req.params.id },
       categories,
       errors: [{ msg: 'An error occurred while updating the product: ' + error.message }],
@@ -478,6 +494,7 @@ router.get('/categories', async (req, res) => {
     
     res.render('admin/categories', {
       title: 'Manage Categories',
+      layout: 'admin/layout',
       categories,
       user: req.session.user
     });
@@ -485,6 +502,7 @@ router.get('/categories', async (req, res) => {
     console.error('Categories list error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the categories list',
       error: { status: 500 }
@@ -592,6 +610,7 @@ router.get('/orders', async (req, res) => {
     
     res.render('admin/orders', {
       title: 'Manage Orders',
+      layout: 'admin/layout',
       orders: ordersData.orders,
       pagination: ordersData.pagination,
       filters: {
@@ -605,6 +624,7 @@ router.get('/orders', async (req, res) => {
     console.error('Orders list error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the orders list',
       error: { status: 500 }
@@ -623,6 +643,7 @@ router.get('/orders/:id', async (req, res) => {
     if (!order) {
       return res.status(404).render('error', {
         title: 'Order Not Found',
+        layout: 'admin/layout',
         status: 404,
         message: 'The requested order does not exist',
         error: { status: 404 }
@@ -631,6 +652,7 @@ router.get('/orders/:id', async (req, res) => {
     
     res.render('admin/order-detail', {
       title: `Order #${order.id}`,
+      layout: 'admin/layout',
       order,
       user: req.session.user
     });
@@ -638,6 +660,7 @@ router.get('/orders/:id', async (req, res) => {
     console.error('Order detail error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the order details',
       error: { status: 500 }
@@ -685,6 +708,7 @@ router.get('/messages', async (req, res) => {
     
     res.render('admin/messages', {
       title: 'Customer Messages',
+      layout: 'admin/layout',
       messages: messagesData.messages,
       pagination: messagesData.pagination,
       activeStatus: status,
@@ -694,6 +718,7 @@ router.get('/messages', async (req, res) => {
     console.error('Messages list error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the messages list',
       error: { status: 500 }
@@ -712,6 +737,7 @@ router.get('/messages/:id', async (req, res) => {
     if (!message) {
       return res.status(404).render('error', {
         title: 'Message Not Found',
+        layout: 'admin/layout',
         status: 404,
         message: 'The requested message does not exist',
         error: { status: 404 }
@@ -726,6 +752,7 @@ router.get('/messages/:id', async (req, res) => {
     
     res.render('admin/message-detail', {
       title: 'Message Details',
+      layout: 'admin/layout',
       message,
       user: req.session.user
     });
@@ -733,6 +760,7 @@ router.get('/messages/:id', async (req, res) => {
     console.error('Message detail error:', error);
     res.status(500).render('error', {
       title: 'Error',
+      layout: 'admin/layout',
       status: 500,
       message: 'Failed to load the message details',
       error: { status: 500 }
@@ -757,6 +785,7 @@ router.post('/messages/:id/reply', [
       
       return res.render('admin/message-detail', {
         title: 'Message Details',
+        layout: 'admin/layout',
         message,
         errors: errors.array(),
         user: req.session.user
@@ -780,11 +809,61 @@ router.post('/messages/:id/reply', [
     
     res.render('admin/message-detail', {
       title: 'Message Details',
+      layout: 'admin/layout',
       message,
       errors: [{
         msg: 'Failed to send the reply. Please try again.'
       }],
       user: req.session.user
+    });
+  }
+});
+
+// Customer management
+router.get('/customers', async (req, res) => {
+  try {
+    // Fetch all users (assuming non-admin users are customers)
+    // You might need to adjust the model function or add filtering based on your user schema
+    const customers = await userModel.getAllUsers(); // Replace placeholder with actual data fetch
+
+    res.render('admin/customers', {
+      title: 'Manage Customers',
+      layout: 'admin/layout',
+      customers, // Pass fetched customers to the view
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Customers list error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      layout: 'admin/layout',
+      status: 500,
+      message: 'Failed to load the customers list',
+      error: { status: 500 }
+    });
+  }
+});
+
+// Settings page (Placeholder)
+router.get('/settings', async (req, res) => {
+  try {
+    // Add logic later to fetch settings
+    const settings = {}; // Placeholder
+
+    res.render('admin/settings', {
+      title: 'Admin Settings',
+      layout: 'admin/layout',
+      settings,
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Settings page error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      layout: 'admin/layout',
+      status: 500,
+      message: 'Failed to load the settings page',
+      error: { status: 500 }
     });
   }
 });

@@ -20,45 +20,6 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="flex h-screen bg-gray-100">
-  <!-- Sidebar Navigation -->
-  <div class="w-64 bg-gray-900 text-white">
-    <div class="p-4 bg-green-700">
-      <h1 class="text-xl font-bold">Reptile E-Commerce Admin</h1>
-    </div>
-    
-    <nav class="mt-4">
-      <a href="/admin/dashboard" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/dashboard' ? 'bg-gray-800' : '' %>">
-        <i class="fas fa-tachometer-alt w-6"></i>
-        <span>Dashboard</span>
-      </a>
-      
-      <a href="/admin/products" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/products' ? 'bg-gray-800' : '' %>">
-        <i class="fas fa-box w-6"></i>
-        <span>Products</span>
-      </a>
-      
-      <a href="/admin/categories" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/categories' ? 'bg-gray-800' : '' %>">
-        <i class="fas fa-tags w-6"></i>
-        <span>Categories</span>
-      </a>
-      
-      <a href="/admin/orders" class="flex items-center px-4 py-3 bg-green-700 hover:bg-green-800 <%= locals.currentPath === '/admin/orders' ? 'bg-green-700' : '' %>">
-        <i class="fas fa-shopping-cart w-6"></i>
-        <span>Orders</span>
-      </a>
-      
-      <a href="/admin/messages" class="flex items-center px-4 py-3 hover:bg-gray-800 <%= locals.currentPath === '/admin/messages' ? 'bg-gray-800' : '' %>">
-        <i class="fas fa-envelope w-6"></i>
-        <span>Messages</span>
-      </a>
-      
-      <a href="/admin/logout" class="flex items-center px-4 py-3 hover:bg-gray-800 mt-auto">
-        <i class="fas fa-sign-out-alt w-6"></i>
-        <span>Logout</span>
-      </a>
-    </nav>
-  </div>
-  
   <!-- Main Content -->
   <div class="flex-1 overflow-auto">
     <header class="bg-white shadow">

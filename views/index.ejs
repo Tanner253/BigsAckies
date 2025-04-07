@@ -1,5 +1,3 @@
-<%- include('partials/header') %>
-
 <div class="bg-green-50">
   <!-- Hero Section -->
   <div class="container mx-auto px-4 py-12 md:py-20">
@@ -38,17 +36,18 @@
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <% if (categories && categories.length > 0) { %>
           <% categories.slice(0, 4).forEach(category => { %>
-            <a href="/products?category=<%= encodeURIComponent(category.name.toLowerCase()) %>" class="category-card hover:no-underline">
-              <div class="relative overflow-hidden rounded-lg h-40 bg-gray-200">
-                <img src="<%= category.name === 'Reptiles' ? 'https://images.pexels.com/photos/53140/snake-ball-python-python-regius-beauty-53140.jpeg?auto=compress&cs=tinysrgb&w=600' :
-                          category.name === 'Feeders' ? 'https://images.pexels.com/photos/27719624/pexels-photo-27719624/free-photo-of-a-person-holding-a-handful-of-cockroaches.jpeg?auto=compress&cs=tinysrgb&w=600' :
-                          category.name === 'Enclosures' ? 'https://images.pexels.com/photos/1466434/pexels-photo-1466434.jpeg?auto=compress&cs=tinysrgb&w=600' :
-                          category.name === 'Heating' ? 'https://images.pexels.com/photos/31142125/pexels-photo-31142125/free-photo-of-crocodile-and-tortoise-under-heat-lamps-in-zoo-habitat.jpeg?auto=compress&cs=tinysrgb&w=600' :
-                          'https://images.pexels.com/photos/45072/pexels-photo-45072.jpeg?auto=compress&cs=tinysrgb&w=600' %>" 
-                     alt="<%= category.name %>" class="w-full h-full object-cover transition duration-500 hover:scale-105" 
-                     onerror="this.src='https://via.placeholder.com/300x200?text=<%= category.name %>';this.onerror='';">
-                <div class="category-name absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-                  <h3 class="font-semibold text-white text-lg"><%= category.name %></h3>
+            <a href="/shop?category=<%= category.id %>" class="block group">
+              <div class="relative overflow-hidden rounded-lg h-40">
+                <% if (category.image_url) { %>
+                  <img src="<%= category.image_url %>" alt="<%= category.name %>" class="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105">
+                <% } else { %>
+                  <div class="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500">No Image</div>
+                <% } %>
+                <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span class="text-white text-lg font-semibold"><%= category.name %></span>
+                </div>
+                <div class="category-name absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-60 group-hover:bg-opacity-75 transition-colors duration-300">
+                  <h3 class="text-white text-center text-sm font-medium truncate"><%= category.name %></h3>
                 </div>
               </div>
             </a>
@@ -56,7 +55,7 @@
         <% } else { %>
           <!-- Fallback cards if no categories are found -->
           <a href="/products?category=reptiles" class="category-card hover:no-underline">
-            <div class="relative overflow-hidden rounded-lg h-40 bg-gray-200">
+            <div class="relative overflow-hidden rounded-lg h-40">
               <img src="https://images.pexels.com/photos/53140/snake-ball-python-python-regius-beauty-53140.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Reptiles" class="w-full h-full object-cover transition duration-500 hover:scale-105" onerror="this.src='https://via.placeholder.com/300x200?text=Reptiles';this.onerror='';">
               <div class="category-name absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
                 <h3 class="font-semibold text-white text-lg">Reptiles</h3>
@@ -65,7 +64,7 @@
           </a>
           
           <a href="/products?category=feeders" class="category-card hover:no-underline">
-            <div class="relative overflow-hidden rounded-lg h-40 bg-gray-200">
+            <div class="relative overflow-hidden rounded-lg h-40">
               <img src="https://images.pexels.com/photos/27719624/pexels-photo-27719624/free-photo-of-a-person-holding-a-handful-of-cockroaches.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Feeders" class="w-full h-full object-cover transition duration-500 hover:scale-105" onerror="this.src='https://via.placeholder.com/300x200?text=Feeders';this.onerror='';">
               <div class="category-name absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
                 <h3 class="font-semibold text-white text-lg">Feeders</h3>
@@ -74,7 +73,7 @@
           </a>
           
           <a href="/products?category=enclosures" class="category-card hover:no-underline">
-            <div class="relative overflow-hidden rounded-lg h-40 bg-gray-200">
+            <div class="relative overflow-hidden rounded-lg h-40">
               <img src="https://images.pexels.com/photos/1466434/pexels-photo-1466434.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Enclosures" class="w-full h-full object-cover transition duration-500 hover:scale-105" onerror="this.src='https://via.placeholder.com/300x200?text=Enclosures';this.onerror='';">
               <div class="category-name absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
                 <h3 class="font-semibold text-white text-lg">Enclosures</h3>
@@ -83,7 +82,7 @@
           </a>
           
           <a href="/products?category=accessories" class="category-card hover:no-underline">
-            <div class="relative overflow-hidden rounded-lg h-40 bg-gray-200">
+            <div class="relative overflow-hidden rounded-lg h-40">
               <img src="https://images.pexels.com/photos/7728706/pexels-photo-7728706.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Accessories" class="w-full h-full object-cover transition duration-500 hover:scale-105" onerror="this.src='https://via.placeholder.com/300x200?text=Accessories';this.onerror='';">
               <div class="category-name absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
                 <h3 class="font-semibold text-white text-lg">Accessories</h3>
@@ -196,6 +195,4 @@
       </div>
     </div>
   </div>
-</div>
-
-<%- include('partials/footer') %> 
+</div> 

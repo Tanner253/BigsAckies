@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Biggs Ackies</title>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS (assuming it's compiled and served from public/css) -->
+  <link href="/css/tailwind.css" rel="stylesheet">
+
+  <!-- Alpine.js (example, include if used globally) -->
+  <script src="https://unpkg.com/alpinejs" defer></script>
+
+  <!-- Custom Styles (if any) -->
+  <style>
+    /* Add any global layout styles here */
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .line-clamp-1 {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+    }
+    .line-clamp-2 {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+
+  <%- include('partials/header') %>
+
+  <main class="flex-grow">
+    <%- body %>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <!-- Global Scripts (e.g., analytics, main JS file) -->
+  <script src="/js/main.js"></script> <!-- Example main JS file -->
+
+</body>
+</html> 

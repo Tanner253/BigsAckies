@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Admin</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <style>
+    .sidebar {
+      height: calc(100vh - 64px); /* Full height minus header */
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        height: auto;
+        /* Removed 'hidden' class addition/toggle logic - will be handled by script */
+      }
+      .sidebar.hidden-mobile { /* Use a specific class for mobile hiding */
+          display: none;
+      }
+    }
+    body {
+      font-family: 'Inter', sans-serif; /* Apply font globally */
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <!-- Admin Header -->
+  <header class="bg-green-700 text-white">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between py-4">
+        <div class="flex items-center">
+          <a href="/admin/dashboard" class="font-bold text-xl">Reptile E-Commerce Admin</a>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <span class="hidden md:inline-block">
+            <% if (locals.user) { %>
+              Welcome, <%= user.name || user.email %>
+            <% } else { %>
+              Welcome, Admin
+            <% } %>
+          </span>
+          <a href="/admin/logout" class="text-white hover:text-green-200 transition">
+            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+          </a>
+          <!-- Mobile Sidebar Toggle Button Placeholder -->
+          <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <div id="admin-sidebar" class="w-full md:w-64 bg-gray-800 text-white sidebar overflow-y-auto hidden-mobile md:block">
+      <nav class="p-4">
+        <ul class="space-y-2">
+          <li>
+            <a href="/admin/dashboard" class="block py-2 px-3 rounded <%= locals.currentPath === '/admin/dashboard' ? 'bg-green-600' : 'hover:bg-gray-700' %>">
+              <i class="fas fa-tachometer-alt w-6 text-center"></i>
+              <span class="ml-2">Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/products" class="block py-2 px-3 rounded <%= locals.currentPath && locals.currentPath.startsWith('/admin/products') ? 'bg-green-600' : 'hover:bg-gray-700' %>">
+              <i class="fas fa-box w-6 text-center"></i>
+              <span class="ml-2">Products</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/categories" class="block py-2 px-3 rounded <%= locals.currentPath && locals.currentPath.startsWith('/admin/categories') ? 'bg-green-600' : 'hover:bg-gray-700' %>">
+              <i class="fas fa-tags w-6 text-center"></i>
+              <span class="ml-2">Categories</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/orders" class="block py-2 px-3 rounded <%= locals.currentPath && locals.currentPath.startsWith('/admin/orders') ? 'bg-green-600' : 'hover:bg-gray-700' %>">
+              <i class="fas fa-shopping-cart w-6 text-center"></i>
+              <span class="ml-2">Orders</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/customers" class="block py-2 px-3 rounded <%= locals.currentPath && locals.currentPath.startsWith('/admin/customers') ? 'bg-green-600' : 'hover:bg-gray-700' %>">
+              <i class="fas fa-users w-6 text-center"></i>
+              <span class="ml-2">Customers</span>
+            </a>
+          </li>
+           <li>
+            <a href="/admin/messages" class="block py-2 px-3 rounded <%= locals.currentPath && locals.currentPath.startsWith('/admin/messages') ? 'bg-green-600' : 'hover:bg-gray-700' %>">
+              <i class="fas fa-envelope w-6 text-center"></i>
+              <span class="ml-2">Messages</span>
+              <% if (locals.unreadMessages && unreadMessages > 0) { %>
+                <span class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1"><%= unreadMessages %></span>
+              <% } %>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/settings" class="block py-2 px-3 rounded <%= locals.currentPath && locals.currentPath.startsWith('/admin/settings') ? 'bg-green-600' : 'hover:bg-gray-700' %>">
+              <i class="fas fa-cog w-6 text-center"></i>
+              <span class="ml-2">Settings</span>
+            </a>
+          </li>
+          <li class="border-t border-gray-700 pt-2 mt-2">
+            <a href="/" target="_blank" class="block py-2 px-3 rounded hover:bg-gray-700">
+              <i class="fas fa-home w-6 text-center"></i>
+              <span class="ml-2">Visit Website</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6 overflow-y-auto" style="height: calc(100vh - 64px);"> <!-- Ensure main content also scrolls -->
+      <%- body %>
+    </div>
+  </div>
+
+  <script>
+    // Mobile sidebar toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('admin-sidebar');
+      const toggleBtn = document.getElementById('mobile-menu-button');
+
+      // Check if elements exist before adding listeners
+      if (sidebar && toggleBtn) {
+          toggleBtn.addEventListener('click', function(event) {
+              event.stopPropagation(); // Prevent click from bubbling up
+              sidebar.classList.toggle('hidden-mobile'); // Use the specific mobile class
+          });
+
+           // Optional: Close sidebar if clicking outside of it on mobile
+           document.addEventListener('click', function(event) {
+                if (window.innerWidth < 768 && !sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    if (!sidebar.classList.contains('hidden-mobile')) {
+                         sidebar.classList.add('hidden-mobile');
+                    }
+                }
+           });
+
+          // Set initial state based on screen size
+          if (window.innerWidth >= 768) {
+            sidebar.classList.remove('hidden-mobile'); // Ensure visible on desktop
+          } else {
+            sidebar.classList.add('hidden-mobile'); // Ensure hidden on mobile initially
+          }
+      } else {
+          console.error("Sidebar or toggle button not found.");
+      }
+
+      // Handle window resize to ensure correct state
+      window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+            sidebar.classList.remove('hidden-mobile');
+        } else {
+            // Only hide if it wasn't manually opened
+            if (!sidebar.classList.contains('hidden-mobile')) {
+               // sidebar.classList.add('hidden-mobile'); // Reconsider this - might hide an intentionally opened menu
+            }
+        }
+      });
+    });
+  </script>
+</body>
+</html> 
