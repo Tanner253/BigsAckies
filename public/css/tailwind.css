@@ -1968,7 +1968,6 @@ body {
 }
 
 .category-card img {
-  height: 8rem;
   width: 100%;
   -o-object-fit: cover;
      object-fit: cover;
