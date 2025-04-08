@@ -135,8 +135,7 @@ app.use((req, res, next) => {
   // Clear flash messages after setting them in locals
   req.session.messages = {};
   
-  // Temporarily bypass database cart fetching for debugging
-  /*
+  // Restore database cart fetching logic
   // If user is logged in, fetch cart data from database
   if (req.session.user) {
     db.query(
@@ -170,8 +169,6 @@ app.use((req, res, next) => {
   } else {
     next();
   }
-  */
-  next(); // Call next() immediately for now
 });
 
 // Socket.IO connection handler

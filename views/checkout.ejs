@@ -210,68 +210,55 @@
 
 <%# Start: Replaced Script - Copied from stripe-test.ejs logic %>
 <script>
-  // Debug logger (Optional, can keep or remove for cleaner code if test passes)
-  function log(message, type = 'info') {
-    const logOutput = document.getElementById('log-output'); // Assumes log-output exists if using this
-    if (logOutput) {
-       const logEntry = document.createElement('p');
-       logEntry.style.margin = '5px 0';
-       if (type === 'error') logEntry.style.color = '#e53e3e';
-       logEntry.textContent = `[${type.toUpperCase()}] ${message}`;
-       logOutput.appendChild(logEntry);
-    }
-    if (type === 'error') console.error(message); else console.log(message);
-  }
-  
   document.addEventListener('DOMContentLoaded', async function() {
-    log('Checkout page loaded, initializing Stripe...');
+    // log('Checkout page loaded, initializing Stripe...'); // Removed debug log
     
     // DOM elements for checkout page
-    const form = document.getElementById('checkout-form'); // Use checkout form ID
-    const submitButton = form.querySelector('button[type="submit"]'); // Get button within the checkout form
-    const paymentMessage = document.getElementById('payment-message'); // Use checkout message ID
-    const loadingOverlay = document.getElementById('loading-overlay'); // Overlay for checkout
+    const form = document.getElementById('checkout-form');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const paymentMessage = document.getElementById('payment-message');
+    const loadingOverlay = document.getElementById('loading-overlay');
 
-    // Get Stripe parameters from server (using EJS syntax for checkout)
+    // Get Stripe parameters from server
     const publicKey = '<%= stripePublicKey %>';
     const clientSecret = '<%= clientSecret %>';
     
     if (!publicKey || !clientSecret) {
-      log('Missing Stripe configuration (public key or client secret)', 'error');
+      console.error('Stripe config missing: PK or CS'); // Keep essential error
       showMessage('Payment configuration is incomplete. Please contact support.');
       return;
     }
     
     if (!form) {
-        log('Checkout form not found!', 'error');
+        console.error('Checkout form not found!'); // Keep essential error
         return;
     }
      if (!submitButton) {
-        log('Submit button not found in checkout form!', 'error');
+        console.error('Submit button not found!'); // Keep essential error
         return;
     }
      if (!paymentMessage) {
-        log('Payment message element not found!', 'error');
+        console.error('Payment message element not found!'); // Keep essential error
         return;
     }
 
     // Initialize Stripe
     let stripe;
     try {
-      log(`Initializing Stripe with public key ${publicKey.substring(0, 8)}...`);
+      // log(`Initializing Stripe with public key ${publicKey.substring(0, 8)}...`); // Removed debug log
       stripe = Stripe(publicKey);
-      log('Stripe initialized successfully');
+      // log('Stripe initialized successfully'); // Removed debug log
     } catch (error) {
-      log(`Error initializing Stripe: ${error.message}`, 'error');
+      console.error('Error initializing Stripe:', error); // Keep essential error
       showMessage('Failed to initialize payment system. Please try again later.');
       return;
     }
     
-    // Create the Elements instance (using checkout appearance)
+    // Create the Elements instance
     const appearance = {
       theme: 'stripe',
        variables: {
-        colorPrimary: '#10b981', // Green color from original checkout
+        colorPrimary: '#10b981',
         colorBackground: '#ffffff',
         colorText: '#30313d',
         colorDanger: '#ef4444',
@@ -283,49 +270,47 @@
     
     let elements;
     try {
-      log('Creating Elements instance...');
+      // log('Creating Elements instance...'); // Removed debug log
       elements = stripe.elements({
         clientSecret,
         appearance
       });
-      log('Elements instance created successfully');
+      // log('Elements instance created successfully'); // Removed debug log
     } catch (error) {
-      log(`Error creating Elements: ${error.message}`, 'error');
+      console.error('Error creating Stripe Elements:', error); // Keep essential error
       showMessage('Failed to create payment elements. Please try again later.');
       return;
     }
     
     // Create and mount the Payment Element
     try {
-      log('Creating Payment Element...');
+      // log('Creating Payment Element...'); // Removed debug log
       const paymentElement = elements.create('payment');
-      log('Payment Element created, now mounting...');
+      // log('Payment Element created, now mounting...'); // Removed debug log
       
       const container = document.getElementById('payment-element');
       if (!container) {
-        log('Payment element container (#payment-element) not found!', 'error');
+        console.error('#payment-element container not found!'); // Keep essential error
         showMessage('An error occurred displaying the payment form.');
         return;
       }
       
       paymentElement.mount('#payment-element');
-      log('Payment Element mounted successfully');
+      // log('Payment Element mounted successfully'); // Removed debug log
       
-      // Listen for ready event (hides the original checkout spinner if needed)
+      // Listen for ready event
       paymentElement.on('ready', function() {
-        log('Payment Element is ready');
-        // Original checkout had a #payment-loading div, removing it now
-        // const loadingDiv = document.getElementById('payment-loading');
-        // if (loadingDiv) loadingDiv.style.display = 'none';
+        // log('Payment Element is ready'); // Removed debug log
+        // No loading spinner to hide anymore
       });
       
       // Listen for errors
       paymentElement.on('loaderror', function(event) {
-        log(`Error loading Payment Element: ${event.error.message}`, 'error');
+        console.error('Error loading Payment Element:', event.error); // Keep essential error
         showMessage(`Failed to load payment form: ${event.error.message}`);
       });
     } catch (error) {
-      log(`Error with Payment Element: ${error.message}`, 'error');
+      console.error('Error with Payment Element creation/mount:', error); // Keep essential error
       showMessage('Failed to set up payment form. Please try again later.');
       return;
     }
@@ -343,33 +328,30 @@
       // Show checkout loading overlay, disable button
       if (loadingOverlay) loadingOverlay.classList.remove('hidden');
       submitButton.disabled = true;
-      paymentMessage.classList.add('hidden'); // Hide previous errors
+      paymentMessage.classList.add('hidden');
       
       try {
-        log('Confirming payment via checkout form...');
+        // log('Confirming payment via checkout form...'); // Removed debug log
         const { error } = await stripe.confirmPayment({
           elements,
           confirmParams: {
-            return_url: window.location.origin + '/checkout/complete' // Redirect to completion route
+            return_url: window.location.origin + '/checkout/complete'
           }
         });
         
         if (error) {
-          log(`Payment confirmation error: ${error.message}`, 'error');
+          console.error('Payment confirmation error:', error); // Keep essential error
           showMessage(error.message);
           
-          // Hide overlay, re-enable button on error
           if (loadingOverlay) loadingOverlay.classList.add('hidden');
           submitButton.disabled = false;
         } 
-        // If no error, Stripe handles the redirect to return_url
-        // No 'else' block needed here typically
+        // Stripe handles redirect on success
         
       } catch (error) {
-        log(`Exception during payment confirmation: ${error.message}`, 'error');
+        console.error('Exception during payment confirmation:', error); // Keep essential error
         showMessage('A system error occurred. Please try again later.');
         
-        // Hide overlay, re-enable button on exception
         if (loadingOverlay) loadingOverlay.classList.add('hidden');
         submitButton.disabled = false;
       }
