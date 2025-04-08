@@ -6,7 +6,9 @@ const categoryModel = require('../models/category');
 const orderModel = require('../models/order');
 const messageModel = require('../models/message');
 const userModel = require('../models/user');
+const paymentService = require('../services/paymentService');
 const newsletterModel = require('../models/newsletter');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const db = require('../models/database');
 const auth = require('../middleware/auth');
 
@@ -265,6 +267,275 @@ router.get('/shop/:id', async (req, res) => {
   }
 });
 
+// Checkout page
+router.get('/checkout', async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.redirect('/login');
+    }
+
+    // Get user's cart
+    const cartResult = await db.query(
+      'SELECT * FROM carts WHERE user_id = $1',
+      [req.session.user.id]
+    );
+
+    if (cartResult.rows.length === 0) {
+      return res.redirect('/cart');
+    }
+
+    const cart = cartResult.rows[0];
+
+    // Get cart items with product details
+    const itemsResult = await db.query(`
+      SELECT ci.*, p.name, p.price, p.stock
+      FROM cart_items ci
+      JOIN products p ON ci.product_id = p.id
+      WHERE ci.cart_id = $1
+    `, [cart.id]);
+
+    const cartItems = itemsResult.rows.map(item => ({
+      ...item,
+      price: parseFloat(item.price),
+      total: parseFloat(item.price) * item.quantity
+    }));
+    
+    // Redirect to cart if empty
+    if (cartItems.length === 0) {
+      return res.redirect('/cart');
+    }
+
+    // Validate cart items against current stock
+    const invalidItems = [];
+    for (const item of cartItems) {
+      if (item.quantity > item.stock) {
+        invalidItems.push({
+          id: item.product_id,
+          name: item.name,
+          reason: `Only ${item.stock} units available in stock`,
+          availableQuantity: item.stock
+        });
+      }
+    }
+
+    if (invalidItems.length > 0) {
+      req.session.cartError = 'Some items in your cart are no longer available in the requested quantity.';
+      return res.redirect('/cart');
+    }
+
+    const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    res.render('checkout', {
+      title: 'Checkout',
+      cart: {
+        items: cartItems,
+        totalQty,
+        totalPrice
+      },
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+      csrfToken: req.csrfToken()
+    });
+  } catch (error) {
+    console.error('Error loading checkout:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      status: 500,
+      message: 'An error occurred while loading checkout',
+      error: process.env.NODE_ENV !== 'production' ? error : null
+    });
+  }
+});
+
+// Process order
+router.post('/checkout', [
+  body('email').isEmail().withMessage('Please enter a valid email address'),
+  body('name').notEmpty().withMessage('Please enter your name'),
+  body('address').notEmpty().withMessage('Please enter your address'),
+  body('city').notEmpty().withMessage('Please enter your city'),
+  body('state').notEmpty().withMessage('Please enter your state/province'),
+  body('zip').notEmpty().withMessage('Please enter your postal/zip code'),
+  body('payment_method_id').notEmpty().withMessage('Payment information is required')
+], async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+    
+    // Get user's cart
+    const cartResult = await db.query(
+      'SELECT * FROM carts WHERE user_id = $1',
+      [req.session.user.id]
+    );
+
+    if (cartResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cart not found'
+      });
+    }
+
+    const cart = cartResult.rows[0];
+
+    // Get cart items with product details
+    const itemsResult = await db.query(`
+      SELECT ci.*, p.name, p.price, p.stock
+      FROM cart_items ci
+      JOIN products p ON ci.product_id = p.id
+      WHERE ci.cart_id = $1
+    `, [cart.id]);
+
+    const cartItems = itemsResult.rows;
+    
+    // Ensure cart is not empty
+    if (cartItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Your cart is empty'
+      });
+    }
+
+    // Validate cart items against current stock
+    const invalidItems = [];
+    for (const item of cartItems) {
+      if (item.quantity > item.stock) {
+        invalidItems.push({
+          id: item.product_id,
+          name: item.name,
+          reason: `Only ${item.stock} units available in stock`,
+          availableQuantity: item.stock
+        });
+      }
+    }
+
+    if (invalidItems.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Some items in your cart are no longer available in the requested quantity.',
+        invalidItems
+      });
+    }
+
+    // Format shipping address
+    const {
+      name,
+      address,
+      city,
+      state,
+      zip,
+      country,
+      email,
+      payment_method_id
+    } = req.body;
+    
+    const shippingAddress = `${name}\n${address}\n${city}, ${state} ${zip}\n${country || 'USA'}`;
+    
+    // Process payment
+    const paymentResult = await paymentService.processPayment({
+      amount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+      paymentMethodId: payment_method_id,
+      description: `Order from Reptile E-Commerce - ${cartItems.length} items`,
+      metadata: {
+        email,
+        items_count: cartItems.length.toString()
+      }
+    });
+    
+    if (!paymentResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment failed: ' + paymentResult.error
+      });
+    }
+    
+    // Create order
+    const orderData = {
+      user_id: req.session.user ? req.session.user.id : null,
+      total_amount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+      shipping_address: shippingAddress
+    };
+    
+    const orderItems = cartItems.map(item => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price_at_time: item.price
+    }));
+    
+    const order = await orderModel.createOrder(orderData, orderItems);
+    
+    // Send confirmation email
+    await paymentService.sendOrderConfirmationEmail(order, email);
+    
+    // Clear cart after successful order
+    await db.query(
+      'DELETE FROM cart_items WHERE cart_id = $1',
+      [cart.id]
+    );
+    
+    return res.json({
+      success: true,
+      orderId: order.id,
+      redirect: `/checkout/success?order_id=${order.id}`
+    });
+  } catch (error) {
+    console.error('Checkout error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred during checkout. Please try again.'
+    });
+  }
+});
+
+// Order success page
+router.get('/checkout/success', async (req, res) => {
+  try {
+    const orderId = req.query.order_id;
+    
+    // If no order ID, show generic success
+    if (!orderId) {
+      return res.render('order-confirmation', {
+        title: 'Order Successful',
+        order: null
+      });
+    }
+    
+    // Get order details
+    const order = await orderModel.getOrderById(orderId);
+    
+    if (!order) {
+      return res.render('order-confirmation', {
+        title: 'Order Successful',
+        order: null,
+        error: 'Order not found or access denied.'
+      });
+    }
+
+    // Optional: Check if the order belongs to the logged-in user
+    if (req.session.user && order.user_id !== req.session.user.id) {
+       return res.status(403).render('error', {
+           title: 'Access Denied',
+           status: 403,
+           message: 'You do not have permission to view this order.'
+       });
+    }
+
+    res.render('order-confirmation', {
+      title: 'Order Successful',
+      order
+    });
+  } catch (error) {
+    console.error('Error rendering success page:', error);
+    // Render the confirmation page even on error, but indicate an issue
+    res.render('order-confirmation', {
+      title: 'Order Successful',
+      order: null,
+      error: 'An unexpected error occurred while retrieving order details.'
+    });
+  }
+});
+
 // Customer message/chat
 router.post('/message', [
   body('name').notEmpty().withMessage('Please enter your name'),
@@ -455,19 +726,69 @@ router.get('/logout', (req, res) => {
   res.redirect('/');
 });
 
-// User account page (profile, orders, etc.)
-router.get('/account', auth.isAuthenticated, async (req, res) => {
+// Redirect /account to /account/profile
+router.get('/account', auth.isAuthenticated, (req, res) => {
+  res.redirect('/account/profile');
+});
+
+// Account Profile Page
+router.get('/account/profile', auth.isAuthenticated, async (req, res) => {
+  try {
+    // User data is already in req.session.user thanks to auth.isAuthenticated
+    res.render('account/profile', {
+      title: 'Personal Information',
+      layout: 'layouts/account-layout', // Use the new account layout
+      user: req.session.user,
+      messages: req.session.messages || {}, // Use session messages
+      currentPath: '/account/profile' // For sidebar active state
+    });
+    delete req.session.messages; // Clear messages after reading
+  } catch (error) {
+    console.error('Error loading profile page:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      status: 500,
+      message: 'Failed to load profile information. Please try again.',
+      layout: 'layouts/account-layout' // Use account layout for error too
+    });
+  }
+});
+
+// Account Orders Page
+router.get('/account/orders', auth.isAuthenticated, async (req, res) => {
   try {
     // Get user's orders
     const ordersQuery = `
-      SELECT o.*, o.total_amount as total, u.email as user_email
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
+      SELECT o.*, o.total_amount as total 
+      FROM orders o 
       WHERE o.user_id = $1
       ORDER BY o.created_at DESC
     `;
     const ordersResult = await db.query(ordersQuery, [req.session.user.id]);
-    
+
+    res.render('account/orders', {
+      title: 'Order History',
+      layout: 'layouts/account-layout',
+      user: req.session.user,
+      orders: ordersResult.rows,
+      messages: req.session.messages || {},
+      currentPath: '/account/orders'
+    });
+    delete req.session.messages;
+  } catch (error) {
+    console.error('Error loading orders page:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      status: 500,
+      message: 'Failed to load order history. Please try again.',
+      layout: 'layouts/account-layout'
+    });
+  }
+});
+
+// Account Addresses Page
+router.get('/account/addresses', auth.isAuthenticated, async (req, res) => {
+  try {
     // Get user's addresses
     const addressesQuery = `
       SELECT * FROM addresses 
@@ -475,23 +796,23 @@ router.get('/account', auth.isAuthenticated, async (req, res) => {
       ORDER BY is_default DESC, created_at DESC
     `;
     const addressesResult = await db.query(addressesQuery, [req.session.user.id]);
-    
-    res.render('account', {
-      title: 'My Account',
-      layout: 'main-layout',
+
+    res.render('account/addresses', {
+      title: 'My Addresses',
+      layout: 'layouts/account-layout',
       user: req.session.user,
-      orders: ordersResult.rows,
       addresses: addressesResult.rows,
-      messages: req.session.messages || {} // Use session messages
+      messages: req.session.messages || {},
+      currentPath: '/account/addresses'
     });
-    delete req.session.messages; // Clear messages after reading
+    delete req.session.messages;
   } catch (error) {
-    console.error('Error loading account page:', error);
+    console.error('Error loading addresses page:', error);
     res.status(500).render('error', {
       title: 'Error',
       status: 500,
-      message: 'Failed to load account information. Please try again.',
-      layout: 'main-layout'
+      message: 'Failed to load addresses. Please try again.',
+      layout: 'layouts/account-layout'
     });
   }
 });
@@ -662,41 +983,42 @@ router.get('/orders/:id', auth.isAuthenticated, async (req, res) => {
 });
 
 // Address management routes
-router.post('/account/addresses/new', async (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: 'Please sign in to continue' });
+router.post('/account/addresses', auth.isAuthenticated, [
+  body('name', 'Full Name is required').notEmpty(),
+  body('street', 'Street Address is required').notEmpty(),
+  body('city', 'City is required').notEmpty(),
+  body('state', 'State is required').notEmpty(),
+  body('zip', 'ZIP Code is required').notEmpty(),
+  body('phone', 'Phone Number is required').notEmpty(),
+], async (req, res) => {
+  
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    req.session.messages = { error: errors.array().map(e => e.msg).join(', ') };
+    return res.redirect('/account/addresses/new'); 
   }
-
+  
   try {
     const { name, street, city, state, zip, country, phone } = req.body;
-    
-    // Check if this is the first address (make it default)
-    const addressCount = await db.query('SELECT COUNT(*) FROM addresses WHERE user_id = $1', [req.session.user.id]);
-    const isDefault = parseInt(addressCount.rows[0].count) === 0;
-    
-    const query = `
-      INSERT INTO addresses (
-        user_id, name, street, city, state, zip, country, phone, is_default
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *
-    `;
-    
-    const result = await db.query(query, [
-      req.session.user.id,
-      name,
-      street,
-      city,
-      state,
-      zip,
-      country,
-      phone,
-      isDefault
-    ]);
+    const userId = req.session.user.id;
 
-    res.json({ success: true, address: result.rows[0] });
+    // Check if this is the first address (make it default)
+    const addressCountResult = await db.query('SELECT COUNT(*) FROM addresses WHERE user_id = $1', [userId]);
+    const isDefault = parseInt(addressCountResult.rows[0].count) === 0;
+
+    const query = `
+      INSERT INTO addresses (user_id, name, street, city, state, zip, country, phone, is_default)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `;
+    await db.query(query, [userId, name, street, city, state, zip, country || 'USA', phone, isDefault]);
+
+    req.session.messages = { success: 'Address added successfully.' };
+    res.redirect('/account/addresses');
+
   } catch (error) {
     console.error('Error adding address:', error);
-    res.status(500).json({ error: 'Failed to add address' });
+    req.session.messages = { error: 'Failed to add address. Please try again.' };
+    res.redirect('/account/addresses/new');
   }
 });
 
@@ -785,9 +1107,34 @@ router.get('/account/addresses/new', async (req, res) => {
 
   res.render('address/new', {
     title: 'Add New Address',
+    layout: 'layouts/account-layout',
     user: req.session.user,
-    messages: req.session.messages || {}
+    messages: req.session.messages || {},
+    currentPath: '/account/addresses',
+    csrfToken: req.csrfToken()
   });
+  delete req.session.messages;
+});
+
+router.get('/account/payment-methods/new', async (req, res) => {
+  if (!req.session.user) {
+    req.session.returnTo = '/account/payment-methods/new';
+    req.session.messages = {
+      error: 'Please sign in to add a new payment method'
+    };
+    return res.redirect('/login');
+  }
+
+  res.render('payment/new', {
+    title: 'Add New Payment Method',
+    layout: 'layouts/account-layout',
+    user: req.session.user,
+    stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+    messages: req.session.messages || {},
+    currentPath: '/account/payment-methods',
+    csrfToken: req.csrfToken()
+  });
+  delete req.session.messages;
 });
 
 // Order confirmation page

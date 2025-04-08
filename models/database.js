@@ -158,6 +158,7 @@ async function setupDatabase() {
         state VARCHAR(100) NOT NULL,
         zip_code VARCHAR(20) NOT NULL,
         country VARCHAR(100) NOT NULL,
+        phone VARCHAR(50),
         is_default BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

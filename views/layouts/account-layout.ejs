@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Biggs Ackies Account</title> <!-- Specific title -->
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <link href="/css/tailwind.css" rel="stylesheet">
+
+  <!-- Alpine.js -->
+  <script src="https://unpkg.com/alpinejs" defer></script>
+
+  <!-- Custom Styles -->
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Removed account-nav-link styles as they will be applied directly */
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+
+  <%- include('../partials/header') %> <!-- Adjusted path for partial -->
+
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8"><%= title %></h1>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Account Navigation Sidebar -->
+      <div class="lg:w-1/4">
+        <div class="bg-white rounded-lg shadow-md p-4 sm:p-6"> <!-- Slightly less padding on small screens -->
+          <div class="mb-6 pb-4 border-b border-gray-200"> <!-- Added bottom border -->
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 flex-shrink-0">
+                <i class="fas fa-user text-xl"></i>
+              </div>
+              <div class="ml-3 overflow-hidden">
+                <h3 class="text-lg font-semibold text-gray-900 truncate"><%= locals.user ? user.name : 'Guest' %></h3>
+                <p class="text-sm text-gray-500 truncate"><%= locals.user ? user.email : '' %></p>
+              </div>
+            </div>
+          </div>
+
+          <nav class="space-y-2"> <!-- Increased spacing between links -->
+            <% 
+              const baseLinkClasses = "flex items-center px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-green-50 hover:text-green-700 group transition duration-150 ease-in-out";
+              const activeLinkClasses = "bg-green-100 text-green-800 font-semibold hover:bg-green-100 hover:text-green-800"; // Active state overrides hover
+              const iconClasses = "w-5 h-5 mr-3 text-gray-400 group-hover:text-green-600 flex-shrink-0";
+              const activeIconClasses = "text-green-700 group-hover:text-green-700"; 
+            %>
+            
+            <a href="/account/profile"
+               class="<%= baseLinkClasses %> <%= locals.currentPath === '/account/profile' ? activeLinkClasses : '' %>">
+               <i class="fas fa-user-edit <%= iconClasses %> <%= locals.currentPath === '/account/profile' ? activeIconClasses : '' %>"></i>
+               Personal Information
+            </a>
+            <a href="/account/orders"
+               class="<%= baseLinkClasses %> <%= locals.currentPath === '/account/orders' ? activeLinkClasses : '' %>">
+               <i class="fas fa-receipt <%= iconClasses %> <%= locals.currentPath === '/account/orders' ? activeIconClasses : '' %>"></i>
+               Order History
+            </a>
+            <a href="/account/addresses"
+               class="<%= baseLinkClasses %> <%= locals.currentPath === '/account/addresses' ? activeLinkClasses : '' %>">
+               <i class="fas fa-map-marker-alt <%= iconClasses %> <%= locals.currentPath === '/account/addresses' ? activeIconClasses : '' %>"></i>
+               Addresses
+            </a>
+            
+            <!-- Separator -->
+            <div class="pt-2 mt-2 border-t border-gray-200"></div> 
+            
+            <a href="/logout" 
+               class="flex items-center px-3 py-3 rounded-md text-base font-medium text-red-600 hover:bg-red-50 hover:text-red-700 group transition duration-150 ease-in-out">
+               <i class="fas fa-sign-out-alt w-5 h-5 mr-3 text-red-400 group-hover:text-red-600 flex-shrink-0"></i>
+              Sign Out
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Account Content Area -->
+      <div class="lg:w-3/4">
+        <!-- The specific view content will be injected here -->
+        <%- body %>
+      </div>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %> <!-- Adjusted path for partial -->
+
+  <!-- Add any account-specific global scripts here if needed -->
+
+</body>
+</html> 
