@@ -740,7 +740,8 @@ router.get('/account/profile', auth.isAuthenticated, async (req, res) => {
       layout: 'layouts/account-layout', // Use the new account layout
       user: req.session.user,
       messages: req.session.messages || {}, // Use session messages
-      currentPath: '/account/profile' // For sidebar active state
+      currentPath: '/account/profile', // For sidebar active state
+      csrfToken: req.csrfToken() // Pass CSRF token
     });
     delete req.session.messages; // Clear messages after reading
   } catch (error) {
@@ -753,6 +754,52 @@ router.get('/account/profile', auth.isAuthenticated, async (req, res) => {
     });
   }
 });
+
+// Handle Profile Update (POST)
+router.post('/account/update-profile', 
+  auth.isAuthenticated, 
+  [
+    body('name', 'Name is required').notEmpty(),
+    body('email', 'Valid email is required').isEmail().normalizeEmail()
+    // Add validation for phone if needed
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.session.messages = { error: errors.array().map(e => e.msg).join(', ') };
+      return res.redirect('/account/profile');
+    }
+
+    const { name, email } = req.body;
+    const userId = req.session.user.id;
+
+    try {
+      // Check if email is changing and if it's already taken by another user
+      if (email !== req.session.user.email) {
+        const existingUser = await userModel.findUserByEmail(email);
+        if (existingUser && existingUser.id !== userId) {
+          req.session.messages = { error: 'Email address is already in use by another account.' };
+          return res.redirect('/account/profile');
+        }
+      }
+      
+      // Update user in database (pass only name and email)
+      const updatedUser = await userModel.updateUser(userId, { name, email });
+
+      // Update user in session (only update name and email)
+      req.session.user.name = updatedUser.name; 
+      req.session.user.email = updatedUser.email;
+
+      req.session.messages = { success: 'Profile updated successfully.' };
+      res.redirect('/account/profile');
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      req.session.messages = { error: 'Failed to update profile. Please try again.' };
+      res.redirect('/account/profile');
+    }
+  }
+);
 
 // Account Orders Page
 router.get('/account/orders', auth.isAuthenticated, async (req, res) => {

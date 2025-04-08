@@ -98,6 +98,51 @@ const getAllUsers = async () => {
   return result.rows;
 };
 
+// Update user profile information
+const updateUser = async (userId, updates) => {
+  const allowedUpdates = ['name', 'email']; // Removed 'phone'
+  const fields = [];
+  const values = [];
+  let paramIndex = 1;
+
+  // Build the SET part of the query dynamically and safely
+  for (const key in updates) {
+    if (allowedUpdates.includes(key) && updates[key] !== undefined) {
+      fields.push(`${key} = $${paramIndex++}`);
+      values.push(updates[key]);
+    }
+  }
+
+  if (fields.length === 0) {
+    // No valid fields to update, return current user data or throw error
+    // For now, let's just return the existing data without hitting DB
+    console.warn('updateUser called with no valid fields to update for userId:', userId);
+    return await getUserById(userId); 
+  }
+
+  // Add the user ID as the last parameter for the WHERE clause
+  values.push(userId);
+
+  const setClause = fields.join(', ');
+  const query = `
+    UPDATE users 
+    SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
+    WHERE id = $${paramIndex}
+    RETURNING id, name, email, role, created_at, updated_at; -- Removed phone from returning clause
+  `;
+
+  try {
+    const result = await db.query(query, values);
+    if (result.rows.length === 0) {
+      throw new Error('User not found or update failed');
+    }
+    return result.rows[0]; // Return the updated user object
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error; // Re-throw the error to be handled by the route
+  }
+};
+
 module.exports = {
   getUserByEmail,
   getUserById,
@@ -106,5 +151,6 @@ module.exports = {
   authenticateUser,
   createInitialAdmin,
   getTotalUsers,
-  getAllUsers
+  getAllUsers,
+  updateUser
 }; 
