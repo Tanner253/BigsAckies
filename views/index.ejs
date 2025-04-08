@@ -37,17 +37,16 @@
         <% if (categories && categories.length > 0) { %>
           <% categories.slice(0, 4).forEach(category => { %>
             <a href="/shop?category=<%= category.id %>" class="block group">
-              <div class="relative overflow-hidden rounded-lg h-40">
-                <% if (category.image_url) { %>
-                  <img src="<%= category.image_url %>" alt="<%= category.name %>" class="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105">
-                <% } else { %>
-                  <div class="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500">No Image</div>
-                <% } %>
-                <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span class="text-white text-lg font-semibold"><%= category.name %></span>
-                </div>
-                <div class="category-name absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-60 group-hover:bg-opacity-75 transition-colors duration-300">
-                  <h3 class="text-white text-center text-sm font-medium truncate"><%= category.name %></h3>
+              <div class="relative overflow-hidden rounded-lg h-40 bg-gray-200">
+                <img src="<%= category.name === 'Reptiles' ? 'https://images.pexels.com/photos/53140/snake-ball-python-python-regius-beauty-53140.jpeg?auto=compress&cs=tinysrgb&w=600' :
+                          category.name === 'Feeders' ? 'https://images.pexels.com/photos/27719624/pexels-photo-27719624/free-photo-of-a-person-holding-a-handful-of-cockroaches.jpeg?auto=compress&cs=tinysrgb&w=600' :
+                          category.name === 'Enclosures' ? 'https://images.pexels.com/photos/1466434/pexels-photo-1466434.jpeg?auto=compress&cs=tinysrgb&w=600' :
+                          category.name === 'Heating' ? 'https://images.pexels.com/photos/31142125/pexels-photo-31142125/free-photo-of-crocodile-and-tortoise-under-heat-lamps-in-zoo-habitat.jpeg?auto=compress&cs=tinysrgb&w=600' :
+                                     'https://images.pexels.com/photos/45072/pexels-photo-45072.jpeg?auto=compress&cs=tinysrgb&w=600' %>"
+                     alt="<%= category.name %>" class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                     onerror="this.style.display='none'; this.parentElement.classList.add('bg-gray-300'); this.parentElement.innerHTML += '<div class=\'w-full h-full flex items-center justify-center text-gray-500\'>Image Error</div>'; this.onerror=null;">
+                <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                  <h3 class="font-semibold text-white text-lg"><%= category.name %></h3>
                 </div>
               </div>
             </a>
