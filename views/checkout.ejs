@@ -1,246 +1,220 @@
+<!-- 
+<%# --- Entire Checkout Form Temporarily Commented Out for Basic Stripe Test --- %>
 <div class="container mx-auto px-4 py-8">
   <h1 class="text-3xl font-bold mb-8">Checkout</h1>
   
-  <div class="flex flex-col lg:flex-row gap-8">
-    <!-- Shipping and Payment Form -->
-    <div class="lg:w-2/3">
-      <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-6">
-          <form id="checkout-form" class="space-y-6">
-            <!-- CSRF Token -->
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            
-            <!-- Shipping Information -->
+  <%# Display General Errors %>
+  <% if (messages && messages.error) { %>
+    <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-md border border-red-200">
+      <%= messages.error %>
+    </div>
+  <% } %>
+
+  <form id="checkout-form" action="/checkout" method="POST" class="lg:flex lg:gap-8">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
+
+    <%# Left Column: Shipping and Payment Details %>
+    <div class="lg:w-2/3 space-y-6">
+
+      <%# --- Shipping Information Section --- %>
+      <div x-data="{ 
+          selectedOption: '<%= addresses && addresses.length > 0 ? "saved" : "new" %>',
+          selectedAddressId: '<%= addresses && addresses.find(a => a.is_default) ? addresses.find(a => a.is_default).id : (addresses && addresses.length > 0 ? addresses[0].id : "") %>',
+          isNewAddressOpen: <%= !(addresses && addresses.length > 0) %> 
+        }" 
+         class="bg-white rounded-lg shadow-md p-6">
+        
+        <h2 class="text-xl font-semibold mb-4 border-b pb-3">Shipping Information</h2>
+        
+        <input type="hidden" name="shipping_option" x-model="selectedOption"> 
+
+        <%# Saved Addresses (if any) %>
+        <% if (addresses && addresses.length > 0) { %>
+          <div class="mb-4">
+             <label class="flex items-center cursor-pointer">
+               <input type="radio" name="_shipping_option_selector" value="saved" 
+                      x-model="selectedOption" @change="isNewAddressOpen = false" class="form-radio h-5 w-5 text-green-600">
+               <span class="ml-2 text-gray-700 font-medium">Use a Saved Address</span>
+             </label>
+          </div>
+
+          <div x-show="selectedOption === 'saved'" x-transition class="space-y-3 pl-8 mb-4">
+            <% addresses.forEach(address => { %>
+              <label 
+                class="flex items-start p-4 border rounded-md cursor-pointer transition duration-150 ease-in-out"
+                :class="{ 'border-green-500 bg-green-50': selectedAddressId == '<%= address.id %>', 'border-gray-300': selectedAddressId != '<%= address.id %>' }"
+              >
+                <input type="radio" name="selected_address_id" value="<%= address.id %>" x-model="selectedAddressId" class="form-radio h-4 w-4 text-green-600 mt-1 mr-3 flex-shrink-0">
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="font-medium text-gray-800"><%= address.name %></span>
+                    <% if(address.is_default) { %><span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">Default</span><% } %>
+                  </div>
+                  <p class="text-sm text-gray-600"><%= address.street %></p>
+                  <p class="text-sm text-gray-600"><%= address.city %>, <%= address.state %> <%= address.zip_code %></p>
+                  <p class="text-sm text-gray-600"><%= address.country %></p>
+                  <% if(address.phone) { %><p class="text-sm text-gray-600 mt-1">Phone: <%= address.phone %></p><% } %>
+                </div>
+              </label>
+            <% }) %>
+            <%# Display validation error for saved address selection %>
+            <% if (locals.formErrors && formErrors.selected_address_id) { %>
+              <p class="text-sm text-red-600 mt-1"><%= formErrors.selected_address_id.msg %></p>
+            <% } %>
+          </div>
+        <% } %>
+
+        <%# Add New Address Option %>
+        <div class="mb-4 <%= addresses && addresses.length > 0 ? '' : 'hidden' %>"> <%# Hide radio if no saved addresses %>
+           <label class="flex items-center cursor-pointer">
+             <input type="radio" name="_shipping_option_selector" value="new" 
+                    x-model="selectedOption" @change="isNewAddressOpen = true" class="form-radio h-5 w-5 text-green-600">
+             <span class="ml-2 text-gray-700 font-medium">Add a New Address</span>
+           </label>
+        </div>
+
+        <%# New Address Form (collapsible) %>
+        <div x-show="isNewAddressOpen" x-transition 
+             class="<%= addresses && addresses.length > 0 ? 'pl-8' : '' %> space-y-4 border-t border-gray-200 pt-4 mt-4">
+          
+          <h3 class="text-md font-medium text-gray-800 mb-3">New Shipping Address Details</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h2 class="text-xl font-semibold mb-4">Shipping Information</h2>
-              
-              <% if (addresses && addresses.length > 0) { %>
-                <div class="mb-6">
-                  <label class="block text-gray-700 mb-2">Select a Saved Address</label>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <% addresses.forEach(address => { %>
-                      <div class="border rounded-lg p-4 cursor-pointer hover:border-green-500 transition-colors relative <%= address.is_default ? 'border-green-500' : 'border-gray-300' %>"
-                           onclick="selectAddress('<%= address.id %>', '<%= address.name %>', '<%= address.street %>', '<%= address.city %>', '<%= address.state %>', '<%= address.zip %>', '<%= address.country %>', '<%= address.phone %>')">
-                        <% if (address.is_default) { %>
-                          <span class="absolute top-2 right-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Default</span>
-                        <% } %>
-                        <h3 class="font-medium"><%= address.name %></h3>
-                        <p class="text-sm text-gray-600 mt-1"><%= address.street %></p>
-                        <p class="text-sm text-gray-600"><%= address.city %>, <%= address.state %> <%= address.zip %></p>
-                        <p class="text-sm text-gray-600"><%= address.country %></p>
-                        <p class="text-sm text-gray-600 mt-1">Phone: <%= address.phone %></p>
-                      </div>
-                    <% }); %>
-                  </div>
-                  <div class="mt-4">
-                    <button type="button" onclick="showNewAddressForm()" class="text-green-600 hover:text-green-700">
-                      <i class="fas fa-plus-circle"></i> Use a Different Address
-                    </button>
-                  </div>
-                </div>
-              <% } %>
-              
-              <div id="new-address-form" class="<%= addresses && addresses.length > 0 ? 'hidden' : '' %>">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label for="name" class="block text-gray-700 mb-2">Full Name*</label>
-                    <input type="text" id="name" name="name" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                  
-                  <div>
-                    <label for="email" class="block text-gray-700 mb-2">Email Address*</label>
-                    <input type="email" id="email" name="email" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                  
-                  <div>
-                    <label for="address" class="block text-gray-700 mb-2">Street Address*</label>
-                    <input type="text" id="address" name="address" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                  
-                  <div>
-                    <label for="city" class="block text-gray-700 mb-2">City*</label>
-                    <input type="text" id="city" name="city" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                  
-                  <div>
-                    <label for="state" class="block text-gray-700 mb-2">State/Province*</label>
-                    <input type="text" id="state" name="state" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                  
-                  <div>
-                    <label for="zip" class="block text-gray-700 mb-2">ZIP/Postal Code*</label>
-                    <input type="text" id="zip" name="zip" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                  
-                  <div>
-                    <label for="country" class="block text-gray-700 mb-2">Country*</label>
-                    <input type="text" id="country" name="country" required value="USA"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                  
-                  <div>
-                    <label for="phone" class="block text-gray-700 mb-2">Phone Number</label>
-                    <input type="tel" id="phone" name="phone"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  </div>
-                </div>
-                
-                <% if (addresses && addresses.length > 0) { %>
-                  <div class="mt-4">
-                    <button type="button" onclick="showSavedAddresses()" class="text-green-600 hover:text-green-700">
-                      <i class="fas fa-arrow-left"></i> Back to Saved Addresses
-                    </button>
-                  </div>
-                <% } %>
-              </div>
+              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name*</label>
+              <input type="text" id="name" name="name" value="<%= locals.oldInput && oldInput.name ? oldInput.name : '' %>" 
+                     class="w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 <%= locals.formErrors && formErrors.name ? 'border-red-500' : 'border-gray-300' %>">
+              <% if (locals.formErrors && formErrors.name) { %><p class="text-sm text-red-600 mt-1"><%= formErrors.name.msg %></p><% } %>
             </div>
-            
-            <!-- Payment Information -->
+             <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input type="tel" id="phone" name="phone" value="<%= locals.oldInput && oldInput.phone ? oldInput.phone : '' %>" 
+                     class="w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 border-gray-300">
+            </div>
+          </div>
+
+          <div>
+            <label for="street" class="block text-sm font-medium text-gray-700 mb-1">Street Address*</label>
+            <input type="text" id="street" name="street" value="<%= locals.oldInput && oldInput.street ? oldInput.street : '' %>" 
+                   class="w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 <%= locals.formErrors && formErrors.street ? 'border-red-500' : 'border-gray-300' %>">
+             <% if (locals.formErrors && formErrors.street) { %><p class="text-sm text-red-600 mt-1"><%= formErrors.street.msg %></p><% } %>
+         </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <h2 class="text-xl font-semibold mb-2">Payment Information</h2>
-              <p class="text-sm text-gray-600 mb-4">
-                <strong class="font-semibold">Demo Payment Details:</strong><br>
-                Use the Stripe test card:<br>
-                Card Number: 4242 4242 4242 4242<br>
-                Expiry Date: Any future date (e.g., 12/25)<br>
-                CVC: Any 3 digits (e.g., 123)
-              </p>
-              
-              <% if (paymentMethods && paymentMethods.length > 0) { %>
-                <div class="mb-6">
-                  <label class="block text-gray-700 mb-2">Select a Saved Payment Method</label>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <% paymentMethods.forEach(method => { %>
-                      <div class="border rounded-lg p-4 cursor-pointer hover:border-green-500 transition-colors relative <%= method.is_default ? 'border-green-500' : 'border-gray-300' %>"
-                           onclick="selectPaymentMethod('<%= method.stripe_payment_method_id %>')">
-                        <% if (method.is_default) { %>
-                          <span class="absolute top-2 right-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Default</span>
-                        <% } %>
-                        <div class="flex items-center">
-                          <% if (method.brand === 'visa') { %>
-                            <i class="fab fa-cc-visa text-2xl text-blue-700 mr-2"></i>
-                          <% } else if (method.brand === 'mastercard') { %>
-                            <i class="fab fa-cc-mastercard text-2xl text-red-500 mr-2"></i>
-                          <% } else if (method.brand === 'amex') { %>
-                            <i class="fab fa-cc-amex text-2xl text-blue-500 mr-2"></i>
-                          <% } else if (method.brand === 'discover') { %>
-                            <i class="fab fa-cc-discover text-2xl text-orange-500 mr-2"></i>
-                          <% } else { %>
-                            <i class="fas fa-credit-card text-2xl text-gray-600 mr-2"></i>
-                          <% } %>
-                          <div>
-                            <h3 class="font-medium"><%= method.brand.charAt(0).toUpperCase() + method.brand.slice(1) %> ending in <%= method.last4 %></h3>
-                            <p class="text-sm text-gray-500">Expires <%= method.exp_month %>/<%= method.exp_year %></p>
-                          </div>
-                        </div>
-                      </div>
-                    <% }); %>
-                  </div>
-                  <div class="mt-4">
-                    <button type="button" onclick="showNewPaymentForm()" class="text-green-600 hover:text-green-700">
-                      <i class="fas fa-plus-circle"></i> Use a Different Payment Method
-                    </button>
-                  </div>
-                </div>
-              <% } %>
-              
-              <div id="new-payment-form" class="<%= paymentMethods && paymentMethods.length > 0 ? 'hidden' : '' %>">
-                <div id="card-element" class="p-4 border border-gray-300 rounded-md mb-4">
-                  <!-- Stripe Card Element will be inserted here -->
-                </div>
-                
-                <div id="card-errors" class="text-red-600 mb-4" role="alert"></div>
-                
-                <% if (paymentMethods && paymentMethods.length > 0) { %>
-                  <div class="mt-4">
-                    <button type="button" onclick="showSavedPaymentMethods()" class="text-green-600 hover:text-green-700">
-                      <i class="fas fa-arrow-left"></i> Back to Saved Payment Methods
-                    </button>
-                  </div>
-                <% } %>
-              </div>
-              
-              <input type="hidden" id="payment_method_id" name="payment_method_id">
+              <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City*</label>
+              <input type="text" id="city" name="city" value="<%= locals.oldInput && oldInput.city ? oldInput.city : '' %>" 
+                     class="w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 <%= locals.formErrors && formErrors.city ? 'border-red-500' : 'border-gray-300' %>">
+              <% if (locals.formErrors && formErrors.city) { %><p class="text-sm text-red-600 mt-1"><%= formErrors.city.msg %></p><% } %>
             </div>
-            
-            <!-- Order Notes -->
             <div>
-              <label for="notes" class="block text-gray-700 mb-2">Order Notes (optional)</label>
-              <textarea id="notes" name="notes" rows="3"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+              <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State/Province*</label>
+              <input type="text" id="state" name="state" value="<%= locals.oldInput && oldInput.state ? oldInput.state : '' %>" 
+                     class="w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 <%= locals.formErrors && formErrors.state ? 'border-red-500' : 'border-gray-300' %>">
+               <% if (locals.formErrors && formErrors.state) { %><p class="text-sm text-red-600 mt-1"><%= formErrors.state.msg %></p><% } %>
+           </div>
+            <div>
+              <label for="zip_code" class="block text-sm font-medium text-gray-700 mb-1">ZIP/Postal Code*</label>
+              <input type="text" id="zip_code" name="zip_code" value="<%= locals.oldInput && oldInput.zip_code ? oldInput.zip_code : '' %>" 
+                     class="w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 <%= locals.formErrors && formErrors.zip_code ? 'border-red-500' : 'border-gray-300' %>">
+              <% if (locals.formErrors && formErrors.zip_code) { %><p class="text-sm text-red-600 mt-1"><%= formErrors.zip_code.msg %></p><% } %>
             </div>
-          </form>
+          </div>
+          <div>
+            <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country*</label>
+            <input type="text" id="country" name="country" value="<%= locals.oldInput && oldInput.country ? oldInput.country : 'USA' %>" 
+                   class="w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 <%= locals.formErrors && formErrors.country ? 'border-red-500' : 'border-gray-300' %>">
+            <% if (locals.formErrors && formErrors.country) { %><p class="text-sm text-red-600 mt-1"><%= formErrors.country.msg %></p><% } %>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <!-- Order Summary -->
-    <div class="lg:w-1/3">
-      <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
-        <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
-        
-        <div class="divide-y divide-gray-200">
-          <% cart.items.forEach(item => { %>
-            <div class="py-3 flex items-start">
-              <div class="flex-shrink-0 mr-3">
-                <% if (item.image_url) { %>
-                  <img src="<%= item.image_url %>" alt="<%= item.name %>" class="w-12 h-12 object-cover rounded">
-                <% } else { %>
-                  <div class="w-12 h-12 bg-gray-200 flex items-center justify-center rounded">
-                    <i class="fas fa-image text-gray-400"></i>
-                  </div>
-                <% } %>
-              </div>
-              <div class="flex-grow">
-                <div class="flex justify-between">
-                  <div>
-                    <h3 class="text-sm font-medium"><%= item.name %></h3>
-                    <p class="text-xs text-gray-500">Qty: <%= item.quantity %></p>
-                  </div>
-                  <p class="text-sm font-medium">$<%= item.total.toFixed(2) %></p>
-                </div>
-              </div>
+
+      <%# --- Payment Information Section --- %>
+      <div x-data="{ isOpen: true }" class="bg-white rounded-lg shadow-md"> <%# Restored Alpine interaction %>
+        <button type="button" @click="isOpen = !isOpen" class="w-full flex justify-between items-center p-6 text-left">
+          <h2 class="text-xl font-semibold">Payment Information</h2>
+          <i class="fas text-gray-500 transition-transform duration-300" :class="isOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </button>
+        <div x-show="isOpen" x-transition class="p-6 border-t border-gray-200 space-y-4">
+          <%# Stripe Payment Element will be mounted here %>
+          <div>
+            <label for="payment-element" class="block text-sm font-medium text-gray-700 mb-2">
+              Payment Details
+            </label>
+            <%# Reverted to original classes, kept explicit min-height for now %>
+            <div id="payment-element" class="p-3 border border-gray-300 rounded-md shadow-sm bg-white" style="min-height: 40px;">
+              <!-- A Stripe Payment Element will be inserted here. -->
             </div>
-          <% }); %>
+          </div>
+          
+          <%# Restored error div %>
+          <div id="payment-errors" role="alert" class="text-sm text-red-600 mt-2"></div>
+
+          <%# Display general payment errors passed from the server (e.g., if PI verification fails) %>
+           <% if (locals.paymentError) { %>
+             <p class="text-sm text-red-600 mt-1"><%= paymentError %></p>
+           <% } %>
+        </div>
+      </div>
+
+      <%# --- Order Notes Section --- %>
+      <div class="bg-white rounded-lg shadow-md p-6">
+         <h2 class="text-xl font-semibold mb-4">Order Notes <span class="text-gray-500 font-normal">(optional)</span></h2>
+         <textarea name="order_notes" id="order_notes" rows="3" placeholder="Add any special instructions for your order..."
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"></textarea>
+      </div>
+
+    </div>
+
+    <%# Right Column: Order Summary %>
+    <div class="lg:w-1/3 mt-8 lg:mt-0">
+      <div class="bg-white rounded-lg shadow-md p-6 sticky top-8"> 
+        <h2 class="text-xl font-semibold mb-4 border-b pb-3">Order Summary</h2>
+        
+        <div class="space-y-4 mb-6">
+          <% cart.items.forEach(item => { %>
+            <div class="flex items-center space-x-4">
+              <img src="<%= item.image_url || '/images/placeholder.png' %>" alt="<%= item.name %>" class="w-16 h-16 object-cover rounded">
+              <div class="flex-grow">
+                <p class="font-medium text-gray-800"><%= item.name %></p>
+                <p class="text-sm text-gray-500">Qty: <%= item.quantity %></p>
+              </div>
+              <p class="text-gray-700 font-medium">$<%= item.total.toFixed(2) %></p>
+            </div>
+          <% }) %>
         </div>
         
-        <div class="mt-6 space-y-4">
-          <div class="flex justify-between">
-            <span class="text-gray-600">Subtotal</span>
-            <span class="font-medium">$<%= cart.totalPrice.toFixed(2) %></span>
-          </div>
-          
-          <div class="flex justify-between">
-            <span class="text-gray-600">Shipping</span>
-            <span class="font-medium">$0.00</span>
-          </div>
-          
-          <hr class="border-gray-200">
-          
-          <div class="flex justify-between text-lg font-bold">
-            <span>Total</span>
+        <div class="border-t pt-4 space-y-2">
+          <div class="flex justify-between text-gray-600">
+            <span>Subtotal</span>
             <span>$<%= cart.totalPrice.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Shipping</span>
+            <span>$0.00</span> <%# Placeholder - Add shipping calculation later %>
+          </div>
+          <div class="flex justify-between text-lg font-semibold text-gray-900 pt-2">
+            <span>Total</span>
+            <span>$<%= cart.totalPrice.toFixed(2) %></span> <%# Adjust if shipping cost added %>
           </div>
         </div>
         
         <div class="mt-6">
-          <button id="place-order-btn" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 px-4 rounded-md transition">
+          <button type="submit" 
+                  class="w-full bg-green-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-green-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
             Place Order
           </button>
         </div>
         
-        <div class="mt-4 text-center text-sm text-gray-500">
-          <p>By placing your order, you agree to our <a href="#" class="text-green-700 hover:underline">Terms of Service</a> and <a href="#" class="text-green-700 hover:underline">Privacy Policy</a>.</p>
-        </div>
+        <p class="text-xs text-gray-500 mt-4 text-center">
+          By placing your order, you agree to our 
+          <a href="/terms" class="text-green-600 hover:underline">Terms of Service</a> and 
+          <a href="/privacy" class="text-green-600 hover:underline">Privacy Policy</a>.
+        </p>
       </div>
     </div>
-  </div>
+
+  </form>
 </div>
 
 <!-- Loading Overlay -->
@@ -251,177 +225,195 @@
   </div>
 </div>
 
+<script src="https://js.stripe.com/v3/"></script> <%# Ensure Stripe.js is loaded %>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Create a Stripe client
-    const stripe = Stripe('<%= stripePublicKey %>');
-    const elements = stripe.elements();
-    
-    // Create a Card Element
-    const cardElement = elements.create('card', {
-      style: {
-        base: {
-          color: '#32325d',
-          fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-          fontSmoothing: 'antialiased',
-          fontSize: '16px',
-          '::placeholder': {
-            color: '#aab7c4'
-          }
-        },
-        invalid: {
-          color: '#fa755a',
-          iconColor: '#fa755a'
-        }
-      }
-    });
-    
-    // Mount the Card Element to the DOM
-    cardElement.mount('#card-element');
-    
-    // Handle real-time validation errors from the card Element
-    cardElement.on('change', function(event) {
-      const displayError = document.getElementById('card-errors');
-      if (event.error) {
-        displayError.textContent = event.error.message;
-      } else {
-        displayError.textContent = '';
-      }
-    });
-    
-    // Handle form submission
-    const form = document.getElementById('checkout-form');
-    const submitButton = document.getElementById('place-order-btn');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    
-    submitButton.addEventListener('click', async function(event) {
-      event.preventDefault();
-      
-      // Validate form
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-      
-      // Disable button to prevent multiple submissions
-      submitButton.disabled = true;
-      submitButton.textContent = 'Processing...';
-      loadingOverlay.classList.remove('hidden');
-      
-      try {
-        // Create a Payment Method
-        const result = await stripe.createPaymentMethod({
-          type: 'card',
-          card: cardElement
-        });
-        
-        if (result.error) {
-          // Show error to your customer
-          const errorElement = document.getElementById('card-errors');
-          errorElement.textContent = result.error.message;
-          submitButton.disabled = false;
-          submitButton.textContent = 'Place Order';
-          loadingOverlay.classList.add('hidden');
-        } else {
-          // Send the payment method ID to your server
-          document.getElementById('payment_method_id').value = result.paymentMethod.id;
-          
-          // Collect form data
-          const formData = {
-            name: document.getElementById('name').value,
-            email: document.getElementById('email').value,
-            address: document.getElementById('address').value,
-            city: document.getElementById('city').value,
-            state: document.getElementById('state').value,
-            zip: document.getElementById('zip').value,
-            country: document.getElementById('country').value,
-            payment_method_id: result.paymentMethod.id,
-            _csrf: document.querySelector('input[name="_csrf"]').value
-          };
-          
-          try {
-            // Send the data to the server
-            const response = await fetch('/checkout', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector('input[name="_csrf"]').value
-              },
-              body: JSON.stringify(formData)
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-              // Redirect to success page
-              window.location.href = data.redirect;
-            } else {
-              // Display error message
-              const errorElement = document.getElementById('card-errors');
-              errorElement.textContent = data.error || 'An error occurred during checkout. Please try again.';
-              submitButton.disabled = false;
-              submitButton.textContent = 'Place Order';
-              loadingOverlay.classList.add('hidden');
-            }
-          } catch (error) {
-            console.error('Error:', error);
-            const errorElement = document.getElementById('card-errors');
-            errorElement.textContent = 'An unexpected error occurred. Please try again later.';
-            submitButton.disabled = false;
-            submitButton.textContent = 'Place Order';
-            loadingOverlay.classList.add('hidden');
-          }
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        const errorElement = document.getElementById('card-errors');
-        errorElement.textContent = 'An unexpected error occurred. Please try again later.';
-        submitButton.disabled = false;
-        submitButton.textContent = 'Place Order';
-        loadingOverlay.classList.add('hidden');
-      }
-    });
+  // Global error listeners
+  window.addEventListener('error', function (event) {
+    console.error('Global error event:', event.error, event.message, event);
+  });
+  window.addEventListener('unhandledrejection', function (event) {
+    console.error('Global unhandled rejection:', event.reason, event);
   });
 
-  // Address selection functions
-  function selectAddress(id, name, street, city, state, zip, country, phone) {
-    document.getElementById('name').value = name;
-    document.getElementById('address').value = street;
-    document.getElementById('city').value = city;
-    document.getElementById('state').value = state;
-    document.getElementById('zip').value = zip;
-    document.getElementById('country').value = country;
-    document.getElementById('phone').value = phone;
-  }
-  
-  function showNewAddressForm() {
-    document.querySelectorAll('.saved-addresses').forEach(el => el.classList.add('hidden'));
-    document.getElementById('new-address-form').classList.remove('hidden');
-  }
-  
-  function showSavedAddresses() {
-    document.querySelectorAll('.saved-addresses').forEach(el => el.classList.remove('hidden'));
-    document.getElementById('new-address-form').classList.add('hidden');
-  }
-  
-  // Payment method selection functions
-  function selectPaymentMethod(paymentMethodId) {
-    document.getElementById('payment_method_id').value = paymentMethodId;
-    document.querySelectorAll('.payment-method').forEach(el => {
-      el.classList.remove('border-green-500');
-      el.classList.add('border-gray-300');
-    });
-    event.currentTarget.classList.remove('border-gray-300');
-    event.currentTarget.classList.add('border-green-500');
-  }
-  
-  function showNewPaymentForm() {
-    document.querySelectorAll('.saved-payment-methods').forEach(el => el.classList.add('hidden'));
-    document.getElementById('new-payment-form').classList.remove('hidden');
-  }
-  
-  function showSavedPaymentMethods() {
-    document.querySelectorAll('.saved-payment-methods').forEach(el => el.classList.remove('hidden'));
-    document.getElementById('new-payment-form').classList.add('hidden');
-  }
-</script> 
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Loaded. Initializing Stripe for Payment Element...');
+    const stripePublicKey = '<%= locals.stripePublicKey %>';
+    const clientSecret = '<%= locals.clientSecret %>'; 
+    const paymentElementId = '#payment-element';
+    const paymentElementContainer = document.querySelector(paymentElementId);
+    const paymentErrorDisplay = document.getElementById('payment-errors'); // Restore error display variable
+    const checkoutForm = document.getElementById('checkout-form');
+    const submitButton = checkoutForm.querySelector('button[type="submit"]');
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    if (!stripePublicKey || !clientSecret) {
+      console.error('Stripe PK or Client Secret missing. Cannot initialize.');
+      if (paymentErrorDisplay) paymentErrorDisplay.textContent = 'Error: Payment configuration missing.'; // Use restored error div
+      return;
+    }
+    
+    if (!paymentElementContainer) {
+        console.error('Payment element container not found:', paymentElementId);
+        return;
+    }
+
+    try {
+      const stripe = Stripe(stripePublicKey);
+      const elements = stripe.elements({ clientSecret });
+      const paymentElement = elements.create('payment');
+
+      console.log('Stripe initialized, attempting to mount Payment Element...');
+      paymentElement.mount(paymentElementId);
+      console.log('Payment Element mount call *finished*.'); // Check if this is reached
+
+      // Restore form submission handler
+      checkoutForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+        if (submitButton) submitButton.disabled = true;
+        if (paymentErrorDisplay) paymentErrorDisplay.textContent = '';
+
+        console.log('Form submitted, attempting stripe.confirmPayment...');
+        const returnUrl = `${window.location.origin}/checkout/complete`;
+        console.log('Using returnUrl:', returnUrl);
+
+        const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: returnUrl,
+          },
+        });
+
+        if (error) {
+          console.error('Stripe confirmPayment error:', error);
+          let errorMessage = 'An unexpected error occurred during payment.';
+          if (error.type === "card_error" || error.type === "validation_error") {
+            errorMessage = error.message;
+          } 
+          if (paymentErrorDisplay) paymentErrorDisplay.textContent = errorMessage;
+          if (loadingOverlay) loadingOverlay.classList.add('hidden');
+          if (submitButton) submitButton.disabled = false;
+        } else {
+          console.log('confirmPayment finished without error, but no redirect occurred?');
+          if (loadingOverlay) loadingOverlay.classList.add('hidden');
+          if (submitButton) submitButton.disabled = false;
+        }
+      });
+
+    } catch (error) {
+        console.error('Error during Stripe setup or mount:', error);
+        if (paymentErrorDisplay) paymentErrorDisplay.textContent = `Error initializing payment: ${error.message}`; // Use restored error div
+    }
+
+  });
+</script>
+
+<% include('./partials/footer') %> 
+-->
+
+<%# --- Minimal Stripe Payment Element Test --- %>
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-8">Stripe Payment Element Test</h1>
+
+  <% if (!locals.stripePublicKey || !locals.clientSecret) { %>
+    <p style="color: red; border: 1px solid red; padding: 10px;">
+      ERROR: Stripe Public Key or Client Secret is missing from server.
+    </p>
+  <% } else { %>
+    <p>Attempting to render Stripe Payment Element below:</p>
+    <div id="payment-element-test-container" style="margin-top: 20px;">
+      <label for="payment-element" class="block text-sm font-medium text-gray-700 mb-2">
+        Payment Details (Test)
+      </label>
+      <div id="payment-element" style="border: 1px solid #ccc; padding: 10px; min-height: 100px;">
+        <!-- Stripe Payment Element will mount here -->
+      </div>
+      <div id="payment-errors" style="color: red; margin-top: 10px;"></div>
+    </div>
+    <button id="submit-test-button" style="margin-top: 20px; padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+      Test Submit (Does Nothing Yet)
+    </button>
+     <div id="loading-overlay-test" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); color: white; text-align: center; padding-top: 20%;">Processing...</div>
+  <% } %>
+
+</div>
+<%# --- End Minimal Test --- %>
+
+
+<script src="https://js.stripe.com/v3/"></script> 
+
+<script>
+  // Global error listeners (keep these)
+  window.addEventListener('error', function (event) {
+    console.error('TEST: Global error event:', event.error, event.message, event);
+  });
+  window.addEventListener('unhandledrejection', function (event) {
+    console.error('TEST: Global unhandled rejection:', event.reason, event);
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('TEST: DOM Loaded. Initializing Stripe...');
+    const stripePublicKey = '<%= locals.stripePublicKey %>';
+    const clientSecret = '<%= locals.clientSecret %>'; 
+    const paymentElementId = '#payment-element';
+    const paymentElementContainer = document.querySelector(paymentElementId);
+    const paymentErrorDisplay = document.getElementById('payment-errors');
+    const submitButton = document.getElementById('submit-test-button');
+    const loadingOverlay = document.getElementById('loading-overlay-test');
+
+    if (!stripePublicKey || !clientSecret) {
+      console.error('TEST: Stripe PK or Client Secret missing.');
+      if (paymentErrorDisplay) paymentErrorDisplay.textContent = 'Config Error.';
+      return;
+    }
+    
+    if (!paymentElementContainer) {
+        console.error('TEST: Payment element container not found:', paymentElementId);
+        if (paymentErrorDisplay) paymentErrorDisplay.textContent = 'DOM Error.';
+        return;
+    }
+
+    try {
+      const stripe = Stripe(stripePublicKey);
+      const elements = stripe.elements({ clientSecret });
+      const paymentElement = elements.create('payment');
+
+      console.log('TEST: Stripe initialized, attempting mount...');
+      paymentElement.mount(paymentElementId);
+      console.log('TEST: Mount call finished.');
+      
+      // Simplified submit for testing completion later
+      if (submitButton) {
+        submitButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            if (loadingOverlay) loadingOverlay.style.display = 'block';
+            submitButton.disabled = true;
+            console.log('TEST: Submit clicked, calling confirmPayment...');
+             const returnUrl = `${window.location.origin}/checkout/complete`;
+             const { error } = await stripe.confirmPayment({
+                 elements,
+                 confirmParams: { return_url: returnUrl },
+             });
+             if (error) {
+                 console.error('TEST: confirmPayment error:', error);
+                 if (paymentErrorDisplay) paymentErrorDisplay.textContent = error.message;
+                 if (loadingOverlay) loadingOverlay.style.display = 'none';
+                 submitButton.disabled = false;
+             } else {
+                console.log('TEST: confirmPayment completed without error (should redirect).');
+             }
+        });
+      }
+
+    } catch (error) {
+        console.error('TEST: Error during Stripe setup/mount:', error);
+        if (paymentErrorDisplay) paymentErrorDisplay.textContent = `Init Error: ${error.message}`;
+    }
+
+  });
+</script>
+
+<%# --- Original Footer Include (commented out with main body) --- %>
+<!-- <% include('./partials/footer') %> --> 

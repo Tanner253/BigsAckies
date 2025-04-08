@@ -3,36 +3,16 @@ const nodemailer = require('nodemailer');
 
 /**
  * Payment Service
- * Handles payment processing with Stripe
+ * Handles post-order actions like confirmation emails.
  */
 
-// Process a payment with Stripe
-const processPayment = async (paymentData) => {
-  const { amount, currency = 'usd', paymentMethodId, description, metadata = {} } = paymentData;
-  
-  try {
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe requires amount in cents
-      currency,
-      payment_method: paymentMethodId,
-      confirm: true,
-      description,
-      metadata
-    });
-    
-    return {
-      success: true,
-      paymentIntent
-    };
-  } catch (error) {
-    console.error('Payment processing error:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
+// The processPayment function previously here is no longer needed 
+// as payment confirmation is handled via client_secret flow and 
+// server-side verification in the POST /checkout route.
+
+/**
+ * Service for handling post-order actions like confirmation emails.
+ */
 
 // Send order confirmation email
 const sendOrderConfirmationEmail = async (order, userEmail) => {
@@ -114,46 +94,7 @@ const sendOrderConfirmationEmail = async (order, userEmail) => {
   }
 };
 
-// Create a Stripe checkout session (alternative approach)
-const createCheckoutSession = async (items, metadata = {}) => {
-  try {
-    const lineItems = items.map(item => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.name,
-          images: item.image_url ? [item.image_url] : []
-        },
-        unit_amount: Math.round(item.price * 100) // Convert to cents
-      },
-      quantity: item.quantity
-    }));
-    
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: lineItems,
-      mode: 'payment',
-      success_url: `${process.env.APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.APP_URL}/cart`,
-      metadata
-    });
-    
-    return {
-      success: true,
-      sessionId: session.id,
-      url: session.url
-    };
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
 module.exports = {
-  processPayment,
-  sendOrderConfirmationEmail,
-  createCheckoutSession
+  // processPayment, // Removed as it's no longer used
+  sendOrderConfirmationEmail
 }; 
