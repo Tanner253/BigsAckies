@@ -23,11 +23,7 @@
   <link rel="stylesheet" href="/css/styles.css">
   
   <% if (typeof stripePublicKey !== 'undefined') { %>
-    <!-- Stripe JS -->
     <script src="https://js.stripe.com/v3/"></script>
-    <script>
-      const stripe = Stripe('<%= stripePublicKey %>');
-    </script>
   <% } %>
 </head>
 <body class="flex flex-col min-h-screen">

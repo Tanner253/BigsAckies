@@ -1,5 +1,3 @@
-<!-- 
-<%# --- Entire Checkout Form Temporarily Commented Out for Basic Stripe Test --- %>
 <div class="container mx-auto px-4 py-8">
   <h1 class="text-3xl font-bold mb-8">Checkout</h1>
   
@@ -129,33 +127,16 @@
         </div>
       </div>
 
-      <%# --- Payment Information Section --- %>
-      <div x-data="{ isOpen: true }" class="bg-white rounded-lg shadow-md"> <%# Restored Alpine interaction %>
-        <button type="button" @click="isOpen = !isOpen" class="w-full flex justify-between items-center p-6 text-left">
-          <h2 class="text-xl font-semibold">Payment Information</h2>
-          <i class="fas text-gray-500 transition-transform duration-300" :class="isOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-        </button>
-        <div x-show="isOpen" x-transition class="p-6 border-t border-gray-200 space-y-4">
-          <%# Stripe Payment Element will be mounted here %>
-          <div>
-            <label for="payment-element" class="block text-sm font-medium text-gray-700 mb-2">
-              Payment Details
-            </label>
-            <%# Reverted to original classes, kept explicit min-height for now %>
-            <div id="payment-element" class="p-3 border border-gray-300 rounded-md shadow-sm bg-white" style="min-height: 40px;">
-              <!-- A Stripe Payment Element will be inserted here. -->
-            </div>
-          </div>
-          
-          <%# Restored error div %>
-          <div id="payment-errors" role="alert" class="text-sm text-red-600 mt-2"></div>
-
-          <%# Display general payment errors passed from the server (e.g., if PI verification fails) %>
-           <% if (locals.paymentError) { %>
-             <p class="text-sm text-red-600 mt-1"><%= paymentError %></p>
-           <% } %>
+      <%# --- Payment Information Section Start (Replaced) --- %>
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Payment Information</h2>
+        <%# Structure based on stripe-test.ejs, loading div removed %>
+        <div id="payment-element" class="p-4 border border-gray-300 rounded-md shadow-sm min-h-[220px] relative">
+          <!-- Stripe Elements will be inserted here by the script -->
         </div>
+        <div id="payment-message" class="mt-2 text-sm text-red-600 hidden"></div>
       </div>
+      <%# --- Payment Information Section End (Replaced) --- %>
 
       <%# --- Order Notes Section --- %>
       <div class="bg-white rounded-lg shadow-md p-6">
@@ -227,193 +208,174 @@
 
 <script src="https://js.stripe.com/v3/"></script> <%# Ensure Stripe.js is loaded %>
 
+<%# Start: Replaced Script - Copied from stripe-test.ejs logic %>
 <script>
-  // Global error listeners
-  window.addEventListener('error', function (event) {
-    console.error('Global error event:', event.error, event.message, event);
-  });
-  window.addEventListener('unhandledrejection', function (event) {
-    console.error('Global unhandled rejection:', event.reason, event);
-  });
+  // Debug logger (Optional, can keep or remove for cleaner code if test passes)
+  function log(message, type = 'info') {
+    const logOutput = document.getElementById('log-output'); // Assumes log-output exists if using this
+    if (logOutput) {
+       const logEntry = document.createElement('p');
+       logEntry.style.margin = '5px 0';
+       if (type === 'error') logEntry.style.color = '#e53e3e';
+       logEntry.textContent = `[${type.toUpperCase()}] ${message}`;
+       logOutput.appendChild(logEntry);
+    }
+    if (type === 'error') console.error(message); else console.log(message);
+  }
+  
+  document.addEventListener('DOMContentLoaded', async function() {
+    log('Checkout page loaded, initializing Stripe...');
+    
+    // DOM elements for checkout page
+    const form = document.getElementById('checkout-form'); // Use checkout form ID
+    const submitButton = form.querySelector('button[type="submit"]'); // Get button within the checkout form
+    const paymentMessage = document.getElementById('payment-message'); // Use checkout message ID
+    const loadingOverlay = document.getElementById('loading-overlay'); // Overlay for checkout
 
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Loaded. Initializing Stripe for Payment Element...');
-    const stripePublicKey = '<%= locals.stripePublicKey %>';
-    const clientSecret = '<%= locals.clientSecret %>'; 
-    const paymentElementId = '#payment-element';
-    const paymentElementContainer = document.querySelector(paymentElementId);
-    const paymentErrorDisplay = document.getElementById('payment-errors'); // Restore error display variable
-    const checkoutForm = document.getElementById('checkout-form');
-    const submitButton = checkoutForm.querySelector('button[type="submit"]');
-    const loadingOverlay = document.getElementById('loading-overlay');
-
-    if (!stripePublicKey || !clientSecret) {
-      console.error('Stripe PK or Client Secret missing. Cannot initialize.');
-      if (paymentErrorDisplay) paymentErrorDisplay.textContent = 'Error: Payment configuration missing.'; // Use restored error div
+    // Get Stripe parameters from server (using EJS syntax for checkout)
+    const publicKey = '<%= stripePublicKey %>';
+    const clientSecret = '<%= clientSecret %>';
+    
+    if (!publicKey || !clientSecret) {
+      log('Missing Stripe configuration (public key or client secret)', 'error');
+      showMessage('Payment configuration is incomplete. Please contact support.');
       return;
     }
     
-    if (!paymentElementContainer) {
-        console.error('Payment element container not found:', paymentElementId);
+    if (!form) {
+        log('Checkout form not found!', 'error');
+        return;
+    }
+     if (!submitButton) {
+        log('Submit button not found in checkout form!', 'error');
+        return;
+    }
+     if (!paymentMessage) {
+        log('Payment message element not found!', 'error');
         return;
     }
 
+    // Initialize Stripe
+    let stripe;
     try {
-      const stripe = Stripe(stripePublicKey);
-      const elements = stripe.elements({ clientSecret });
+      log(`Initializing Stripe with public key ${publicKey.substring(0, 8)}...`);
+      stripe = Stripe(publicKey);
+      log('Stripe initialized successfully');
+    } catch (error) {
+      log(`Error initializing Stripe: ${error.message}`, 'error');
+      showMessage('Failed to initialize payment system. Please try again later.');
+      return;
+    }
+    
+    // Create the Elements instance (using checkout appearance)
+    const appearance = {
+      theme: 'stripe',
+       variables: {
+        colorPrimary: '#10b981', // Green color from original checkout
+        colorBackground: '#ffffff',
+        colorText: '#30313d',
+        colorDanger: '#ef4444',
+        fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        spacingUnit: '4px',
+        borderRadius: '4px'
+      }
+    };
+    
+    let elements;
+    try {
+      log('Creating Elements instance...');
+      elements = stripe.elements({
+        clientSecret,
+        appearance
+      });
+      log('Elements instance created successfully');
+    } catch (error) {
+      log(`Error creating Elements: ${error.message}`, 'error');
+      showMessage('Failed to create payment elements. Please try again later.');
+      return;
+    }
+    
+    // Create and mount the Payment Element
+    try {
+      log('Creating Payment Element...');
       const paymentElement = elements.create('payment');
-
-      console.log('Stripe initialized, attempting to mount Payment Element...');
-      paymentElement.mount(paymentElementId);
-      console.log('Payment Element mount call *finished*.'); // Check if this is reached
-
-      // Restore form submission handler
-      checkoutForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        
-        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
-        if (submitButton) submitButton.disabled = true;
-        if (paymentErrorDisplay) paymentErrorDisplay.textContent = '';
-
-        console.log('Form submitted, attempting stripe.confirmPayment...');
-        const returnUrl = `${window.location.origin}/checkout/complete`;
-        console.log('Using returnUrl:', returnUrl);
-
+      log('Payment Element created, now mounting...');
+      
+      const container = document.getElementById('payment-element');
+      if (!container) {
+        log('Payment element container (#payment-element) not found!', 'error');
+        showMessage('An error occurred displaying the payment form.');
+        return;
+      }
+      
+      paymentElement.mount('#payment-element');
+      log('Payment Element mounted successfully');
+      
+      // Listen for ready event (hides the original checkout spinner if needed)
+      paymentElement.on('ready', function() {
+        log('Payment Element is ready');
+        // Original checkout had a #payment-loading div, removing it now
+        // const loadingDiv = document.getElementById('payment-loading');
+        // if (loadingDiv) loadingDiv.style.display = 'none';
+      });
+      
+      // Listen for errors
+      paymentElement.on('loaderror', function(event) {
+        log(`Error loading Payment Element: ${event.error.message}`, 'error');
+        showMessage(`Failed to load payment form: ${event.error.message}`);
+      });
+    } catch (error) {
+      log(`Error with Payment Element: ${error.message}`, 'error');
+      showMessage('Failed to set up payment form. Please try again later.');
+      return;
+    }
+    
+    // Show/hide error message for checkout
+    function showMessage(message) {
+      paymentMessage.textContent = message;
+      paymentMessage.classList.remove('hidden');
+    }
+    
+    // Handle form submission for checkout
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      // Show checkout loading overlay, disable button
+      if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+      submitButton.disabled = true;
+      paymentMessage.classList.add('hidden'); // Hide previous errors
+      
+      try {
+        log('Confirming payment via checkout form...');
         const { error } = await stripe.confirmPayment({
           elements,
           confirmParams: {
-            return_url: returnUrl,
-          },
+            return_url: window.location.origin + '/checkout/complete' // Redirect to completion route
+          }
         });
-
+        
         if (error) {
-          console.error('Stripe confirmPayment error:', error);
-          let errorMessage = 'An unexpected error occurred during payment.';
-          if (error.type === "card_error" || error.type === "validation_error") {
-            errorMessage = error.message;
-          } 
-          if (paymentErrorDisplay) paymentErrorDisplay.textContent = errorMessage;
+          log(`Payment confirmation error: ${error.message}`, 'error');
+          showMessage(error.message);
+          
+          // Hide overlay, re-enable button on error
           if (loadingOverlay) loadingOverlay.classList.add('hidden');
-          if (submitButton) submitButton.disabled = false;
-        } else {
-          console.log('confirmPayment finished without error, but no redirect occurred?');
-          if (loadingOverlay) loadingOverlay.classList.add('hidden');
-          if (submitButton) submitButton.disabled = false;
-        }
-      });
-
-    } catch (error) {
-        console.error('Error during Stripe setup or mount:', error);
-        if (paymentErrorDisplay) paymentErrorDisplay.textContent = `Error initializing payment: ${error.message}`; // Use restored error div
-    }
-
+          submitButton.disabled = false;
+        } 
+        // If no error, Stripe handles the redirect to return_url
+        // No 'else' block needed here typically
+        
+      } catch (error) {
+        log(`Exception during payment confirmation: ${error.message}`, 'error');
+        showMessage('A system error occurred. Please try again later.');
+        
+        // Hide overlay, re-enable button on exception
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        submitButton.disabled = false;
+      }
+    });
   });
 </script>
+<%# End: Replaced Script %>
 
 <% include('./partials/footer') %> 
--->
-
-<%# --- Minimal Stripe Payment Element Test --- %>
-<div class="container mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold mb-8">Stripe Payment Element Test</h1>
-
-  <% if (!locals.stripePublicKey || !locals.clientSecret) { %>
-    <p style="color: red; border: 1px solid red; padding: 10px;">
-      ERROR: Stripe Public Key or Client Secret is missing from server.
-    </p>
-  <% } else { %>
-    <p>Attempting to render Stripe Payment Element below:</p>
-    <div id="payment-element-test-container" style="margin-top: 20px;">
-      <label for="payment-element" class="block text-sm font-medium text-gray-700 mb-2">
-        Payment Details (Test)
-      </label>
-      <div id="payment-element" style="border: 1px solid #ccc; padding: 10px; min-height: 100px;">
-        <!-- Stripe Payment Element will mount here -->
-      </div>
-      <div id="payment-errors" style="color: red; margin-top: 10px;"></div>
-    </div>
-    <button id="submit-test-button" style="margin-top: 20px; padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
-      Test Submit (Does Nothing Yet)
-    </button>
-     <div id="loading-overlay-test" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); color: white; text-align: center; padding-top: 20%;">Processing...</div>
-  <% } %>
-
-</div>
-<%# --- End Minimal Test --- %>
-
-
-<script src="https://js.stripe.com/v3/"></script> 
-
-<script>
-  // Global error listeners (keep these)
-  window.addEventListener('error', function (event) {
-    console.error('TEST: Global error event:', event.error, event.message, event);
-  });
-  window.addEventListener('unhandledrejection', function (event) {
-    console.error('TEST: Global unhandled rejection:', event.reason, event);
-  });
-
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('TEST: DOM Loaded. Initializing Stripe...');
-    const stripePublicKey = '<%= locals.stripePublicKey %>';
-    const clientSecret = '<%= locals.clientSecret %>'; 
-    const paymentElementId = '#payment-element';
-    const paymentElementContainer = document.querySelector(paymentElementId);
-    const paymentErrorDisplay = document.getElementById('payment-errors');
-    const submitButton = document.getElementById('submit-test-button');
-    const loadingOverlay = document.getElementById('loading-overlay-test');
-
-    if (!stripePublicKey || !clientSecret) {
-      console.error('TEST: Stripe PK or Client Secret missing.');
-      if (paymentErrorDisplay) paymentErrorDisplay.textContent = 'Config Error.';
-      return;
-    }
-    
-    if (!paymentElementContainer) {
-        console.error('TEST: Payment element container not found:', paymentElementId);
-        if (paymentErrorDisplay) paymentErrorDisplay.textContent = 'DOM Error.';
-        return;
-    }
-
-    try {
-      const stripe = Stripe(stripePublicKey);
-      const elements = stripe.elements({ clientSecret });
-      const paymentElement = elements.create('payment');
-
-      console.log('TEST: Stripe initialized, attempting mount...');
-      paymentElement.mount(paymentElementId);
-      console.log('TEST: Mount call finished.');
-      
-      // Simplified submit for testing completion later
-      if (submitButton) {
-        submitButton.addEventListener('click', async (event) => {
-            event.preventDefault();
-            if (loadingOverlay) loadingOverlay.style.display = 'block';
-            submitButton.disabled = true;
-            console.log('TEST: Submit clicked, calling confirmPayment...');
-             const returnUrl = `${window.location.origin}/checkout/complete`;
-             const { error } = await stripe.confirmPayment({
-                 elements,
-                 confirmParams: { return_url: returnUrl },
-             });
-             if (error) {
-                 console.error('TEST: confirmPayment error:', error);
-                 if (paymentErrorDisplay) paymentErrorDisplay.textContent = error.message;
-                 if (loadingOverlay) loadingOverlay.style.display = 'none';
-                 submitButton.disabled = false;
-             } else {
-                console.log('TEST: confirmPayment completed without error (should redirect).');
-             }
-        });
-      }
-
-    } catch (error) {
-        console.error('TEST: Error during Stripe setup/mount:', error);
-        if (paymentErrorDisplay) paymentErrorDisplay.textContent = `Init Error: ${error.message}`;
-    }
-
-  });
-</script>
-
-<%# --- Original Footer Include (commented out with main body) --- %>
-<!-- <% include('./partials/footer') %> --> 

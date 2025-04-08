@@ -408,6 +408,22 @@ router.get('/checkout', async (req, res) => {
     const paymentMethodsResult = await db.query(paymentMethodsQuery, [req.session.user.id]);
     const paymentMethods = paymentMethodsResult.rows;
 
+    // Initialize Stripe and create payment intent
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Create Payment Intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalPrice * 100), // Amount in cents
+      currency: 'usd',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        cart_id: cart.id,
+        user_id: req.session.user.id
+      }
+    });
+
     res.render('checkout', {
       title: 'Checkout',
       layout: 'main-layout',
@@ -420,7 +436,8 @@ router.get('/checkout', async (req, res) => {
       addresses,
       paymentMethods,
       csrfToken: req.csrfToken(),
-      stripePublicKey: process.env.STRIPE_PUBLIC_KEY
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+      clientSecret: paymentIntent.client_secret
     });
   } catch (error) {
     console.error('Error loading checkout:', error);

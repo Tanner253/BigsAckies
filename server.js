@@ -130,6 +130,13 @@ app.use((req, res, next) => {
   // Make cart available to all views
   res.locals.cart = req.session.cart;
   
+  // Initialize messages object to make it available to all views
+  res.locals.messages = req.session.messages || {};
+  // Clear flash messages after setting them in locals
+  req.session.messages = {};
+  
+  // Temporarily bypass database cart fetching for debugging
+  /*
   // If user is logged in, fetch cart data from database
   if (req.session.user) {
     db.query(
@@ -154,25 +161,17 @@ app.use((req, res, next) => {
       // Update locals cart
       res.locals.cart = req.session.cart;
       
-      // Initialize messages object to make it available to all views
-      res.locals.messages = req.session.messages || {};
-      // Clear flash messages after setting them in locals
-      req.session.messages = {};
-      
       next();
     })
     .catch(err => {
       console.error('Error fetching cart data:', err);
-      next();
+      next(); // Ensure next() is called even on error
     });
   } else {
-    // Initialize messages object to make it available to all views
-    res.locals.messages = req.session.messages || {};
-    // Clear flash messages after setting them in locals
-    req.session.messages = {};
-    
     next();
   }
+  */
+  next(); // Call next() immediately for now
 });
 
 // Socket.IO connection handler

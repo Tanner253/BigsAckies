@@ -269,52 +269,46 @@ router.get('/shop/:id', async (req, res) => {
 
 // Checkout page
 router.get('/checkout', auth.isAuthenticated, async (req, res) => {
-  console.log('[Server] >>> GET /checkout route handler entered.'); // Log route entry
   try {
-    // Ensure user is logged in
-    if (!req.session.user) {
-      req.session.returnTo = req.originalUrl;
-      return res.redirect('/login');
-    }
-
     // Get user's cart
-    const cartResult = await db.query(
-      'SELECT id FROM carts WHERE user_id = $1',
-      [req.session.user.id]
-    );
-
+    const userId = req.session.user.id;
+    const cartResult = await db.query('SELECT id FROM carts WHERE user_id = $1', [userId]);
+    
     if (cartResult.rows.length === 0) {
       req.flash('error', 'Your cart is empty.');
       return res.redirect('/cart');
     }
+    
     const cartId = cartResult.rows[0].id;
-
-    // Get cart items with product details
-    const itemsResult = await db.query(`
-      SELECT ci.*, p.name, p.price, p.stock, p.image_url 
-      FROM cart_items ci
-      JOIN products p ON ci.product_id = p.id
-      WHERE ci.cart_id = $1
-    `, [cartId]);
-
+    
+    // Get cart items
+    const itemsResult = await db.query(
+      `SELECT ci.*, p.name, p.price, p.stock, p.image_url 
+       FROM cart_items ci 
+       JOIN products p ON ci.product_id = p.id 
+       WHERE ci.cart_id = $1`,
+      [cartId]
+    );
+    
     const cartItems = itemsResult.rows.map(item => ({
       ...item,
       price: parseFloat(item.price),
       total: parseFloat(item.price) * item.quantity
     }));
-
+    
     if (cartItems.length === 0) {
       req.flash('error', 'Your cart is empty.');
       return res.redirect('/cart');
     }
 
-    // Validate cart items against current stock
+    // Check stock
     const invalidItems = [];
     for (const item of cartItems) {
       if (item.quantity > item.stock) {
         invalidItems.push(`${item.name} (only ${item.stock} available)`);
       }
     }
+    
     if (invalidItems.length > 0) {
       req.flash('error', `Stock updated for: ${invalidItems.join(', ')}. Please review your cart.`);
       return res.redirect('/cart');
@@ -323,43 +317,28 @@ router.get('/checkout', auth.isAuthenticated, async (req, res) => {
     const totalPrice = cartItems.reduce((sum, item) => sum + item.total, 0);
     const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-    // --- Create Stripe Payment Intent --- 
-    let paymentIntent;
-    try {
-      console.log(`[Server] Attempting to create PaymentIntent for cart ${cartId}, amount: ${Math.round(totalPrice * 100)}`);
-      paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(totalPrice * 100), // Amount in cents
-        currency: 'usd', // Or your default currency
-        metadata: {
-          user_id: req.session.user.id,
-          cart_id: cartId
-        },
-        description: `Order from ${req.session.user.email || 'guest'} - Cart ${cartId}`,
-        automatic_payment_methods: { enabled: true } // Add this for Payment Element
-      });
-      // Log success and the secret immediately after creation
-      console.log(`[Server] PaymentIntent ${paymentIntent.id} created successfully. Client Secret: ${paymentIntent.client_secret}`);
-    } catch (stripeError) {
-      console.error("[Server] !!! Error creating Stripe PaymentIntent:", stripeError);
-      // Flash a specific error and redirect *immediately* if PI creation fails
-      req.flash('error', 'Could not initialize payment session. Please try refreshing your cart or contact support if the problem persists.');
-      return res.redirect('/cart'); // CRITICAL: Do not proceed to render checkout
-    }
-    // --- End Stripe Payment Intent Creation ---
+    // Initialize Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Create Payment Intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalPrice * 100), // Amount in cents
+      currency: 'usd',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        cart_id: cartId,
+        user_id: userId
+      }
+    });
 
     // Get user's saved addresses
     const addressesResult = await db.query(
       'SELECT * FROM addresses WHERE user_id = $1 ORDER BY is_default DESC, created_at DESC',
-      [req.session.user.id]
+      [userId]
     );
-    const addresses = addressesResult.rows;
-
-    // --- Log values right before rendering --- 
-    console.log(`[Server GET /checkout] Rendering checkout view with:`);
-    console.log(`  - stripePublicKey type: ${typeof process.env.STRIPE_PUBLIC_KEY}, value: ${process.env.STRIPE_PUBLIC_KEY ? process.env.STRIPE_PUBLIC_KEY.substring(0, 10) + '...' : 'MISSING'}`);
-    console.log(`  - clientSecret type: ${typeof paymentIntent.client_secret}, value: ${paymentIntent.client_secret ? paymentIntent.client_secret.substring(0, 15) + '...' : 'MISSING'}`);
-    // --- End logging --- 
-
+    
     res.render('checkout', {
       title: 'Checkout',
       layout: 'main-layout',
@@ -369,208 +348,162 @@ router.get('/checkout', auth.isAuthenticated, async (req, res) => {
         totalQty,
         totalPrice
       },
-      addresses: addresses,
-      stripePublicKey: process.env.STRIPE_PUBLIC_KEY, // Ensure this is passed correctly
-      clientSecret: paymentIntent.client_secret,      // Ensure this is passed correctly
+      addresses: addressesResult.rows,
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+      clientSecret: paymentIntent.client_secret,
       csrfToken: req.csrfToken(),
-      messages: req.flash() 
+      messages: req.flash()
     });
-
   } catch (error) {
     console.error('Error loading checkout page:', error);
-    req.flash('error', 'An unexpected error occurred while loading the checkout page.');
-    res.redirect('/cart'); // Redirect to cart on general errors
+    req.flash('error', 'An unexpected error occurred. Please try again.');
+    res.redirect('/cart');
   }
 });
 
-// New route to handle redirect from Stripe after payment attempt
+// Handle Stripe redirect after payment attempt
 router.get('/checkout/complete', auth.isAuthenticated, async (req, res) => {
-  const { payment_intent: paymentIntentId, payment_intent_client_secret: clientSecret } = req.query;
-
-  if (!paymentIntentId || !clientSecret) {
-    console.error('[GET /checkout/complete] Missing payment_intent or client_secret in query params');
-    req.flash('error', 'Invalid payment confirmation request.');
+  // Get payment information from URL
+  const { payment_intent, payment_intent_client_secret } = req.query;
+  
+  if (!payment_intent || !payment_intent_client_secret) {
+    req.flash('error', 'Invalid payment confirmation request');
     return res.redirect('/checkout');
   }
-
+  
   try {
-    const userId = req.session.user.id;
-
-    // Retrieve the PaymentIntent from Stripe
-    console.log(`[GET /checkout/complete] Retrieving PaymentIntent ${paymentIntentId}`);
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-      client_secret: clientSecret,
-    });
-
-    // Check PaymentIntent status
-    console.log(`[GET /checkout/complete] PaymentIntent status: ${paymentIntent.status}`);
-    if (paymentIntent.status === 'succeeded') {
-        
-      // --- Payment Succeeded - Finalize Order --- 
-      console.log(`[GET /checkout/complete] Payment succeeded for ${paymentIntentId}. Finalizing order...`);
-
-      // Check if this PaymentIntent has already been used for an order
-      const existingOrderCheck = await db.query('SELECT id FROM orders WHERE payment_intent_id = $1', [paymentIntentId]);
-      if (existingOrderCheck.rows.length > 0) {
-          console.warn(`[GET /checkout/complete] PaymentIntent ${paymentIntentId} has already been used for order ${existingOrderCheck.rows[0].id}. Redirecting.`);
-          req.flash('info', 'Your order was already processed.');
-          return res.redirect(`/account/orders/${existingOrderCheck.rows[0].id}`);
-      }
-
-      // Get Cart details needed for order (Amount, Items, Stock Check)
-      const cartId = paymentIntent.metadata.cart_id; // Get cart_id from PI metadata
-      if (!cartId) {
-          // This shouldn't happen if metadata was set correctly
-          throw new Error(`Cart ID missing from PaymentIntent metadata for PI ${paymentIntentId}`);
-      }
-
-      const itemsResult = await db.query(
-          'SELECT ci.*, p.name, p.price, p.stock FROM cart_items ci JOIN products p ON ci.product_id = p.id WHERE ci.cart_id = $1',
-          [cartId]
-      );
-      const cartItems = itemsResult.rows.map(item => ({...item, price: parseFloat(item.price) }));
-      if (cartItems.length === 0) {
-         console.warn(`[GET /checkout/complete] Cart ${cartId} was empty after successful payment ${paymentIntentId}.`);
-         req.flash('error', 'Your cart was empty. Please contact support if payment was taken.');
-         // Consider refund? Or let webhook handle?
-         return res.redirect('/cart');
-      }
-      const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      // Verify amount again (important check)
-      const expectedAmountInCents = Math.round(totalAmount * 100);
-      if (paymentIntent.amount !== expectedAmountInCents) {
-          console.error(`[GET /checkout/complete] PaymentIntent ${paymentIntentId} amount (${paymentIntent.amount}) mismatch with final cart total (${expectedAmountInCents})`);
-          req.flash('error', 'Payment amount mismatch. Please contact support.');
-          // Consider refund
-          return res.redirect('/checkout');
-      }
-      
-      // Validate Stock Again (Crucial before finalizing order)
-      const stockCheckResult = await db.query(
-          'SELECT p.id, p.stock FROM products p JOIN cart_items ci ON p.id = ci.product_id WHERE ci.cart_id = $1',
-          [cartId]
-      );
-      const currentStockMap = stockCheckResult.rows.reduce((map, row) => {
-          map[row.id] = row.stock;
-          return map;
-      }, {});
-      const invalidItems = []; 
-      for (const item of cartItems) {
-        if (!currentStockMap.hasOwnProperty(item.product_id) || item.quantity > currentStockMap[item.product_id]) {
-          const currentAvailable = currentStockMap.hasOwnProperty(item.product_id) ? currentStockMap[item.product_id] : 0;
-          invalidItems.push({ name: item.name || `Product ID ${item.product_id}`, reason: `Only ${currentAvailable} available.` });
-        }
-      }
-      if (invalidItems.length > 0) {
-          console.error(`[GET /checkout/complete] Stock issue after successful payment ${paymentIntentId} for cart ${cartId}. Items:`, invalidItems);
-          req.flash('error', 'Payment succeeded, but stock changed for some items: ' + invalidItems.map(i => i.name).join(', ') + '. Please contact support to resolve this.');
-          // Consider refund: await stripe.refunds.create({ payment_intent: paymentIntentId });
-          return res.redirect('/cart'); 
-      }
-
-      // Determine Shipping Address - Needs to be stored temporarily or fetched differently
-      // Since POST /checkout is no longer used for order creation, we can't get address from its body.
-      // OPTION 1: Store address temporarily (e.g., session) during GET /checkout
-      // OPTION 2: Fetch user's default address here
-      // OPTION 3: Pass address details through Stripe metadata (limited size)
-      // For now, let's fetch the default address as a placeholder
-      let shippingAddressString = 'Address N/A - Requires implementation';
-      const defaultAddrResult = await db.query('SELECT * FROM addresses WHERE user_id = $1 AND is_default = true', [userId]);
-      if (defaultAddrResult.rows.length > 0) {
-          const savedAddr = defaultAddrResult.rows[0];
-          shippingAddressString = `${savedAddr.name || ''}\n${savedAddr.street}\n${savedAddr.city}, ${savedAddr.state} ${savedAddr.zip_code}\n${savedAddr.country}\n${savedAddr.phone ? 'Phone: ' + savedAddr.phone : ''}`.trim();
-      } else {
-          console.warn(`[GET /checkout/complete] No default shipping address found for user ${userId} to finalize order ${paymentIntentId}. Using placeholder.`);
-          // Maybe fetch the *most recent* address instead? Or redirect to ask user?
-      }
-      // TODO: Implement a robust way to get the correct shipping address used for this specific checkout.
-      
-      // Order Notes - Similarly, need a way to retrieve these. Temporarily store in session?
-      const orderNotes = req.session.orderNotes || null; // Example: Retrieve from session
-      delete req.session.orderNotes; // Clear after use
-
-      // --- Create Order (Transaction) --- 
-      const orderData = {
-        user_id: userId,
-        total_amount: totalAmount,
-        shipping_address: shippingAddressString,
-        status: 'processing', 
-        payment_intent_id: paymentIntentId,
-        order_notes: orderNotes
-      };
-      const orderItemsData = cartItems.map(item => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price_at_time: item.price
-      }));
-
-      const client = await db.getClient();
-      let orderId;
-      try {
-          await client.query('BEGIN');
-          const orderResult = await client.query(
-            `INSERT INTO orders (user_id, total_amount, shipping_address, status, payment_intent_id, order_notes)
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at`, 
-            [orderData.user_id, orderData.total_amount, orderData.shipping_address, 
-             orderData.status, orderData.payment_intent_id, orderData.order_notes]
-          );
-          orderId = orderResult.rows[0].id;
-          const itemInsertPromises = orderItemsData.map(item => client.query(
-              `INSERT INTO order_items (order_id, product_id, quantity, price_at_time) VALUES ($1, $2, $3, $4)`,
-              [orderId, item.product_id, item.quantity, item.price_at_time]
-          ));
-          await Promise.all(itemInsertPromises);
-          const stockUpdatePromises = orderItemsData.map(item => client.query(
-              'UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1',
-              [item.quantity, item.product_id]
-          ));
-          const stockUpdateResults = await Promise.all(stockUpdatePromises);
-          for (let i = 0; i < stockUpdateResults.length; i++) {
-              if (stockUpdateResults[i].rowCount === 0) {
-                  throw new Error(`Insufficient stock for product ID ${orderItemsData[i].product_id} during final update.`);
-              }
-          }
-          await client.query('DELETE FROM cart_items WHERE cart_id = $1', [cartId]);
-          await client.query('COMMIT');
-          console.log(`[GET /checkout/complete] Transaction committed for order ${orderId}.`);
-
-          // Send Confirmation Email
-          const orderForEmail = { id: orderId, ...orderData, items: await orderModel.getOrderItems(orderId) };
-          try {
-              await paymentService.sendOrderConfirmationEmail(orderForEmail, req.session.user.email);
-          } catch (emailError) {
-              console.error(`[GET /checkout/complete] Failed to send confirmation email for order ${orderId}:`, emailError);
-          }
-
-          // Redirect to success page
-          req.flash('success', 'Order placed successfully!');
-          res.redirect(`/account/orders/${orderId}`);
-
-      } catch (transactionError) {
-          await client.query('ROLLBACK');
-          console.error(`[GET /checkout/complete] Transaction failed for order ${paymentIntentId}, rolled back:`, transactionError);
-          req.flash('error', 'Failed to finalize order after payment. Please contact support.');
-          if (transactionError.message.includes('Insufficient stock')) {
-              req.flash('info', 'This may be due to a stock issue.');
-              // Consider refund
-          }
-          res.redirect('/cart'); // Or redirect to account/orders? 
-      } finally {
-          client.release();
-      }
-
-    } else {
-      // Handle other payment statuses (e.g., processing, requires_payment_method)
-      console.warn(`[GET /checkout/complete] PaymentIntent ${paymentIntentId} status is ${paymentIntent.status}.`);
-      req.flash('error', `Payment ${paymentIntent.status}. Please try again or contact support.`);
-      res.redirect('/checkout');
+    // Initialize Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Retrieve the payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent);
+    
+    // Check if payment was successful
+    if (paymentIntent.status !== 'succeeded') {
+      req.flash('error', `Payment ${paymentIntent.status}. Please try again.`);
+      return res.redirect('/checkout');
     }
-
+    
+    // Check if this payment has already been processed
+    const existingOrderCheck = await db.query('SELECT id FROM orders WHERE payment_intent_id = $1', [payment_intent]);
+    if (existingOrderCheck.rows.length > 0) {
+      return res.redirect(`/account/orders/${existingOrderCheck.rows[0].id}`);
+    }
+    
+    // Get cart information
+    const userId = req.session.user.id;
+    const cartId = paymentIntent.metadata.cart_id;
+    
+    // Verify cart belongs to user
+    const cartCheck = await db.query('SELECT id FROM carts WHERE id = $1 AND user_id = $2', [cartId, userId]);
+    if (cartCheck.rows.length === 0) {
+      req.flash('error', 'Invalid cart information');
+      return res.redirect('/cart');
+    }
+    
+    // Get cart items
+    const itemsResult = await db.query(
+      `SELECT ci.*, p.name, p.price, p.stock 
+       FROM cart_items ci 
+       JOIN products p ON ci.product_id = p.id 
+       WHERE ci.cart_id = $1`,
+      [cartId]
+    );
+    
+    const cartItems = itemsResult.rows.map(item => ({
+      ...item,
+      price: parseFloat(item.price),
+    }));
+    
+    if (cartItems.length === 0) {
+      req.flash('error', 'Your cart is empty');
+      return res.redirect('/cart');
+    }
+    
+    // Check stock again
+    const invalidItems = [];
+    for (const item of cartItems) {
+      if (item.quantity > item.stock) {
+        invalidItems.push(`${item.name} (only ${item.stock} available)`);
+      }
+    }
+    
+    if (invalidItems.length > 0) {
+      req.flash('error', `Stock has changed: ${invalidItems.join(', ')}. Your payment will be refunded.`);
+      
+      // TODO: Issue refund if needed
+      // await stripe.refunds.create({ payment_intent: payment_intent });
+      
+      return res.redirect('/cart');
+    }
+    
+    // Calculate total amount
+    const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Get shipping address
+    const addressResult = await db.query(
+      'SELECT * FROM addresses WHERE user_id = $1 AND is_default = true LIMIT 1',
+      [userId]
+    );
+    
+    const address = addressResult.rows.length > 0 ? addressResult.rows[0] : null;
+    const shippingAddress = address ? 
+      `${address.name}, ${address.street}, ${address.city}, ${address.state} ${address.zip_code}, ${address.country}` :
+      'No address provided';
+    
+    // Create order in database
+    const client = await db.getClient();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Create order
+      const orderResult = await client.query(
+        `INSERT INTO orders (
+          user_id, total_amount, shipping_address, status, payment_intent_id, created_at
+        ) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id`,
+        [userId, totalAmount, shippingAddress, 'paid', payment_intent]
+      );
+      
+      const orderId = orderResult.rows[0].id;
+      
+      // Add order items
+      for (const item of cartItems) {
+        await client.query(
+          `INSERT INTO order_items (order_id, product_id, quantity, price_at_time)
+           VALUES ($1, $2, $3, $4)`,
+          [orderId, item.product_id, item.quantity, item.price]
+        );
+        
+        // Update product stock
+        await client.query(
+          'UPDATE products SET stock = stock - $1 WHERE id = $2',
+          [item.quantity, item.product_id]
+        );
+      }
+      
+      // Clear cart
+      await client.query('DELETE FROM cart_items WHERE cart_id = $1', [cartId]);
+      
+      await client.query('COMMIT');
+      
+      // Redirect to order confirmation
+      req.flash('success', 'Order placed successfully!');
+      return res.redirect(`/account/orders/${orderId}`);
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error processing order:', error);
+      req.flash('error', 'Failed to process your order. Please contact support.');
+      return res.redirect('/cart');
+    } finally {
+      client.release();
+    }
+    
   } catch (error) {
-    console.error('[GET /checkout/complete] Error handling payment completion:', error);
-    req.flash('error', 'An unexpected error occurred while completing your order.');
-    res.redirect('/checkout');
+    console.error('Error handling checkout completion:', error);
+    req.flash('error', 'An unexpected error occurred');
+    return res.redirect('/cart');
   }
 });
 
@@ -1016,12 +949,12 @@ router.get('/account/orders', auth.isAuthenticated, async (req, res) => {
     // Get user's orders
     const ordersQuery = `
       SELECT o.*, o.total_amount as total 
-      FROM orders o 
+      FROM orders o
       WHERE o.user_id = $1
       ORDER BY o.created_at DESC
     `;
     const ordersResult = await db.query(ordersQuery, [req.session.user.id]);
-
+    
     res.render('account/orders', {
       title: 'Order History',
       layout: 'layouts/account-layout',
@@ -1052,7 +985,7 @@ router.get('/account/addresses', auth.isAuthenticated, async (req, res) => {
       ORDER BY is_default DESC, created_at DESC
     `;
     const addressesResult = await db.query(addressesQuery, [req.session.user.id]);
-
+    
     res.render('account/addresses', {
       title: 'My Addresses',
       layout: 'layouts/account-layout',
@@ -1253,15 +1186,15 @@ router.post('/account/addresses', auth.isAuthenticated, [
     req.session.messages = { error: errors.array().map(e => e.msg).join(', ') };
     return res.redirect('/account/addresses/new'); 
   }
-  
+
   try {
     const { name, street, city, state, zip, country, phone } = req.body;
     const userId = req.session.user.id;
-
+    
     // Check if this is the first address (make it default)
     const addressCountResult = await db.query('SELECT COUNT(*) FROM addresses WHERE user_id = $1', [userId]);
     const isDefault = parseInt(addressCountResult.rows[0].count) === 0;
-
+    
     const query = `
       INSERT INTO addresses (user_id, name, street, city, state, zip, country, phone, is_default)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -1398,6 +1331,41 @@ router.post('/contact', [
   // ... existing contact form validation ...
 ], async (req, res) => {
   // ... implementation ...
+});
+
+// Add a route for Stripe debugging (only in development)
+router.get('/stripe-debug', auth.isAuthenticated, async (req, res) => {
+  // Only allow in development environment
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).render('404', {
+      title: 'Page Not Found',
+      layout: 'main-layout',
+      user: req.session.user
+    });
+  }
+
+  try {
+    // Create a test payment intent
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: 1999, // $19.99
+      currency: 'usd',
+      description: 'Debug payment intent',
+      automatic_payment_methods: { enabled: true }
+    });
+
+    res.render('stripe-debug', {
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
+      clientSecret: paymentIntent.client_secret
+    });
+  } catch (error) {
+    console.error('Error creating test payment intent:', error);
+    res.status(500).send(`
+      <h1>Stripe Debug Error</h1>
+      <p>Error creating test payment intent: ${error.message}</p>
+      <pre>${JSON.stringify(error, null, 2)}</pre>
+    `);
+  }
 });
 
 module.exports = router; 

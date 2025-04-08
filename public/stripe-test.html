@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stripe Payment Test</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #32325d;
+      font-weight: 600;
+      margin-bottom: 25px;
+    }
+
+    label {
+      color: #6b7c93;
+      font-weight: 500;
+      letter-spacing: 0.025em;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    button {
+      background-color: #10b981;
+      color: #ffffff;
+      border: 0;
+      padding: 12px 16px;
+      margin-top: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: block;
+      width: 100%;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    button:hover {
+      filter: brightness(90%);
+    }
+
+    #payment-element {
+      margin-bottom: 24px;
+      padding: 12px;
+      border: 1px solid #e6e6e6;
+      border-radius: 4px;
+    }
+
+    #payment-message {
+      color: rgb(220, 53, 69);
+      font-size: 14px;
+      line-height: 20px;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    #payment-message.hidden {
+      display: none;
+    }
+
+    #spinner {
+      margin: 0 auto;
+      height: 30px;
+      width: 30px;
+      border: 3px solid rgba(0, 0, 0, 0.2);
+      border-radius: 50%;
+      border-top-color: #10b981;
+      animation: spin 1s ease-in-out infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Stripe Test Payment</h1>
+    <form id="payment-form">
+      <div id="payment-element">
+        <!-- Stripe Elements Placeholder -->
+        <div style="text-align: center; padding: 30px 0;">
+          <div id="spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid #ccc; border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <p style="color: #6b7c93;">Loading payment form...</p>
+        </div>
+      </div>
+      <button id="submit-button" type="submit">
+        <div id="spinner" class="spinner hidden"></div>
+        <span id="button-text">Pay $19.99</span>
+      </button>
+      <div id="payment-message" class="hidden"></div>
+    </form>
+  </div>
+
+  <script>
+    // Get client secret from URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientSecret = urlParams.get('client_secret');
+    
+    // Function to show a message to the user
+    const showMessage = (messageText) => {
+      const messageElement = document.getElementById('payment-message');
+      messageElement.textContent = messageText;
+      messageElement.classList.remove('hidden');
+      setTimeout(() => {
+        messageElement.classList.add('hidden');
+      }, 8000);
+    };
+    
+    // Initialize Stripe
+    const initializeStripe = async () => {
+      // If no client secret in URL, create a new payment intent
+      if (!clientSecret) {
+        showMessage("No client secret provided. Testing in demo mode.");
+        // Demo mode - using hardcoded test client secret
+        // In production, you would get this from your server
+        
+        // Initialize with demo mode
+        setupStripe('demo_mode');
+        return;
+      }
+      
+      setupStripe(clientSecret);
+    };
+    
+    const setupStripe = (clientSecret) => {
+      // Initialize Stripe with your publishable key
+      // Replace with your actual publishable key
+      const stripe = Stripe('pk_test_51R9OnhBTCF7wfUA2pSATzUxvLVRM1NZoPtPQ9liPWCOGulPapU1MDAi1xiJW2irsTU10drcrRsRb8u5cbgvwwRjZ006DQ3BixR');
+      
+      // Create options for Elements
+      const options = {
+        clientSecret: clientSecret === 'demo_mode' ? null : clientSecret,
+        appearance: {
+          theme: 'stripe',
+          variables: {
+            colorPrimary: '#10b981',
+            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+          },
+        },
+      };
+      
+      // If in demo mode, use demo options
+      const elements = clientSecret === 'demo_mode' 
+        ? stripe.elements(options)
+        : stripe.elements(options);
+      
+      // Create and mount the Payment Element
+      const paymentElement = elements.create('payment', {
+        layout: {
+          type: 'tabs',
+          defaultCollapsed: false,
+        }
+      });
+      
+      paymentElement.mount('#payment-element');
+      
+      // Handle form submission
+      const form = document.getElementById('payment-form');
+      const submitButton = document.getElementById('submit-button');
+      const spinner = document.getElementById('spinner');
+      const buttonText = document.getElementById('button-text');
+      
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        // Disable the submit button
+        submitButton.disabled = true;
+        spinner.classList.remove('hidden');
+        buttonText.textContent = 'Processing...';
+        
+        if (clientSecret === 'demo_mode') {
+          showMessage("This is a demo. In production, payment would be processed here.");
+          setTimeout(() => {
+            submitButton.disabled = false;
+            spinner.classList.add('hidden');
+            buttonText.textContent = 'Pay $19.99';
+          }, 2000);
+          return;
+        }
+        
+        const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: window.location.origin + '/checkout/complete',
+          },
+        });
+        
+        // Handle errors
+        if (error) {
+          showMessage(error.message);
+          submitButton.disabled = false;
+          spinner.classList.add('hidden');
+          buttonText.textContent = 'Pay $19.99';
+        }
+      });
+    };
+    
+    // Start the Stripe initialization when the page loads
+    document.addEventListener('DOMContentLoaded', initializeStripe);
+  </script>
+</body>
+</html> 
