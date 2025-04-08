@@ -133,38 +133,5 @@
 </div>
 
 <script>
-  // Add Category Modal
-  function openAddCategoryModal() {
-    document.getElementById('addCategoryModal').classList.remove('hidden');
-    document.getElementById('addCategoryModal').classList.add('flex');
-  }
-
-  function closeAddCategoryModal() {
-    document.getElementById('addCategoryModal').classList.remove('flex');
-    document.getElementById('addCategoryModal').classList.add('hidden');
-  }
-
-  // Edit Category Modal
-  function openEditCategoryModal(buttonElement) {
-    const categoryJson = buttonElement.getAttribute('data-category');
-    if (!categoryJson) {
-      console.error('Could not find category data for modal');
-      return;
-    }
-    const category = JSON.parse(categoryJson.replace(/&quot;/g, '"')); // Parse the JSON, reverting &quot;
-    
-    const form = document.getElementById('editCategoryForm');
-    form.action = `/admin/categories/edit/${category.id}`;
-
-    document.getElementById('editCategoryName').value = category.name;
-    document.getElementById('editCategoryDescription').value = category.description || '';
-
-    document.getElementById('editCategoryModal').classList.remove('hidden');
-    document.getElementById('editCategoryModal').classList.add('flex');
-  }
-
-  function closeEditCategoryModal() {
-    document.getElementById('editCategoryModal').classList.remove('flex');
-    document.getElementById('editCategoryModal').classList.add('hidden');
-  }
+  // Scripts are now in the layout file (views/admin/layout.ejs)
 </script>
