@@ -146,6 +146,23 @@ async function setupDatabase() {
         is_active BOOLEAN DEFAULT true
       )
     `);
+
+    // Create addresses table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS addresses (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(255), -- Optional name for the address (e.g., 'Home', 'Work')
+        street VARCHAR(255) NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        state VARCHAR(100) NOT NULL,
+        zip_code VARCHAR(20) NOT NULL,
+        country VARCHAR(100) NOT NULL,
+        is_default BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     
     // Add 'name' column to users table if it doesn't exist
     try {

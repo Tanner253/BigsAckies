@@ -125,62 +125,68 @@ const getOrderById = async (id) => {
 };
 
 // Create a new order
-const createOrder = async (orderData, items) => {
-  const client = await db.pool.connect();
-  
+const createOrder = async (orderData, items, client) => {
   try {
-    await client.query('BEGIN');
-    
-    const { user_id, total_amount, shipping_address } = orderData;
+    const { user_id, total_amount, shipping_address, payment_id, status } = orderData;
     
     // Insert order
     const orderQuery = `
-      INSERT INTO orders (user_id, total_amount, shipping_address)
-      VALUES ($1, $2, $3)
+      INSERT INTO orders (user_id, total_amount, shipping_address, payment_id, status)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
     
     const orderResult = await client.query(orderQuery, [
       user_id,
       total_amount,
-      shipping_address
+      shipping_address,
+      payment_id,
+      status || 'paid'
     ]);
     
     const order = orderResult.rows[0];
     
     // Insert order items
-    for (const item of items) {
+    const itemInserts = items.map(item => {
       const { product_id, quantity, price_at_time } = item;
-      
       const itemQuery = `
         INSERT INTO order_items (order_id, product_id, quantity, price_at_time)
         VALUES ($1, $2, $3, $4)
-        RETURNING *
       `;
-      
-      await client.query(itemQuery, [
+      return client.query(itemQuery, [
         order.id,
         product_id,
         quantity,
         price_at_time
       ]);
-      
-      // Update product stock
-      await client.query(`
+    });
+    
+    // Wait for all item inserts to complete
+    await Promise.all(itemInserts);
+
+    // Stock decrement logic is now handled in the calling route (/order/processing)
+    // Remove stock update from here:
+    /*
+    for (const item of items) {
+      const { product_id, quantity } = item;
+      const stockUpdateResult = await client.query(`
         UPDATE products
         SET stock = stock - $1
         WHERE id = $2 AND stock >= $1
+        RETURNING stock
       `, [quantity, product_id]);
+
+      if (stockUpdateResult.rowCount === 0) {
+         throw new Error(`Insufficient stock for product ID ${product_id}`);
+      }
     }
-    
-    await client.query('COMMIT');
-    
-    return await getOrderById(order.id);
+    */
+
+    // Return the created order ID
+    return order.id;
   } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
+    console.error('Error during order creation transaction:', error);
+    throw error; // Re-throw the error to be caught by the route handler for rollback
   }
 };
 

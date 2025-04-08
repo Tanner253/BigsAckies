@@ -6,9 +6,7 @@ const categoryModel = require('../models/category');
 const orderModel = require('../models/order');
 const messageModel = require('../models/message');
 const userModel = require('../models/user');
-const paymentService = require('../services/paymentService');
 const newsletterModel = require('../models/newsletter');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const db = require('../models/database');
 const auth = require('../middleware/auth');
 
@@ -267,275 +265,6 @@ router.get('/shop/:id', async (req, res) => {
   }
 });
 
-// Checkout page
-router.get('/checkout', async (req, res) => {
-  try {
-    if (!req.session.user) {
-      return res.redirect('/login');
-    }
-
-    // Get user's cart
-    const cartResult = await db.query(
-      'SELECT * FROM carts WHERE user_id = $1',
-      [req.session.user.id]
-    );
-
-    if (cartResult.rows.length === 0) {
-      return res.redirect('/cart');
-    }
-
-    const cart = cartResult.rows[0];
-
-    // Get cart items with product details
-    const itemsResult = await db.query(`
-      SELECT ci.*, p.name, p.price, p.stock
-      FROM cart_items ci
-      JOIN products p ON ci.product_id = p.id
-      WHERE ci.cart_id = $1
-    `, [cart.id]);
-
-    const cartItems = itemsResult.rows.map(item => ({
-      ...item,
-      price: parseFloat(item.price),
-      total: parseFloat(item.price) * item.quantity
-    }));
-    
-    // Redirect to cart if empty
-    if (cartItems.length === 0) {
-      return res.redirect('/cart');
-    }
-
-    // Validate cart items against current stock
-    const invalidItems = [];
-    for (const item of cartItems) {
-      if (item.quantity > item.stock) {
-        invalidItems.push({
-          id: item.product_id,
-          name: item.name,
-          reason: `Only ${item.stock} units available in stock`,
-          availableQuantity: item.stock
-        });
-      }
-    }
-
-    if (invalidItems.length > 0) {
-      req.session.cartError = 'Some items in your cart are no longer available in the requested quantity.';
-      return res.redirect('/cart');
-    }
-
-    const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-    res.render('checkout', {
-      title: 'Checkout',
-      cart: {
-        items: cartItems,
-        totalQty,
-        totalPrice
-      },
-      stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
-      csrfToken: req.csrfToken()
-    });
-  } catch (error) {
-    console.error('Error loading checkout:', error);
-    res.status(500).render('error', {
-      title: 'Error',
-      status: 500,
-      message: 'An error occurred while loading checkout',
-      error: process.env.NODE_ENV !== 'production' ? error : null
-    });
-  }
-});
-
-// Process order
-router.post('/checkout', [
-  body('email').isEmail().withMessage('Please enter a valid email address'),
-  body('name').notEmpty().withMessage('Please enter your name'),
-  body('address').notEmpty().withMessage('Please enter your address'),
-  body('city').notEmpty().withMessage('Please enter your city'),
-  body('state').notEmpty().withMessage('Please enter your state/province'),
-  body('zip').notEmpty().withMessage('Please enter your postal/zip code'),
-  body('payment_method_id').notEmpty().withMessage('Payment information is required')
-], async (req, res) => {
-  try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
-    }
-    
-    // Get user's cart
-    const cartResult = await db.query(
-      'SELECT * FROM carts WHERE user_id = $1',
-      [req.session.user.id]
-    );
-
-    if (cartResult.rows.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Cart not found'
-      });
-    }
-
-    const cart = cartResult.rows[0];
-
-    // Get cart items with product details
-    const itemsResult = await db.query(`
-      SELECT ci.*, p.name, p.price, p.stock
-      FROM cart_items ci
-      JOIN products p ON ci.product_id = p.id
-      WHERE ci.cart_id = $1
-    `, [cart.id]);
-
-    const cartItems = itemsResult.rows;
-    
-    // Ensure cart is not empty
-    if (cartItems.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Your cart is empty'
-      });
-    }
-
-    // Validate cart items against current stock
-    const invalidItems = [];
-    for (const item of cartItems) {
-      if (item.quantity > item.stock) {
-        invalidItems.push({
-          id: item.product_id,
-          name: item.name,
-          reason: `Only ${item.stock} units available in stock`,
-          availableQuantity: item.stock
-        });
-      }
-    }
-
-    if (invalidItems.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Some items in your cart are no longer available in the requested quantity.',
-        invalidItems
-      });
-    }
-
-    // Format shipping address
-    const {
-      name,
-      address,
-      city,
-      state,
-      zip,
-      country,
-      email,
-      payment_method_id
-    } = req.body;
-    
-    const shippingAddress = `${name}\n${address}\n${city}, ${state} ${zip}\n${country || 'USA'}`;
-    
-    // Process payment
-    const paymentResult = await paymentService.processPayment({
-      amount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-      paymentMethodId: payment_method_id,
-      description: `Order from Reptile E-Commerce - ${cartItems.length} items`,
-      metadata: {
-        email,
-        items_count: cartItems.length.toString()
-      }
-    });
-    
-    if (!paymentResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: 'Payment failed: ' + paymentResult.error
-      });
-    }
-    
-    // Create order
-    const orderData = {
-      user_id: req.session.user ? req.session.user.id : null,
-      total_amount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-      shipping_address: shippingAddress
-    };
-    
-    const orderItems = cartItems.map(item => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price_at_time: item.price
-    }));
-    
-    const order = await orderModel.createOrder(orderData, orderItems);
-    
-    // Send confirmation email
-    await paymentService.sendOrderConfirmationEmail(order, email);
-    
-    // Clear cart after successful order
-    await db.query(
-      'DELETE FROM cart_items WHERE cart_id = $1',
-      [cart.id]
-    );
-    
-    return res.json({
-      success: true,
-      orderId: order.id,
-      redirect: `/checkout/success?order_id=${order.id}`
-    });
-  } catch (error) {
-    console.error('Checkout error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'An error occurred during checkout. Please try again.'
-    });
-  }
-});
-
-// Order success page
-router.get('/checkout/success', async (req, res) => {
-  try {
-    const orderId = req.query.order_id;
-    
-    // If no order ID, show generic success
-    if (!orderId) {
-      return res.render('order-confirmation', {
-        title: 'Order Successful',
-        order: null
-      });
-    }
-    
-    // Get order details
-    const order = await orderModel.getOrderById(orderId);
-    
-    if (!order) {
-      return res.render('order-confirmation', {
-        title: 'Order Successful',
-        order: null,
-        error: 'Order not found or access denied.'
-      });
-    }
-
-    // Optional: Check if the order belongs to the logged-in user
-    if (req.session.user && order.user_id !== req.session.user.id) {
-       return res.status(403).render('error', {
-           title: 'Access Denied',
-           status: 403,
-           message: 'You do not have permission to view this order.'
-       });
-    }
-
-    res.render('order-confirmation', {
-      title: 'Order Successful',
-      order
-    });
-  } catch (error) {
-    console.error('Error rendering success page:', error);
-    // Render the confirmation page even on error, but indicate an issue
-    res.render('order-confirmation', {
-      title: 'Order Successful',
-      order: null,
-      error: 'An unexpected error occurred while retrieving order details.'
-    });
-  }
-});
-
 // Customer message/chat
 router.post('/message', [
   body('name').notEmpty().withMessage('Please enter your name'),
@@ -584,9 +313,10 @@ router.get('/login', (req, res) => {
   res.render('login', {
     title: 'Login',
     layout: 'main-layout',
-    messages: req.flash(),
+    messages: req.session.messages || {},
     csrfToken: req.csrfToken()
   });
+  delete req.session.messages; // Clear messages after reading
 });
 
 // Process login
@@ -646,9 +376,10 @@ router.get('/register', (req, res) => {
   res.render('register', {
     title: 'Register',
     layout: 'main-layout',
-    messages: req.flash(),
+    messages: req.session.messages || {},
     csrfToken: req.csrfToken()
   });
+  delete req.session.messages; // Clear messages after reading
 });
 
 // Process registration
@@ -745,25 +476,15 @@ router.get('/account', auth.isAuthenticated, async (req, res) => {
     `;
     const addressesResult = await db.query(addressesQuery, [req.session.user.id]);
     
-    // Get user's payment methods
-    const paymentMethodsQuery = `
-      SELECT * FROM payment_methods 
-      WHERE user_id = $1 
-      ORDER BY is_default DESC, created_at DESC
-    `;
-    const paymentMethodsResult = await db.query(paymentMethodsQuery, [req.session.user.id]);
-    
-    const flashMessages = req.flash(); // Get flash messages
-    
     res.render('account', {
       title: 'My Account',
       layout: 'main-layout',
       user: req.session.user,
       orders: ordersResult.rows,
       addresses: addressesResult.rows,
-      paymentMethods: paymentMethodsResult.rows,
-      messages: flashMessages // Use flash messages
+      messages: req.session.messages || {} // Use session messages
     });
+    delete req.session.messages; // Clear messages after reading
   } catch (error) {
     console.error('Error loading account page:', error);
     res.status(500).render('error', {
@@ -1052,124 +773,6 @@ router.delete('/account/addresses/:id', async (req, res) => {
   }
 });
 
-// Payment method management routes
-router.post('/account/payment-methods/new', async (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: 'Please sign in to continue' });
-  }
-
-  try {
-    const { payment_method_id } = req.body;
-    
-    // Retrieve payment method details from Stripe
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const paymentMethod = await stripe.paymentMethods.retrieve(payment_method_id);
-    
-    // Check if this is the first payment method (make it default)
-    const methodCount = await db.query('SELECT COUNT(*) FROM payment_methods WHERE user_id = $1', [req.session.user.id]);
-    const isDefault = parseInt(methodCount.rows[0].count) === 0;
-    
-    const query = `
-      INSERT INTO payment_methods (
-        user_id, stripe_payment_method_id, brand, last4, exp_month, exp_year, is_default
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *
-    `;
-    
-    const result = await db.query(query, [
-      req.session.user.id,
-      payment_method_id,
-      paymentMethod.card.brand,
-      paymentMethod.card.last4,
-      paymentMethod.card.exp_month,
-      paymentMethod.card.exp_year,
-      isDefault
-    ]);
-
-    res.json({ success: true, paymentMethod: result.rows[0] });
-  } catch (error) {
-    console.error('Error adding payment method:', error);
-    res.status(500).json({ error: 'Failed to add payment method' });
-  }
-});
-
-router.post('/account/payment-methods/:id/set-default', async (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: 'Please sign in to continue' });
-  }
-
-  try {
-    const methodId = req.params.id;
-    
-    // First, remove default from all payment methods
-    await db.query(
-      'UPDATE payment_methods SET is_default = false WHERE user_id = $1',
-      [req.session.user.id]
-    );
-    
-    // Set the selected payment method as default
-    await db.query(
-      'UPDATE payment_methods SET is_default = true WHERE id = $1 AND user_id = $2',
-      [methodId, req.session.user.id]
-    );
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error setting default payment method:', error);
-    res.status(500).json({ error: 'Failed to set default payment method' });
-  }
-});
-
-router.delete('/account/payment-methods/:id', async (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: 'Please sign in to continue' });
-  }
-
-  try {
-    const methodId = req.params.id;
-    
-    // Check if this is the default payment method
-    const methodResult = await db.query(
-      'SELECT is_default, stripe_payment_method_id FROM payment_methods WHERE id = $1 AND user_id = $2',
-      [methodId, req.session.user.id]
-    );
-    
-    if (methodResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Payment method not found' });
-    }
-    
-    // Delete the payment method from Stripe
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    await stripe.paymentMethods.detach(methodResult.rows[0].stripe_payment_method_id);
-    
-    // Delete from database
-    await db.query(
-      'DELETE FROM payment_methods WHERE id = $1 AND user_id = $2',
-      [methodId, req.session.user.id]
-    );
-    
-    // If this was the default method, set a new default if other methods exist
-    if (methodResult.rows[0].is_default) {
-      const remainingMethods = await db.query(
-        'SELECT id FROM payment_methods WHERE user_id = $1 ORDER BY created_at ASC LIMIT 1',
-        [req.session.user.id]
-      );
-      
-      if (remainingMethods.rows.length > 0) {
-        await db.query(
-          'UPDATE payment_methods SET is_default = true WHERE id = $1',
-          [remainingMethods.rows[0].id]
-        );
-      }
-    }
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting payment method:', error);
-    res.status(500).json({ error: 'Failed to delete payment method' });
-  }
-});
-
 // Address management routes
 router.get('/account/addresses/new', async (req, res) => {
   if (!req.session.user) {
@@ -1183,23 +786,6 @@ router.get('/account/addresses/new', async (req, res) => {
   res.render('address/new', {
     title: 'Add New Address',
     user: req.session.user,
-    messages: req.session.messages || {}
-  });
-});
-
-router.get('/account/payment-methods/new', async (req, res) => {
-  if (!req.session.user) {
-    req.session.returnTo = '/account/payment-methods/new';
-    req.session.messages = {
-      error: 'Please sign in to add a new payment method'
-    };
-    return res.redirect('/login');
-  }
-
-  res.render('payment/new', {
-    title: 'Add New Payment Method',
-    user: req.session.user,
-    stripePublicKey: process.env.STRIPE_PUBLIC_KEY,
     messages: req.session.messages || {}
   });
 });
@@ -1221,8 +807,9 @@ router.get('/order-confirmation/:orderId', async (req, res) => {
       layout: 'main-layout',
       order: orderDetails,
       user: req.session.user || null,
-      messages: req.flash()
+      messages: req.session.messages || {}
     });
+    delete req.session.messages; // Clear messages after reading
   } catch (error) {
     // ... error handling ...
     res.status(500).render('error', {

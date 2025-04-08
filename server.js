@@ -19,6 +19,7 @@ const auth = require('./middleware/auth');
 const indexRoutes = require('./routes/index');
 const adminRoutes = require('./routes/admin');
 const cartRoutes = require('./routes/cart');
+const checkoutRoutes = require('./routes/checkout');
 
 // Create Express app
 const app = express();
@@ -60,6 +61,18 @@ app.set("layout extractScripts", true);
 app.set("layout extractStyles", true);
 
 // Middleware setup
+
+// IMPORTANT: Raw body parser for Stripe webhook MUST come BEFORE express.json()
+// Apply it only to the webhook route
+// REMOVED webhook middleware as webhook is no longer used
+/*
+app.post('/checkout/webhook', express.raw({ type: 'application/json' }), (req, res, next) => {
+  // Attach rawBody to the request object for the webhook handler
+  req.rawBody = req.body;
+  next();
+});
+*/
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -94,11 +107,12 @@ const csrfProtection = csrf({
   }
 });
 
-// Apply CSRF protection to all routes except API and file uploads
+// Apply CSRF protection to all routes except specific ones
 app.use((req, res, next) => {
-  // Skip CSRF for API routes, Socket.IO, or file uploads
-  if (req.path.startsWith('/api/') || 
-      req.path.startsWith('/socket.io/') || 
+  // Skip CSRF for API routes, Socket.IO, file uploads
+  if (req.path.startsWith('/api/') ||
+      req.path.startsWith('/socket.io/') ||
+      // req.path === '/checkout/webhook' || // REMOVED webhook path from CSRF exclusion
       (req.path.startsWith('/admin/products/') && req.method === 'POST' && req.is('multipart/form-data'))) {
     next();
   } else {
@@ -206,6 +220,7 @@ io.on('connection', (socket) => {
 app.use('/', indexRoutes);
 app.use('/admin', adminRoutes);
 app.use('/cart', cartRoutes);
+app.use('/checkout', checkoutRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
