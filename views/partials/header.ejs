@@ -114,10 +114,10 @@
   <!-- Mobile Navigation Menu (Hidden by default) -->
   <div class="md:hidden">
     <!-- Backdrop overlay -->
-    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden pointer-events-auto"></div>
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
     
     <!-- Mobile menu -->
-    <div id="mobile-menu" class="mobile-menu closed z-50">
+    <div id="mobile-menu" class="fixed top-0 right-0 h-screen w-3/4 sm:w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out translate-x-full">
       <div class="flex justify-between items-center p-4 border-b bg-white">
         <h3 class="text-xl font-bold text-gray-800">Menu</h3>
         <button id="close-mobile-menu" class="text-gray-600 hover:text-green-600 focus:outline-none p-2" aria-label="Close menu">

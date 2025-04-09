@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 
     // Get cart items with product details
     const itemsResult = await db.query(`
-      SELECT ci.*, p.name, p.price, p.image_url 
+      SELECT ci.*, p.name, p.price, p.image_url, p.stock 
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
       WHERE ci.cart_id = $1
@@ -37,6 +37,7 @@ router.get('/', async (req, res) => {
 
     const cartItems = itemsResult.rows.map(item => ({
       ...item,
+      stock: item.stock,
       price: parseFloat(item.price),
       total: parseFloat(item.price) * item.quantity
     }));
@@ -67,8 +68,16 @@ router.get('/', async (req, res) => {
 
 // Add product to cart
 router.post('/add', async (req, res) => {
+  console.log('--- Add to Cart Request ---');
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Body:', JSON.stringify(req.body, null, 2));
+  console.log('Session User:', req.session.user ? req.session.user.id : 'No user session');
+  console.log('CSRF Token (from header):', req.headers['x-csrf-token']);
+  console.log('CSRF Token (from body):', req.body._csrf);
+
   try {
     if (!req.session.user) {
+      console.log('Add to Cart: No user session detected.');
       // In production, always redirect to login
       if (process.env.NODE_ENV === 'production') {
         return res.redirect('/login');
@@ -137,6 +146,7 @@ router.post('/add', async (req, res) => {
       DO UPDATE SET quantity = cart_items.quantity + $3
     `, [cart.id, parsedProductId, qty]);
 
+    console.log('Add to Cart: Item added/updated successfully.');
     // Get updated cart totals
     const cartItemsResult = await db.query(`
       SELECT ci.*, p.price 
@@ -159,6 +169,7 @@ router.post('/add', async (req, res) => {
       cartTotal: totalPrice.toFixed(2)
     });
   } catch (error) {
+    console.error('!!! Add to Cart Error:', error);
     console.error('Error adding to cart:', error);
     res.status(500).json({ error: 'An error occurred while adding to cart' });
   }
@@ -376,7 +387,7 @@ router.get('/checkout', async (req, res) => {
 
     // Get cart items with product details
     const itemsResult = await db.query(`
-      SELECT ci.*, p.name, p.price, p.image_url 
+      SELECT ci.*, p.name, p.price, p.image_url, p.stock 
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
       WHERE ci.cart_id = $1
@@ -384,6 +395,7 @@ router.get('/checkout', async (req, res) => {
 
     const cartItems = itemsResult.rows.map(item => ({
       ...item,
+      stock: item.stock,
       price: parseFloat(item.price),
       total: parseFloat(item.price) * item.quantity
     }));

@@ -109,28 +109,33 @@
     const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
     const closeMobileMenu = document.getElementById('close-mobile-menu');
     
-    if (mobileMenuButton && mobileMenu) {
-      // Ensure menu starts in closed state
-      mobileMenu.classList.add('closed');
+    if (mobileMenuButton && mobileMenu && mobileMenuOverlay) {
       
       const toggleMenu = (shouldOpen) => {
         if (shouldOpen) {
-          mobileMenu.classList.remove('closed');
-          mobileMenu.classList.add('open');
-          mobileMenuOverlay.classList.remove('hidden');
+          // Open menu
+          mobileMenu.classList.remove('translate-x-full');
+          mobileMenu.classList.add('translate-x-0');
+          // Show overlay
+          mobileMenuOverlay.classList.remove('opacity-0', 'pointer-events-none');
+          mobileMenuOverlay.classList.add('opacity-100', 'pointer-events-auto');
           document.body.style.overflow = 'hidden';
         } else {
-          mobileMenu.classList.remove('open');
-          mobileMenu.classList.add('closed');
-          mobileMenuOverlay.classList.add('hidden');
+          // Close menu
+          mobileMenu.classList.remove('translate-x-0');
+          mobileMenu.classList.add('translate-x-full');
+          // Hide overlay
+          mobileMenuOverlay.classList.remove('opacity-100', 'pointer-events-auto');
+          mobileMenuOverlay.classList.add('opacity-0', 'pointer-events-none');
           document.body.style.overflow = '';
         }
       };
 
       mobileMenuButton.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isCurrentlyOpen = mobileMenu.classList.contains('open');
-        toggleMenu(!isCurrentlyOpen);
+        // Check if menu is currently closed (has translate-x-full)
+        const isCurrentlyClosed = mobileMenu.classList.contains('translate-x-full');
+        toggleMenu(isCurrentlyClosed); // Open if closed, close if open
       });
       
       if (closeMobileMenu) {

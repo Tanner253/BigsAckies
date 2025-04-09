@@ -1,4 +1,22 @@
 <main class="flex-grow bg-gray-50">
+  <style>
+    /* Hide spin buttons on number inputs for WebKit browsers (more specific) */
+    .quantity-input input[type='number'].quantity-value::-webkit-outer-spin-button,
+    .quantity-input input[type='number'].quantity-value::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Hide spin buttons on number inputs for Firefox (more specific) */
+    .quantity-input input[type='number'].quantity-value {
+      -moz-appearance: textfield;
+    }
+    /* Ensure it still applies even if specificity is high elsewhere */
+    input[type=number] {
+       -moz-appearance: textfield; 
+    }
+
+  </style>
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">Your Shopping Cart</h1>
     
@@ -53,7 +71,10 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <% cart.items.forEach(function(item) { %>
-                    <tr>
+                    <tr class="cart-item-row" 
+                        data-product-id="<%= item.product_id %>" 
+                        data-price="<%= item.price %>" 
+                        data-stock="<%= item.stock %>">
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                           <div class="flex-shrink-0 h-16 w-16">
@@ -68,19 +89,22 @@
                         <div class="text-sm text-gray-900">$<%= item.price.toFixed(2) %></div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <form class="update-quantity-form">
+                        <div class="inline-flex items-center">
+                          <button type="button" class="quantity-decrement bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-3 rounded-l disabled:opacity-50 disabled:cursor-not-allowed">
+                            -
+                          </button>
+                          <input type="hidden" class="quantity-value" name="quantity" value="<%= item.quantity %>">
+                          <span class="quantity-display bg-white border-t border-b border-gray-300 px-4 py-1 text-center w-12">
+                            <%= item.quantity %>
+                          </span>
+                          <button type="button" class="quantity-increment bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-3 rounded-r disabled:opacity-50 disabled:cursor-not-allowed">
+                            +
+                          </button>
+                        </div>
+                        <%# Keep the original form and CSRF token for server updates, but hide it %>
+                        <form class="update-quantity-form hidden">
                           <input type="hidden" name="product_id" value="<%= item.product_id %>">
                           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                          <div class="quantity-input mx-auto flex items-center justify-center space-x-2">
-                            <button type="button" class="quantity-decrement bg-gray-200 hover:bg-gray-300 rounded-l px-3 py-1">
-                              <i class="fas fa-minus"></i>
-                            </button>
-                            <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.stock %>" 
-                                   class="quantity-value w-16 text-center border-gray-300 rounded">
-                            <button type="button" class="quantity-increment bg-gray-200 hover:bg-gray-300 rounded-r px-3 py-1">
-                              <i class="fas fa-plus"></i>
-                            </button>
-                          </div>
                         </form>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -114,7 +138,7 @@
             <div class="space-y-4">
               <div class="flex justify-between">
                 <span class="text-gray-600">Subtotal</span>
-                <span class="text-gray-900">$<%= cart.totalPrice.toFixed(2) %></span>
+                <span class="text-gray-900" id="cart-subtotal">$<%= cart.totalPrice.toFixed(2) %></span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-600">Shipping</span>
@@ -123,7 +147,7 @@
               <div class="border-t pt-4">
                 <div class="flex justify-between">
                   <span class="text-lg font-semibold text-gray-900">Total</span>
-                  <span class="text-lg font-semibold text-gray-900">$<%= cart.totalPrice.toFixed(2) %></span>
+                  <span class="text-lg font-semibold text-gray-900" id="cart-total">$<%= cart.totalPrice.toFixed(2) %></span>
                 </div>
               </div>
               <a href="/cart/checkout" class="block w-full bg-green-600 text-white text-center py-2 px-4 rounded hover:bg-green-700 transition-colors">
@@ -136,3 +160,286 @@
     <% } %>
   </div>
 </main> 
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const cartRows = document.querySelectorAll('.cart-item-row');
+    const subtotalEl = document.getElementById('cart-subtotal');
+    const totalEl = document.getElementById('cart-total');
+    const clearCartForm = document.getElementById('clear-cart-form');
+    const removeButtons = document.querySelectorAll('.remove-item-btn');
+
+    function updateButtonStates(row) {
+        const quantityInput = row.querySelector('.quantity-value'); // Target hidden input
+        const quantityDisplay = row.querySelector('.quantity-display'); // Target span
+        const decrementBtn = row.querySelector('.quantity-decrement');
+        const incrementBtn = row.querySelector('.quantity-increment');
+        const stock = parseInt(row.dataset.stock, 10);
+        // Read from hidden input
+        const currentQuantity = parseInt(quantityInput.value, 10);
+
+        decrementBtn.disabled = currentQuantity <= 1;
+        incrementBtn.disabled = currentQuantity >= stock;
+    }
+
+    function updateTotals() {
+        let newSubtotal = 0;
+        document.querySelectorAll('.cart-item-row').forEach(row => {
+            const price = parseFloat(row.dataset.price);
+            // Read quantity from hidden input
+            const quantity = parseInt(row.querySelector('.quantity-value').value, 10); 
+            if (!isNaN(price) && !isNaN(quantity)) {
+                newSubtotal += price * quantity;
+            }
+        });
+        subtotalEl.textContent = `$${newSubtotal.toFixed(2)}`;
+        // Assuming shipping is always free for now
+        totalEl.textContent = `$${newSubtotal.toFixed(2)}`; 
+        
+        // Update header cart count if it exists
+        const headerCartCount = document.getElementById('header-cart-count');
+        if (headerCartCount) {
+            let totalQty = 0;
+             document.querySelectorAll('.cart-item-row').forEach(row => {
+                 // Read quantity from hidden input
+                const quantity = parseInt(row.querySelector('.quantity-value').value, 10);
+                if (!isNaN(quantity)) {
+                    totalQty += quantity;
+                }
+            });
+            headerCartCount.textContent = totalQty;
+            const cartItemsTitle = document.querySelector('.cart-items-title'); // Assuming you add this class/id
+            if (cartItemsTitle) {
+                 cartItemsTitle.textContent = `Cart Items (${totalQty})`;
+            }
+        }
+    }
+
+    function updateItemTotal(row) {
+        const price = parseFloat(row.dataset.price);
+        const quantityInput = row.querySelector('.quantity-value'); // Target hidden input
+        const quantityDisplay = row.querySelector('.quantity-display'); // Target span
+        const itemTotalEl = row.querySelector('.item-total');
+        // Read quantity from hidden input
+        const quantity = parseInt(quantityInput.value, 10);
+        
+        if (!isNaN(price) && !isNaN(quantity)) {
+            itemTotalEl.textContent = `$${(price * quantity).toFixed(2)}`;
+            // Update the display span as well
+            quantityDisplay.textContent = quantity; 
+        }
+    }
+    
+    async function updateCartOnServer(productId, quantity, csrfToken) {
+        try {
+            const response = await fetch('/cart/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ product_id: productId, quantity: quantity })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Failed to update cart:', errorData.message);
+                // Optional: show error to user, maybe revert optimistic update
+                alert(`Error updating cart: ${errorData.message || 'Please try again.'}`);
+                return false; 
+            }
+            // Success, UI is already updated optimistically
+             const data = await response.json();
+             console.log('Cart updated successfully on server:', data);
+             // Optionally update totals from server response if needed
+             // subtotalEl.textContent = `$${data.totalPrice.toFixed(2)}`;
+             // totalEl.textContent = `$${data.totalPrice.toFixed(2)}`;
+            return true;
+
+        } catch (error) {
+            console.error('Error sending update to server:', error);
+            alert('An error occurred while updating your cart. Please check your connection and try again.');
+             return false;
+        }
+    }
+    
+     async function removeCartItemOnServer(productId, csrfToken) {
+        try {
+            const response = await fetch('/cart/remove', {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ product_id: productId })
+            });
+
+            if (!response.ok) {
+                 const errorData = await response.json();
+                 console.error('Failed to remove item:', errorData.message);
+                 alert(`Error removing item: ${errorData.message || 'Please try again.'}`);
+                 return false;
+            }
+            
+            console.log('Item removed successfully on server');
+             return true;
+
+        } catch (error) {
+            console.error('Error removing item from server:', error);
+             alert('An error occurred while removing the item. Please check your connection and try again.');
+            return false;
+        }
+    }
+    
+     async function clearCartOnServer(csrfToken) {
+        try {
+            const response = await fetch('/cart/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({}) // No body needed usually for clear
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Failed to clear cart:', errorData.message);
+                alert(`Error clearing cart: ${errorData.message || 'Please try again.'}`);
+                return false;
+            }
+            
+            console.log('Cart cleared successfully on server');
+            return true;
+
+        } catch (error) {
+            console.error('Error clearing cart on server:', error);
+            alert('An error occurred while clearing the cart. Please check your connection and try again.');
+             return false;
+        }
+    }
+
+
+    cartRows.forEach(row => {
+        const quantityInput = row.querySelector('.quantity-value'); // Target hidden input
+        const quantityDisplay = row.querySelector('.quantity-display'); // Target span
+        const decrementBtn = row.querySelector('.quantity-decrement');
+        const incrementBtn = row.querySelector('.quantity-increment');
+        const stock = parseInt(row.dataset.stock, 10);
+        const productId = row.dataset.productId;
+        // Find CSRF token in the now hidden form
+        const csrfTokenInput = row.querySelector('.update-quantity-form input[name="_csrf"]'); 
+        const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+        let debounceTimer;
+
+        // Initial button state
+        updateButtonStates(row);
+
+        decrementBtn.addEventListener('click', () => {
+            let currentValue = parseInt(quantityInput.value, 10);
+            if (currentValue > 1) {
+                const newValue = currentValue - 1;
+                quantityInput.value = newValue; // Update hidden input
+                quantityDisplay.textContent = newValue; // Update display span
+                updateButtonStates(row); // Update button states immediately
+                
+                // Trigger server update via debounced function
+                triggerUpdate(productId, newValue, csrfToken);
+            }
+        });
+
+        incrementBtn.addEventListener('click', () => {
+            let currentValue = parseInt(quantityInput.value, 10);
+             if (currentValue < stock) {
+                const newValue = currentValue + 1;
+                quantityInput.value = newValue; // Update hidden input
+                quantityDisplay.textContent = newValue; // Update display span
+                updateButtonStates(row); // Update button states immediately
+                
+                // Trigger server update via debounced function
+                triggerUpdate(productId, newValue, csrfToken);
+            }
+        });
+        
+        // Debounced function to update server and totals
+        function triggerUpdate(prodId, qty, token) {
+            clearTimeout(debounceTimer);
+             updateItemTotal(row);
+             updateTotals();
+            debounceTimer = setTimeout(() => {
+                 updateCartOnServer(prodId, qty, token);
+            }, 500); // Send update after 500ms of inactivity
+        }
+        
+        // REMOVED previous change listener on the input field as it's hidden now
+        /*
+        quantityInput.addEventListener('change', (event) => {
+            // ... old logic ...
+        });
+        
+         quantityInput.addEventListener('keydown', (e) => {
+            // ... old logic ...
+        });
+        */
+    });
+    
+    // Handle Remove Item Button Clicks
+    removeButtons.forEach(button => {
+        button.addEventListener('click', async (event) => {
+             const row = event.target.closest('.cart-item-row');
+             const productId = button.dataset.productId;
+             const csrfTokenInput = document.querySelector('input[name="_csrf"]'); // Find a CSRF token
+             const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+
+             if (!csrfToken) {
+                 console.error('CSRF token not found for removal.');
+                 alert('Could not remove item. Security token missing. Please refresh the page.');
+                 return;
+             }
+
+            if (confirm('Are you sure you want to remove this item from your cart?')) {
+                 const success = await removeCartItemOnServer(productId, csrfToken);
+                 if (success) {
+                    // Remove the row from the table
+                    row.remove();
+                    // Update totals
+                    updateTotals();
+                    
+                     // Check if cart is now empty
+                    if (document.querySelectorAll('.cart-item-row').length === 0) {
+                         // Optionally, reload the page or display the empty cart message dynamically
+                         window.location.reload(); // Easiest way to show the empty cart view
+                    }
+                 }
+            }
+        });
+    });
+    
+    // Handle Clear Cart Form Submission
+     if (clearCartForm) {
+        clearCartForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+             const csrfTokenInput = document.querySelector('input[name="_csrf"]'); // Find a CSRF token
+             const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+
+             if (!csrfToken) {
+                  console.error('CSRF token not found for clearing cart.');
+                 alert('Could not clear cart. Security token missing. Please refresh the page.');
+                 return;
+             }
+
+            if (confirm('Are you sure you want to clear your entire cart?')) {
+                const success = await clearCartOnServer(csrfToken);
+                if (success) {
+                    // Optionally, reload the page or display the empty cart message dynamically
+                     window.location.reload(); // Easiest way to show the empty cart view
+                }
+            }
+        });
+    }
+    
+     // Initial total calculation on page load in case totals differ (e.g. discounts not shown yet)
+     updateTotals();
+
+});
+</script> 
