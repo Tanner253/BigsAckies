@@ -23,10 +23,32 @@
         </div>
       </div>
       <div class="md:w-1/2">
-        <img src="https://media.istockphoto.com/id/1210293989/photo/an-ackie-spiny-tail-monitor.jpg?b=1&s=612x612&w=0&k=20&c=_6V4MTpWGEGdO1XGTvHuKs3fF_c3yBzzViDgmjpJluY=" alt="Ackie Monitor" class="rounded-lg shadow-xl w-full h-auto object-cover" onerror="this.src='https://via.placeholder.com/600x400?text=Ackie+Monitor';this.onerror='';">
+        <!-- Swiper -->
+        <div class="swiper hero-swiper aspect-video rounded-lg shadow-xl overflow-hidden" style="max-height: 420px;"> 
+          <div class="swiper-wrapper">
+            <!-- Slides -->
+            <div class="swiper-slide">
+              <img src="/images/20250414_143352.jpg" alt="Ackie Monitor 1" class="w-full h-full object-cover"/>
+            </div>
+            <div class="swiper-slide">
+              <img src="/images/20250414_143219.jpg" alt="Ackie Monitor 2" class="w-full h-full object-cover"/>
+            </div>
+            <div class="swiper-slide">
+              <img src="/images/IMG_20240829_141121_408.jpg" alt="Ackie Monitor 3" class="w-full h-full object-cover"/>
+            </div>
+            <div class="swiper-slide">
+              <img src="/images/20250414_144025.jpg" alt="Ackie Monitor 4" class="w-full h-full object-cover"/>
+            </div>
+          </div>
+          <!-- Add Pagination -->
+          <div class="swiper-pagination"></div>
+          <!-- Add Navigation -->
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-button-next"></div>
+        </div>
       </div>
     </div>
-  </div>
+  </div> 
   
   <!-- Featured Categories -->
   <div class="bg-white py-12">
@@ -195,3 +217,28 @@
     </div>
   </div>
 </div> 
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const swiper = new Swiper('.hero-swiper', {
+      // Optional parameters
+      loop: true,
+      autoplay: {
+        delay: 5000, // Autoplay delay in milliseconds
+        disableOnInteraction: false,
+      },
+
+      // If we need pagination
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+
+      // Navigation arrows
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  });
+</script> 
