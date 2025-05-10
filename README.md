@@ -12,7 +12,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14.x-blue.svg)](https://www.postgresql.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-latest-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-E-commerce platform for reptiles and supplies.
+E-commerce platform for reptiles and supplies. can be used for any product.
 
 ## Table of Contents
 
