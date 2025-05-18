@@ -30,7 +30,7 @@ E-commerce platform for reptiles and supplies. can be used for any product.
 
 ## About The Project
 
-This project is an e-commerce platform focused on selling reptiles and related supplies. It provides features for browsing products, user authentication, managing carts, processing payments, and potentially more.
+This project is an e-commerce platform focused on selling reptiles and related supplies. It provides features for browsing products, user authentication, managing carts, processing payments, and potentially more..
 
 ### Built With
 
