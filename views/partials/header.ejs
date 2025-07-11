@@ -22,9 +22,6 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/styles.css">
   
-  <% if (typeof stripePublicKey !== 'undefined') { %>
-    <script src="https://js.stripe.com/v3/"></script>
-  <% } %>
 </head>
 <body class="flex flex-col min-h-screen">
   <!-- Header -->
@@ -41,8 +38,14 @@
         
         <!-- Desktop Navigation -->
         <nav class="hidden md:flex items-center space-x-6">
-          <a href="/" class="nav-link <%= locals.currentPath === '/' ? 'active' : '' %>">Home</a>
-          <a href="/products" class="nav-link <%= locals.currentPath && locals.currentPath.startsWith('/products') ? 'active' : '' %>">Products</a>
+          <a href="/shop" class="text-white hover:text-gray-300 transition-colors">Shop</a>
+          <% if (user) { %>
+            <a href="/account/orders" class="text-white hover:text-gray-300 transition-colors">My Orders</a>
+            <a href="/account" class="text-white hover:text-gray-300 transition-colors">
+              <i class="fas fa-user-circle text-xl"></i>
+              <span class="ml-2"><%= user.name %></span>
+            </a>
+          <% } %>
           <a href="/about" class="nav-link <%= locals.currentPath === '/about' ? 'active' : '' %>">About</a>
           <a href="/contact" class="nav-link <%= locals.currentPath === '/contact' ? 'active' : '' %>">Contact</a>
         </nav>

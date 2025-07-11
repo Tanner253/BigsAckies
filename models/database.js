@@ -73,7 +73,7 @@ async function setupDatabase() {
         total_amount DECIMAL(10, 2) NOT NULL,
         status VARCHAR(20) NOT NULL DEFAULT 'pending',
         shipping_address TEXT,
-        payment_id VARCHAR(255),
+        payment_intent_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -185,6 +185,32 @@ async function setupDatabase() {
       console.error('Error checking/adding name column:', error);
     }
     
+    // Migration for orders table: add payment_intent_id
+    try {
+      const columnCheck = await pool.query(`
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'orders' AND column_name = 'payment_intent_id'
+      `);
+      
+      if (columnCheck.rows.length === 0) {
+        await pool.query(`ALTER TABLE orders ADD COLUMN payment_intent_id VARCHAR(255)`);
+        console.log("Added 'payment_intent_id' column to 'orders' table.");
+      }
+
+      // Optional: Remove old 'payment_id' column if it exists and is no longer needed
+      const oldColumnCheck = await pool.query(`
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'orders' AND column_name = 'payment_id'
+      `);
+
+      if (oldColumnCheck.rows.length > 0) {
+        await pool.query(`ALTER TABLE orders DROP COLUMN payment_id`);
+        console.log("Removed legacy 'payment_id' column from 'orders' table.");
+      }
+    } catch (error) {
+      console.error("Error during 'orders' table migration:", error);
+    }
+
     console.log('Database setup completed');
   } catch (error) {
     console.error('Error setting up database:', error);

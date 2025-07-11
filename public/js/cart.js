@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove item functionality
     const removeItemButtons = document.querySelectorAll('.remove-item-btn');
     
-    if (removeItemButtons) {
+    if (removeItemButtons.length > 0) {
         removeItemButtons.forEach(button => {
             button.addEventListener('click', async (e) => {
                 e.preventDefault();

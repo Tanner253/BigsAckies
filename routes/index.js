@@ -316,9 +316,6 @@ router.get('/checkout', auth.isAuthenticated, async (req, res) => {
 
     const totalPrice = cartItems.reduce((sum, item) => sum + item.total, 0);
     const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-    // Initialize Stripe
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     
     // Create Payment Intent
     const paymentIntent = await stripe.paymentIntents.create({
@@ -356,7 +353,13 @@ router.get('/checkout', auth.isAuthenticated, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading checkout page:', error);
-    req.flash('error', 'An unexpected error occurred. Please try again.');
+    // Log the specific Stripe error if available
+    if (error.type === 'StripeInvalidRequestError') {
+      console.error('Stripe Error Details:', error.message);
+      req.flash('error', `A payment processing error occurred: ${error.message}. Please check your API keys.`);
+    } else {
+      req.flash('error', 'An unexpected error occurred while preparing the checkout. Please try again.');
+    }
     res.redirect('/cart');
   }
 });
@@ -372,9 +375,6 @@ router.get('/checkout/complete', auth.isAuthenticated, async (req, res) => {
   }
   
   try {
-    // Initialize Stripe
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    
     // Retrieve the payment intent from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent);
     
@@ -452,7 +452,7 @@ router.get('/checkout/complete', auth.isAuthenticated, async (req, res) => {
       'No address provided';
     
     // Create order in database
-    const client = await db.getClient();
+    const client = await db.pool.connect();
     
     try {
       await client.query('BEGIN');
@@ -1086,88 +1086,39 @@ router.get('/terms', (req, res) => {
   });
 });
 
-// User orders page (requires authentication)
-router.get('/orders', async (req, res) => {
-  // Check if user is logged in
-  if (!req.session.user) {
-    req.session.returnTo = '/orders';
-    req.session.messages = {
-      error: 'Please sign in to view your orders'
-    };
-    return res.redirect('/login');
-  }
-
-  try {
-    // Get user's orders
-    const query = `
-      SELECT o.*, o.total_amount as total, u.email as user_email
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
-      WHERE o.user_id = $1
-      ORDER BY o.created_at DESC
-    `;
-    
-    const result = await db.query(query, [req.session.user.id]);
-    const orders = result.rows;
-
-    res.render('orders', {
-      title: 'My Orders',
-      user: req.session.user,
-      orders: orders
-    });
-  } catch (error) {
-    console.error('Error fetching user orders:', error);
-    res.status(500).render('error', {
-      title: 'Error',
-      status: 500,
-      message: 'Failed to load your orders',
-      error: { status: 500 }
-    });
-  }
+// Redirect old /orders page to the new /account/orders page for bookmark compatibility
+router.get('/orders', auth.isAuthenticated, (req, res) => {
+  res.redirect('/account/orders');
 });
 
 // View individual order details (requires authentication)
-router.get('/orders/:id', auth.isAuthenticated, async (req, res) => {
+router.get('/account/orders/:id', auth.isAuthenticated, async (req, res) => {
   try {
     const orderId = req.params.id;
-    
-    // Get order with items
-    const order = await orderModel.getOrderById(orderId);
-    
-    if (!order) {
-      return res.status(404).render('error', {
-        title: 'Order Not Found',
-        status: 404,
-        message: 'The requested order does not exist',
-        error: { status: 404 }
-      });
-    }
+    const userId = req.session.user.id;
 
-    // Check if the order belongs to the logged-in user
-    if (order.user_id !== req.session.user.id) {
-      return res.status(403).render('error', {
-        title: 'Access Denied',
-        status: 403,
-        message: 'You do not have permission to view this order',
-        error: { status: 403 }
-      });
+    const order = await orderModel.getOrderByIdForUser(orderId, userId);
+
+    if (!order) {
+      req.flash('error', 'Order not found or you do not have permission to view it.');
+      return res.redirect('/account/orders');
     }
     
+    // Get order items as well
+    const items = await orderModel.getOrderItems(orderId);
+
     res.render('order-detail', {
       title: `Order #${order.id}`,
-      layout: 'main-layout',
-      order,
-      user: req.session.user
+      layout: 'layouts/account-layout', 
+      user: req.session.user,
+      order: order,
+      items: items,
+      messages: req.flash()
     });
   } catch (error) {
-    console.error('Error fetching order details:', error);
-    res.status(500).render('error', {
-      title: 'Error',
-      status: 500,
-      message: 'Failed to load order details',
-      error: { status: 500 },
-      layout: 'main-layout'
-    });
+    console.error('Error displaying order details:', error);
+    req.flash('error', 'Failed to load order details.');
+    res.redirect('/account/orders');
   }
 });
 
@@ -1346,7 +1297,6 @@ router.get('/stripe-debug', auth.isAuthenticated, async (req, res) => {
 
   try {
     // Create a test payment intent
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: 1999, // $19.99
       currency: 'usd',

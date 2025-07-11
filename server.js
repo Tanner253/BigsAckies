@@ -9,6 +9,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
+const flash = require('connect-flash');
 
 // Import database and models
 const db = require('./models/database');
@@ -82,35 +83,20 @@ app.use(session({
   }
 }));
 
-// Add user data to response locals - MUST be before CSRF
+// Flash middleware - MUST be after session
+app.use(flash());
+
+// Add user data to response locals
 app.use(auth.setUserLocals);
 
-// CSRF protection
-const csrfProtection = csrf({
-  cookie: false, // Use session instead of cookie
-  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
-  value: (req) => {
-    return req.body._csrf || req.headers['x-csrf-token'] || req.query._csrf;
-  }
-});
+// CSRF protection middleware
+app.use(csrf({ cookie: false }));
 
-// Apply CSRF protection to all routes except API and file uploads
+// Middleware to make CSRF token and flash messages available to all views
+// This MUST come after the CSRF middleware and before the routes
 app.use((req, res, next) => {
-  // Skip CSRF for API routes, Socket.IO, or file uploads
-  if (req.path.startsWith('/api/') || 
-      req.path.startsWith('/socket.io/') || 
-      (req.path.startsWith('/admin/products/') && req.method === 'POST' && req.is('multipart/form-data'))) {
-    next();
-  } else {
-    csrfProtection(req, res, next);
-  }
-});
-
-// Add CSRF token to all rendered views
-app.use((req, res, next) => {
-  if (req.csrfToken) {
-    res.locals.csrfToken = req.csrfToken();
-  }
+  res.locals.csrfToken = req.csrfToken();
+  res.locals.messages = req.flash();
   next();
 });
 
@@ -129,11 +115,6 @@ app.use((req, res, next) => {
   
   // Make cart available to all views
   res.locals.cart = req.session.cart;
-  
-  // Initialize messages object to make it available to all views
-  res.locals.messages = req.session.messages || {};
-  // Clear flash messages after setting them in locals
-  req.session.messages = {};
   
   // Restore database cart fetching logic
   // If user is logged in, fetch cart data from database
@@ -205,20 +186,29 @@ app.use('/cart', cartRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  // Handle CSRF token errors specifically
+  if (err.code === 'EBADCSRFTOKEN') {
+    res.status(403).render('error', {
+      title: 'Error 403',
+      layout: 'main-layout',
+      status: 403,
+      message: 'Invalid security token. Please try submitting the form again.',
+      error: null,
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
+    });
+    return;
+  }
+
   console.error(err.stack);
   const statusCode = err.statusCode || 500;
-  
-  // Ensure csrfToken is available for error page rendering
-  if (!res.locals.csrfToken) {
-    res.locals.csrfToken = 'error-page-token';
-  }
   
   res.status(statusCode).render('error', {
     title: `Error ${statusCode}`,
     layout: 'main-layout',
     status: statusCode,
     message: err.message || 'An unexpected error occurred',
-    error: process.env.NODE_ENV !== 'production' ? err : null
+    error: process.env.NODE_ENV !== 'production' ? err : null,
+    csrfToken: req.csrfToken ? req.csrfToken() : ''
   });
 });
 
