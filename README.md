@@ -166,7 +166,15 @@ Make sure you have the following installed on your system:
     npm start
     ```
 
-Access the application by navigating to `http://localhost:PORT` in your web browser (replace `PORT` with the port number specified in your `.env` file or the application default, often 3000 or 5000).
+### Running the Application
+
+1.  Start the application:
+    ```bash
+    npm start
+    ```
+2.  Access the application by navigating to `http://biggsackies.xyz` in your web browser. For local development, this will typically be `http://localhost:PORT` (replace `PORT` with the port number specified in your `.env` file, usually 3000 or 5000).
+
+### Admin Access
 
 ## Environment Variables
 

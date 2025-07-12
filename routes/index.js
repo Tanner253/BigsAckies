@@ -1059,6 +1059,15 @@ router.get('/faq', (req, res) => {
   });
 });
 
+// Care Requirements page
+router.get('/care-requirements', (req, res) => {
+  res.render('care-requirements', {
+    title: 'Care Requirements',
+    layout: 'main-layout',
+    user: req.session.user || null
+  });
+});
+
 // Shipping & Returns page
 router.get('/shipping', (req, res) => {
   res.render('shipping', { 

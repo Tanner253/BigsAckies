@@ -38,14 +38,8 @@
         
         <!-- Desktop Navigation -->
         <nav class="hidden md:flex items-center space-x-6">
-          <a href="/shop" class="text-white hover:text-gray-300 transition-colors">Shop</a>
-          <% if (user) { %>
-            <a href="/account/orders" class="text-white hover:text-gray-300 transition-colors">My Orders</a>
-            <a href="/account" class="text-white hover:text-gray-300 transition-colors">
-              <i class="fas fa-user-circle text-xl"></i>
-              <span class="ml-2"><%= user.name %></span>
-            </a>
-          <% } %>
+          <a href="/shop" class="text-gray-600 hover:text-green-600 transition-colors">Shop</a>
+          <a href="/care-requirements" class="text-gray-600 hover:text-green-600 transition-colors">Care Requirements</a>
           <a href="/about" class="nav-link <%= locals.currentPath === '/about' ? 'active' : '' %>">About</a>
           <a href="/contact" class="nav-link <%= locals.currentPath === '/contact' ? 'active' : '' %>">Contact</a>
         </nav>
@@ -132,6 +126,7 @@
         <ul class="space-y-4">
           <li><a href="/" class="block py-2 text-gray-700 <%= locals.currentPath === '/' ? 'text-green-600 font-medium' : '' %>">Home</a></li>
           <li><a href="/products" class="block py-2 text-gray-700 <%= locals.currentPath && locals.currentPath.startsWith('/products') ? 'text-green-600 font-medium' : '' %>">Products</a></li>
+          <li><a href="/care-requirements" class="block py-2 text-gray-700 <%= locals.currentPath === '/care-requirements' ? 'text-green-600 font-medium' : '' %>">Care Requirements</a></li>
           <li><a href="/about" class="block py-2 text-gray-700 <%= locals.currentPath === '/about' ? 'text-green-600 font-medium' : '' %>">About</a></li>
           <li><a href="/contact" class="block py-2 text-gray-700 <%= locals.currentPath === '/contact' ? 'text-green-600 font-medium' : '' %>">Contact</a></li>
           

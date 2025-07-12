@@ -61,15 +61,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         showNotification('Item added to cart', 'success');
                     } else {
                         showNotification(data.error || 'Failed to add item to cart', 'error');
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                        }
                     }
                 } catch (error) {
                     console.error('Error adding item to cart:', error);
-                    // In production, redirect to login instead of showing alert
-                    if (window.location.hostname.includes('herokuapp.com') || process.env.NODE_ENV === 'production') {
-                        window.location.href = '/login';
-                        return;
-                    }
-                    alert(error.message || 'Failed to add item to cart');
+                    // Redirect to login page if there's an error,
+                    // which is likely due to the user not being authenticated.
+                    window.location.href = '/login';
                 }
             });
         });
