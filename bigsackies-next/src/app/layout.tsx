@@ -10,7 +10,7 @@ import CosmicFooter from "@/components/CosmicFooter";
 const exo2 = Exo_2({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700", "800"] });
 
 export const metadata: Metadata = {
-  title: "BigsAckies - Cosmic Reptile Paradise",
+  title: "BiggsAckies - Cosmic Reptile Paradise",
   description: "Explore the universe of premium reptiles in our cosmic marketplace",
 };
 

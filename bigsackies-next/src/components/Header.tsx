@@ -29,9 +29,28 @@ export default function Header() {
         >
           <Link 
             href="/" 
-            className="text-3xl font-bold text-stellar-white hover:text-nebula-pink transition-all duration-300 relative group"
+            className="text-3xl font-bold transition-all duration-300 relative group"
           >
-            <span className="relative z-10">Biggs Ackies</span>
+            <motion.span 
+              className="relative z-10 leading-[1.2] py-2"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #db2777 25%, #ec4899 50%, #fbbf24 75%, #06b6d4 100%)',
+                backgroundSize: '400% 100%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+              animate={{
+                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            >
+              Biggs Ackies
+            </motion.span>
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-nebula-violet/20 via-nebula-magenta/20 to-nebula-hot-pink/20 rounded-lg blur-md"
               initial={{ opacity: 0 }}

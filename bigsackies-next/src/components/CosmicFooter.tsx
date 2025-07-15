@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { 
   Mail, 
-  Phone, 
   MapPin, 
   Facebook, 
   Twitter, 
@@ -107,10 +106,6 @@ export default function CosmicFooter() {
                 <div className="flex items-center space-x-2 text-stellar-silver/70 text-sm">
                   <Mail size={14} className="text-nebula-cyan" />
                   <span>percivaltanner@gmail.com</span>
-                </div>
-                <div className="flex items-center space-x-2 text-stellar-silver/70 text-sm">
-                  <Phone size={14} className="text-nebula-hot-pink" />
-                  <span>(555) 123-4567</span>
                 </div>
               </div>
             </motion.div>

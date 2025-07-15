@@ -63,6 +63,24 @@
   html {
     scroll-behavior: smooth;
   }
+  
+  /* Fix for clipped g's and better typography */
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  
+  .text-5xl, .text-6xl, .text-7xl, .text-8xl {
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+  }
+  
+  .gradient-text {
+    line-height: 1.15;
+    padding: 0.1em 0;
+    display: inline-block;
+  }
 }
 
 /* Cosmic Background Effects */
@@ -199,6 +217,12 @@
     position: relative;
     overflow: hidden;
     transition: all 0.3s ease;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    letter-spacing: 0.025em;
   }
   
   .btn-cosmic::before {
@@ -274,6 +298,9 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    line-height: 1.15;
+    padding: 0.1em 0;
+    display: inline-block;
   }
   
   .holographic-effect {
@@ -301,4 +328,90 @@
     opacity: 0.7;
     z-index: -1;
   }
+  
+  /* Hero section improvements */
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 6rem 1rem 2rem;
+    text-align: center;
+    position: relative;
+  }
+  
+  .hero-title {
+    margin-bottom: 1rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .hero-subtitle {
+    margin-bottom: 2rem;
+    max-width: 50rem;
+    line-height: 1.6;
+  }
+  
+  .hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 3rem;
+  }
+  
+  .hero-scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  @media (max-width: 640px) {
+    .hero-content {
+      padding: 5rem 1rem 2rem;
+      justify-content: center;
+    }
+    
+    .hero-title {
+      margin-bottom: 1rem;
+    }
+    
+    .hero-subtitle {
+      margin-bottom: 1.5rem;
+    }
+    
+    .hero-buttons {
+      flex-direction: column;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+    
+    .hero-buttons .btn-cosmic {
+      width: 100%;
+      max-width: 280px;
+    }
+  }
+}
+
+/* Additional animation improvements */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }

@@ -82,3 +82,5 @@
 
 ---
 **Note for the next agent:** The core functionality is robust, but the UI/UX layer needs significant work to meet the client's vision of a "visually stunning" and "impressive" deep space theme. The primary focus should be on a complete redesign of the visual elements using the established "nebula" color palette. The current implementation has failed to satisfy the client's aesthetic requirements. 
+
+EDITED: the front end theme has been astablished, make sure to maintain it with new features that will be added. make sure to work closely with the user and the legacy website to ensure alignment with final product. be very careful and thurough and do not introduce duplicate code needlessly. please check for existing implementations before implementing new solutions.

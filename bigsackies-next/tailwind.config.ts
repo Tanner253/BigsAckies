@@ -35,12 +35,15 @@ const config: Config = {
         'nebula-violet': '#7c3aed',
         'nebula-pink': '#e879f9',
         'nebula-rose': '#f43f5e',
+        'nebula-blue': '#3b82f6',
         
         // Accent Colors
         'cosmic-blue': '#1e40af',
         'cosmic-teal': '#0f766e',
         'stellar-white': '#f8fafc',
-        'stellar-silver': '#cbd5e1',
+        'stellar-silver': '#e2e8f0',
+        'stellar-silver-light': '#cbd5e1',
+        'stellar-silver-dark': '#94a3b8',
         
         // Default theme colors
         border: "hsl(var(--border))",
