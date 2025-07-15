@@ -196,27 +196,6 @@
         }, 300);
       });
     });
-
-    // Copy contract address
-    const copyButton = document.getElementById('copy-ca');
-    const addressInput = document.getElementById('ca-address');
-
-    if (copyButton && addressInput) {
-      copyButton.addEventListener('click', () => {
-        const address = addressInput.value;
-        navigator.clipboard.writeText(address).then(() => {
-          // Success feedback
-          const originalIcon = copyButton.innerHTML;
-          copyButton.innerHTML = '<i class="fas fa-check text-green-400"></i>';
-          setTimeout(() => {
-            copyButton.innerHTML = originalIcon;
-          }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy: ', err);
-          // You could add some error feedback here if you want
-        });
-      });
-    }
   </script>
 </body>
 </html> 
