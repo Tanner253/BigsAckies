@@ -1,6 +1,3 @@
-"use client";
-
-import prisma from "@/lib/db";
 import AddToCartButton from "@/components/AddToCartButton";
 import Image from "next/image";
 
@@ -30,10 +27,11 @@ async function getProduct(id: string): Promise<Product | null> {
 }
 
 export default async function ProductDetailPage({
-  params: { id },
+  params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const product = await getProduct(id);
 
   if (!product) {

@@ -182,12 +182,12 @@ export default function HomePage() {
                       <Heart className="w-5 h-5 text-white" />
                     </div>
                     <h4 className="text-lg md:text-xl font-bold text-stellar-white">
-                      Potty Training Success
+                      A Capacity for Routine
                     </h4>
                   </div>
                   <p className="text-stellar-silver text-sm md:text-base">
-                    Believe it or not, Biggs has learned to use designated areas for his bathroom needs. 
-                    This level of intelligence and adaptability is what makes Ackie Monitors extraordinary companions.
+                    Biggs demonstrates a surprising tendency to use consistent spots for his bathroom needs.
+                    This level of routine behavior highlights the intelligence and adaptability that make Ackie Monitors extraordinary companions.
                   </p>
                 </div>
               </div>
@@ -310,10 +310,10 @@ export default function HomePage() {
             className="text-center mb-12 md:mb-16"
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 gradient-text">
-              Why Ackies Beat Bearded Dragons
+              Why Ackies Excel as Companions
             </h2>
             <p className="text-base md:text-lg lg:text-xl text-stellar-silver max-w-3xl mx-auto">
-              Discover why Ackie Monitors are the superior choice for intelligent reptile companions
+              Discover why Ackie Monitors are a superior choice for an intelligent and engaging reptile companion.
             </p>
           </motion.div>
 
@@ -339,8 +339,7 @@ export default function HomePage() {
                   🧠 Superior Intelligence
                 </h3>
                 <p className="text-stellar-silver text-sm md:text-base text-center">
-                  Ackie Monitors are among the most intelligent reptiles. They can learn routines, recognize their owners, 
-                  and even respond to their names. Some can be trained to perform simple behaviors and show genuine curiosity.
+                  Ackie Monitors are renowned for their problem-solving skills. They show remarkable curiosity and can learn to recognize their keepers and daily routines, making them one of the most intelligent pet lizards.
                 </p>
               </div>
             </motion.div>
@@ -366,8 +365,7 @@ export default function HomePage() {
                   ⚡ Active & Engaging
                 </h3>
                 <p className="text-stellar-silver text-sm md:text-base text-center">
-                  While bearded dragons often sit motionless for hours, Ackies are constantly active and engaging. 
-                  They explore, hunt, dig, and interact with their environment in fascinating ways.
+                  While many reptiles are sedentary, Ackies are constantly active. They are natural foragers who explore, hunt, burrow, and interact with their environment in fascinating ways that are a joy to watch.
                 </p>
               </div>
             </motion.div>
@@ -381,14 +379,13 @@ export default function HomePage() {
             >
               <div className="card-cosmic p-6 md:p-8 rounded-xl h-full">
                 <div className="aspect-video bg-nebula-teal/30 rounded-lg flex items-center justify-center text-4xl md:text-6xl mb-6">
-                  🤝
+                  <Users className="w-12 h-12" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold text-stellar-white mb-4 text-center">
-                  💪 Hardy & Adaptable
+                  🤝 Social & Communal
                 </h3>
                 <p className="text-stellar-silver text-sm md:text-base text-center">
-                  Ackies are incredibly hardy reptiles that adapt well to captivity. They're less prone to stress-related 
-                  illnesses and can handle temperature variations better than many other reptiles.
+                  Unlike many solitary reptiles, Ackies can thrive in small, properly structured groups. Their complex social hierarchies and interactions are a key indicator of their advanced intelligence and behavior.
                 </p>
               </div>
             </motion.div>
@@ -402,7 +399,7 @@ export default function HomePage() {
             >
               <div className="card-cosmic p-6 md:p-8 rounded-xl h-full">
                 <div className="aspect-video bg-nebula-blue/30 rounded-lg flex items-center justify-center text-4xl md:text-6xl mb-6">
-                  🎯
+                  🏹
                 </div>
                 <h3 className="text-lg md:text-xl font-bold text-stellar-white mb-4 text-center">
                   🏹 Natural Hunters

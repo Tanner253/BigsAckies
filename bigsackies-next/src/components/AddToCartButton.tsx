@@ -30,9 +30,21 @@ export default function AddToCartButton({
     setIsAdding(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: productId,
+          quantity: quantity,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add item to cart');
+      }
+
       // Add success notification
       addNotification({
         type: "success",

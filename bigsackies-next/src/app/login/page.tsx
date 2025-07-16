@@ -177,10 +177,10 @@ export default function LoginPage() {
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stellar-silver/50" size={18} />
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    placeholder="Enter your username or email"
                     className="input-cosmic pl-12"
                     required
                   />

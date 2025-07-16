@@ -88,6 +88,21 @@ export default function Header() {
             </Button>
           </motion.div>
 
+          {session?.user?.role === 'admin' && (
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button 
+                asChild 
+                variant="ghost" 
+                className="text-stellar-white hover:text-nebula-amber hover:bg-nebula-violet/30 transition-all duration-300 font-medium text-lg"
+              >
+                <Link href="/admin/dashboard">Admin Panel</Link>
+              </Button>
+            </motion.div>
+          )}
+
           {/* Auth Section */}
           <div className="flex items-center space-x-4">
             {isLoading ? (

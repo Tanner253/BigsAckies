@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model addresses {
@@ -97,6 +96,7 @@ model orders {
   user_id           Int?
   total_amount      Decimal       @db.Decimal(10, 2)
   status            String        @default("pending") @db.VarChar(20)
+  is_paid           Boolean       @default(false)
   shipping_address  String?
   created_at        DateTime?     @default(now()) @db.Timestamp(6)
   updated_at        DateTime?     @default(now()) @db.Timestamp(6)
@@ -106,19 +106,45 @@ model orders {
 }
 
 model products {
-  id          Int           @id @default(autoincrement())
-  name        String        @db.VarChar(255)
+  id               Int           @id @default(autoincrement())
+  name             String        @db.VarChar(255)
+  description      String?
+  price            Decimal       @db.Decimal(10, 2)
+  stock            Int           @default(0)
+  sold_count       Int           @default(0)
+  image_url        String?
+  category_id      Int?
+  featured         Boolean?      @default(false)
+  is_animal        Boolean       @default(false)
+  is_active        Boolean       @default(true)
+  male_quantity    Int           @default(0)
+  female_quantity  Int           @default(0)
+  unknown_quantity Int           @default(0)
+  laid_date        DateTime?     @db.Date
+  species_id       Int?
+  created_at       DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?     @default(now()) @db.Timestamp(6)
+  cart_items       cart_items[]
+  order_items      order_items[]
+  categories       categories?   @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  species          species?      @relation(fields: [species_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model species {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique @db.VarChar(255)
   description String?
-  price       Decimal       @db.Decimal(10, 2)
-  stock       Int           @default(0)
-  image_url   String?
-  category_id Int?
-  featured    Boolean?      @default(false)
-  created_at  DateTime?     @default(now()) @db.Timestamp(6)
-  updated_at  DateTime?     @default(now()) @db.Timestamp(6)
-  cart_items  cart_items[]
-  order_items order_items[]
-  categories  categories?   @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at  DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at  DateTime?  @default(now()) @db.Timestamp(6)
+  products    products[]
+}
+
+model images {
+  id          Int       @id @default(autoincrement())
+  public_id   String    @unique @db.VarChar(255)
+  url         String    @unique
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
 }
 
 model sessions {
