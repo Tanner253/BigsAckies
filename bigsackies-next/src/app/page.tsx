@@ -18,24 +18,24 @@ export default function HomePage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="relative pt-20 pb-4 bg-gradient-to-r from-purple-900/80 via-pink-900/80 to-blue-900/80 backdrop-blur-sm border-b border-purple-500/30"
+        className="relative py-3 bg-gradient-to-r from-purple-900/80 via-pink-900/80 to-blue-900/80 backdrop-blur-sm border-b border-purple-500/30"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20 animate-pulse" />
         
         <div className="relative z-10 container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-md opacity-50 animate-pulse" />
-                <div className="relative bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-full">
-                  <Code className="w-6 h-6 text-white" />
+                <div className="relative bg-gradient-to-r from-purple-500 to-pink-500 p-2 rounded-full">
+                  <Code className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <div>
-                <h2 className="text-lg md:text-xl font-bold text-white">
+              <div className="text-left">
+                <h2 className="text-base md:text-lg font-bold text-white">
                   Need a Website or App?
                 </h2>
-                <p className="text-sm text-purple-200">
+                <p className="text-xs md:text-sm text-purple-200">
                   Full-stack developer available for hire • Next.js, React, Unity & more
                 </p>
               </div>
@@ -43,11 +43,11 @@ export default function HomePage() {
             
             <Button
               onClick={() => setShowHireMeModal(true)}
-              className="relative overflow-hidden group bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 border border-white/20"
+              className="relative overflow-hidden group bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 border border-white/20 text-sm w-full md:w-auto mt-2 md:mt-0"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              <div className="relative flex items-center gap-2">
-                <Briefcase className="w-5 h-5" />
+              <div className="relative flex items-center justify-center gap-2">
+                <Briefcase className="w-4 h-4" />
                 <span>Hire Me</span>
                 <ArrowRight className="w-4 h-4" />
               </div>

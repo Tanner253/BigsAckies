@@ -206,6 +206,10 @@ const getOrderStats = async () => {
     // Get total revenue
     const revenueQuery = 'SELECT COALESCE(SUM(total_amount), 0) as total_revenue FROM orders';
     const revenueResult = await db.query(revenueQuery);
+
+    // Get completed orders count
+    const completedQuery = "SELECT COUNT(*) FROM orders WHERE is_paid = true OR status = 'delivered'";
+    const completedResult = await db.query(completedQuery);
     
     // Get recent orders
     const recentQuery = `
@@ -224,6 +228,7 @@ const getOrderStats = async () => {
     return {
       total: parseInt(totalResult.rows[0].count) || 0,
       pending: parseInt(pendingResult.rows[0].count) || 0,
+      completed: parseInt(completedResult.rows[0].count) || 0,
       revenue: parseFloat(revenueResult.rows[0].total_revenue) || 0,
       recentOrders: recentResult.rows || [],
       products: totalProducts,
@@ -234,6 +239,7 @@ const getOrderStats = async () => {
     return {
       total: 0,
       pending: 0,
+      completed: 0,
       revenue: 0,
       recentOrders: [],
       products: 0,

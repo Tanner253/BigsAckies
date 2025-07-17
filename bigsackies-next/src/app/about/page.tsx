@@ -83,7 +83,7 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-stellar-white text-lg">Potty Training Success</h4>
-                  <p className="text-stellar-silver">Believe it or not, Biggs is potty trained, showcasing the incredible intelligence of Ackie Monitors.</p>
+                  <p className="text-stellar-silver">Believe it or not, Biggs Recognizes me and my wife diffeently and behaves differently to us. showcasing the incredible intelligence of Ackie Monitors.</p>
                 </div>
               </div>
             </div>

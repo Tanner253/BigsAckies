@@ -587,30 +587,23 @@ export default function HireMeModal({ isOpen: externalIsOpen, onClose, showButto
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                             <User className="w-6 h-6 text-white" />
                           </div>
-                          <h3 className="text-xl md:text-2xl font-bold text-white">About Me</h3>
+                          <h3 className="text-xl md:text-2xl font-bold text-white">What I Do</h3>
                         </div>
                         <div className="text-sm md:text-base leading-relaxed space-y-4 text-slate-300">
                           <p>
-                            <strong>🌟 "Seek Fellowship among the stars"</strong> - Unicorn Software Engineer with expertise in 
-                            Object-Oriented Programming (OOP) and microservices architecture, delivering high-performance applications 
-                            across multiple domains.
+                            <strong>Got an idea for an app or website? I can build it.</strong> Think of me as your one-stop-shop for turning a concept into a real, working product. I handle everything from start to finish.
                           </p>
                           <p>
-                            <strong>💼 Professional Background:</strong> Experienced in multi-tenancy implementation, custom theming, 
-                            document generation, HTTPS enforcement, and user secrets management. Skilled in AWS and Azure cloud integrations 
-                            across Linux/Windows environments.
+                            <strong>The Look and Feel (Front-End):</strong> I design and build the part of the app you actually see and use. My goal is to make it beautiful, easy-to-use, and enjoyable for your customers. This includes everything from the layout and buttons to smooth animations and a design that works perfectly on phones, tablets, and computers.
                           </p>
                           <p>
-                            <strong>🎮 Gaming & Blockchain:</strong> Specialized in Unity game development with multiple deployed 
-                            mobile games on Google Play Store, blockchain integration with Solana, and memecoin-backed gaming platforms.
+                            <strong>The Brains of the Operation (Back-End):</strong> Behind the scenes, I build the powerful engine that makes your app work. This includes managing user accounts, storing data securely, and handling all the complex logic that happens when a user clicks a button.
                           </p>
                           <p>
-                            <strong>🏗️ Construction to Code:</strong> Background in construction management informs a disciplined approach 
-                            to scalable, secure, and responsive software development. Passionate about creating solutions that solve real-world problems.
+                            <strong>The Plumbing and Power (API & Server Services):</strong> I also build and manage the critical infrastructure that keeps your app running fast and reliably. This includes connecting your app to other services (like payment systems), ensuring it can handle many users at once, and keeping it secure from threats.
                           </p>
-                          <p>
-                            <strong>🚀 Current Focus:</strong> Building production e-commerce platforms, AI tool integrations, 
-                            and innovative gaming experiences while maintaining active contributions to open-source projects.
+                           <p>
+                            <strong>Bottom line: If you have an idea, I have the skills to build it.</strong>
                           </p>
                         </div>
                       </div>
@@ -621,10 +614,19 @@ export default function HireMeModal({ isOpen: externalIsOpen, onClose, showButto
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                             <Award className="w-6 h-6 text-white" />
                           </div>
-                          <h3 className="text-xl md:text-2xl font-bold text-white">Specialties</h3>
+                          <h3 className="text-xl md:text-2xl font-bold text-white">Example Services</h3>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
-                          {specialties.map((specialty, index) => (
+                          {[
+                            { name: "Full Website & App Creation", icon: Rocket, color: "#7c3aed" },
+                            { name: "E-commerce & Online Stores", icon: ShoppingCart, color: "#10b981" },
+                            { name: "Game Development (PC & Mobile)", icon: Gamepad2, color: "#000000" },
+                            { name: "Connecting to Other Apps (APIs)", icon: GitBranch, color: "#f59e0b" },
+                            { name: "Making Sure Your App is Fast & Secure", icon: Shield, color: "#ef4444" },
+                            { name: "Custom Business Tools", icon: Wrench, color: "#3b82f6" },
+                            { name: "AI & Automation for Your Business", icon: Bot, color: "#06b6d4" },
+                            { name: "Blockchain & Web3 Integration", icon: Coins, color: "#8b5cf6" },
+                          ].map((specialty, index) => (
                             <motion.div
                               key={specialty.name}
                               initial={{ opacity: 0, x: -20 }}

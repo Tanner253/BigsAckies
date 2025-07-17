@@ -460,9 +460,9 @@ router.get('/checkout/complete', auth.isAuthenticated, async (req, res) => {
       // Create order
       const orderResult = await client.query(
         `INSERT INTO orders (
-          user_id, total_amount, shipping_address, status, payment_intent_id, created_at
+          user_id, total_amount, shipping_address, is_paid, payment_intent_id, created_at
         ) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id`,
-        [userId, totalAmount, shippingAddress, 'paid', payment_intent]
+        [userId, totalAmount, shippingAddress, true, payment_intent]
       );
       
       const orderId = orderResult.rows[0].id;
