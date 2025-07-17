@@ -300,7 +300,7 @@ export default function TraditionalProductsPage() {
             className="card-cosmic rounded-2xl p-4 md:p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
             whileHover={{ y: -5 }}
           >
-            <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-green to-nebula-teal mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-green-400 mb-2">
               {completedOrders}
             </div>
             <div className="text-xs md:text-base text-stellar-silver/70">Completed Orders</div>

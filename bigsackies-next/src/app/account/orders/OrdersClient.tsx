@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, ShoppingBag } from "lucide-react";
+import { Package, ShoppingBag, CheckCircle, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 // Clean, explicit types for the client component
@@ -86,7 +86,22 @@ export default function OrdersClient({ orders }: OrdersClientProps) {
                         {new Date(order.created_at!).toLocaleDateString()}
                         </TableCell>
                         <TableCell>${Number(order.total_amount).toFixed(2)}</TableCell>
-                        <TableCell>{order.status}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {order.status.toLowerCase() === 'succeeded' || order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'delivered' ? (
+                              <CheckCircle className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-red-400" />
+                            )}
+                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              order.status.toLowerCase() === 'succeeded' || order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'delivered'
+                                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                        </TableCell>
                         <TableCell>
                         <Button variant="outline" size="sm" asChild>
                             <Link href={`/account/orders/${order.id}`}>View Details</Link>
