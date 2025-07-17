@@ -40,14 +40,14 @@ import Image from "next/image";
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, "Price must be a positive number"),
-  stock: z.coerce.number().int("Stock must be a whole number").optional(),
+  price: z.number().min(0, "Price must be a positive number"),
+  stock: z.number().int("Stock must be a whole number").optional(),
   categoryId: z.string().min(1, "Category is required"),
-  is_animal: z.boolean().default(false),
+  is_animal: z.boolean(),
   laid_date: z.string().optional(),
-  male_quantity: z.coerce.number().int().min(0).optional(),
-  female_quantity: z.coerce.number().int().min(0).optional(),
-  unknown_quantity: z.coerce.number().int().min(0).optional(),
+  male_quantity: z.number().int().min(0).optional(),
+  female_quantity: z.number().int().min(0).optional(),
+  unknown_quantity: z.number().int().min(0).optional(),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
