@@ -1,5 +1,3 @@
-const { withZeus } = require("@zeus-ci/next");
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     eslint: {
@@ -7,7 +5,6 @@ const nextConfig = {
         // your project has ESLint errors.
         ignoreDuringBuilds: true,
     },
-    // ... any other options
     images: {
         remotePatterns: [
             {
@@ -18,4 +15,4 @@ const nextConfig = {
     }
 };
 
-module.exports = withZeus(nextConfig); 
+module.exports = nextConfig; 
