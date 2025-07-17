@@ -44,7 +44,7 @@ export const {
             id: user.id.toString(),
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: user.role || "customer",
           };
         }
 
@@ -59,13 +59,13 @@ export const {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = (token.role as string) || "customer";
+        session.user.role = token.role as string;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id as string;
         token.role = user.role || "customer";
       }
       return token;
