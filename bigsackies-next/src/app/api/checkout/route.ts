@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2022-11-15",
+  apiVersion: "2025-06-30.basil",
 });
 
 export async function POST() {
