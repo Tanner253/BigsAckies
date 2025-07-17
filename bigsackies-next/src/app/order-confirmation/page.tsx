@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Package, ArrowRight, Home, Receipt } from "lucide-react";
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
   const [isLoading, setIsLoading] = useState(true);
@@ -119,5 +119,20 @@ export default function OrderConfirmationPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-24 pb-12 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading-cosmic mb-4" />
+          <p className="text-stellar-silver">Loading...</p>
+        </div>
+      </div>
+    }>
+      <OrderConfirmationContent />
+    </Suspense>
   );
 } 

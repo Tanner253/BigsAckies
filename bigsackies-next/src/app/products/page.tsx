@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,7 +45,7 @@ type UserChoices = {
 
 type Scene = 'welcome' | 'experience' | 'category' | 'animal-type' | 'budget' | 'swipe' | 'results';
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [currentScene, setCurrentScene] = useState<Scene>('welcome');
@@ -1062,4 +1062,19 @@ export default function ProductsPage() {
       </div>
     </div>
   );
-} 
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-24 pb-12 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading-cosmic mb-4" />
+          <p className="text-stellar-silver">Loading products...</p>
+        </div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
+  );
+}
