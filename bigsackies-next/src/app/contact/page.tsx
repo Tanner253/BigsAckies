@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNotifications } from "@/components/NotificationSystem";
 import { Mail, Phone, MapPin, Clock, Instagram, Youtube, Github, Send, User, Book, MessageSquare } from "lucide-react";
+import { submitContactForm } from "./actions"; // Import the server action
 
 // Schema for form validation
 const formSchema = z.object({
@@ -22,16 +24,8 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-async function submitContactForm(data: FormData) {
-  "use server";
-  // Here you would add logic to handle the form submission, 
-  // like sending an email or saving to a database.
-  // For now, we'll just log it to the console.
-  console.log("New contact form submission:", data);
-  // In a real app, you might want to revalidate a path or handle errors.
-}
-
 export default function ContactPage() {
+  const { data: session } = useSession();
   const { addNotification } = useNotifications();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -45,7 +39,7 @@ export default function ContactPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      email: "",
+      email: session?.user?.email || "",
       subject: "",
       message: ""
     }
@@ -54,18 +48,29 @@ export default function ContactPage() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      await submitContactForm(data);
-      addNotification({
-        type: "success",
-        title: "Message Sent!",
-        message: "Thanks for reaching out. We'll get back to you soon!",
+      const fullMessage = `Subject: ${data.subject}\nName: ${data.name}\n\nMessage:\n${data.message}`;
+      
+      const result = await submitContactForm({
+        email: data.email,
+        message: fullMessage,
+        userId: session?.user?.id ? parseInt(session.user.id) : null,
       });
-      reset();
+
+      if (result.success) {
+        addNotification({
+          type: "success",
+          title: "Message Sent!",
+          message: "Thanks for reaching out. We'll get back to you soon!",
+        });
+        reset();
+      } else {
+        throw new Error(result.message);
+      }
     } catch (error) {
       addNotification({
         type: "error",
         title: "Submission Failed",
-        message: "Something went wrong. Please try again.",
+        message: (error as Error).message || "Something went wrong. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
