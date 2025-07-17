@@ -44,6 +44,7 @@ const formSchema = z.object({
   stock: z.number().int("Stock must be a whole number").optional(),
   categoryId: z.string().min(1, "Category is required"),
   is_animal: z.boolean(),
+  species_id: z.string().optional(),
   laid_date: z.string().optional(),
   male_quantity: z.number().int().min(0).optional(),
   female_quantity: z.number().int().min(0).optional(),
@@ -55,12 +56,14 @@ type ProductFormValues = z.infer<typeof formSchema>;
 interface ProductFormProps {
   initialData?: any;
   categories: { id: number; name: string }[];
+  species?: { id: number; name: string }[];
   onSave: (data: ProductFormValues) => Promise<void>;
 }
 
 export default function ProductForm({
   initialData,
   categories,
+  species,
   onSave,
 }: ProductFormProps) {
   const router = useRouter();
@@ -79,6 +82,7 @@ export default function ProductForm({
           stock: initialData.stock || 0,
           categoryId: initialData.category_id?.toString(),
           is_animal: initialData.is_animal || false,
+          species_id: initialData.species_id?.toString() || "",
           laid_date: initialData.laid_date ? new Date(initialData.laid_date).toISOString().split('T')[0] : "",
           male_quantity: initialData.male_quantity || 0,
           female_quantity: initialData.female_quantity || 0,
@@ -91,6 +95,7 @@ export default function ProductForm({
           stock: 0,
           categoryId: "",
           is_animal: false,
+          species_id: "",
           laid_date: "",
           male_quantity: 0,
           female_quantity: 0,
@@ -309,6 +314,40 @@ export default function ProductForm({
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Species Selection - Only show for animals */}
+                  {isAnimal && species && (
+                    <FormField
+                      control={form.control}
+                      name="species_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-stellar-white font-medium">
+                            Species
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="input-cosmic bg-space-dark/50 border-nebula-violet/30 text-stellar-white focus:border-nebula-magenta/50 focus:ring-nebula-magenta/25">
+                                <SelectValue placeholder="Select a species" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="bg-space-dark border border-nebula-violet/30 backdrop-blur-xl">
+                              {species.map((spec) => (
+                                <SelectItem
+                                  key={spec.id}
+                                  value={spec.id.toString()}
+                                  className="text-stellar-white hover:bg-nebula-violet/20 focus:bg-nebula-violet/20 cursor-pointer"
+                                >
+                                  {spec.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="text-red-400" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
               </div>
             </div>
