@@ -12,11 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Grid, List, Heart, RotateCcw, Sparkles } from "lucide-react";
+import { Search, Filter, Grid, List, Heart, RotateCcw, Sparkles, Eye, EyeOff } from "lucide-react";
 import LoadingScreen from "@/components/LoadingScreen";
 import Link from "next/link";
 
-// Define types for our data for type safety
+// --- Types ---
 type Product = {
   id: number;
   name: string;
@@ -24,6 +24,10 @@ type Product = {
   stock: number;
   image_url: string | null;
   categories: { id: number; name: string } | null;
+  is_animal?: boolean;
+  male_quantity?: number;
+  female_quantity?: number;
+  unknown_quantity?: number;
 };
 
 type Category = {
@@ -31,190 +35,134 @@ type Category = {
   name: string;
 };
 
+type PageStats = {
+  species: number;
+  categories: number;
+  completedOrders: number;
+  soldOut: number;
+};
+
+// --- Helper Functions ---
+const calculateStock = (product: any): number => {
+  if (product.is_animal) {
+    return (product.male_quantity || 0) + (product.female_quantity || 0) + (product.unknown_quantity || 0);
+  }
+  return product.stock || 0;
+};
+
+const calculateUniqueSpecies = (products: Product[]): number => {
+  const speciesNames = new Set<string>();
+  products.forEach(product => {
+    const name = product.name.toLowerCase();
+    if (name.includes('ackie') || name.includes('monitor')) speciesNames.add('Ackie Monitor');
+    else if (name.includes('ball python') || name.includes('python')) speciesNames.add('Ball Python');
+    else if (name.includes('bearded dragon')) speciesNames.add('Bearded Dragon');
+    else if (name.includes('roach')) {
+      if (name.includes('dubia')) speciesNames.add('Dubia Roach');
+      else if (name.includes('hisser') || name.includes('hissing')) speciesNames.add('Hissing Roach');
+      else speciesNames.add('Roach');
+    }
+  });
+  return speciesNames.size;
+};
+
+
 export default function TraditionalProductsPage() {
+  // --- State ---
+  const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<PageStats>({
+    species: 0,
+    categories: 0,
+    completedOrders: 0,
+    soldOut: 0,
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("name");
+  const [showSoldOut, setShowSoldOut] = useState(false);
 
+  // --- Data Fetching ---
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const res = await fetch('/api/products-data');
-        const { products, categories } = await res.json();
-        setProducts(products);
-        setCategories(categories);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch data: ${res.statusText}`);
+        }
+        const data = await res.json();
+
+        const processedProducts = data.products.map((p: any) => ({
+          ...p,
+          stock: calculateStock(p),
+        }));
+        
+        setProducts(processedProducts);
+        setCategories(data.categories || []);
+
+        const soldOutCount = processedProducts.filter((p: Product) => p.stock === 0).length;
+        const speciesCount = calculateUniqueSpecies(processedProducts);
+
+        setStats({
+          species: speciesCount,
+          categories: (data.categories || []).length,
+          completedOrders: data.completedOrders || 0,
+          soldOut: soldOutCount,
+        });
+
       } catch (error) {
-        console.error("Failed to fetch products page data", error);
+        console.error("Failed to fetch or process products page data", error);
+        setProducts([]);
+        setCategories([]);
+        setStats({ species: 0, categories: 0, completedOrders: 0, soldOut: 0 });
       } finally {
         setIsLoading(false);
       }
-    }
+    };
     fetchData();
   }, []);
 
+  // --- Memos for Derived State ---
   const filteredProducts = useMemo(() => {
     let filtered = products
-      .filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .filter((product) =>
-        selectedCategory === "all"
-          ? true
-          : product.categories?.id.toString() === selectedCategory
-      );
+      .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter(p => selectedCategory === "all" || p.categories?.id.toString() === selectedCategory)
+      .filter(p => showSoldOut || p.stock > 0);
 
-    // Sort products
     switch (sortBy) {
       case "price-low":
-        filtered.sort((a, b) => a.price - b.price);
-        break;
+        return filtered.sort((a, b) => a.price - b.price);
       case "price-high":
-        filtered.sort((a, b) => b.price - a.price);
-        break;
+        return filtered.sort((a, b) => b.price - a.price);
       case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
       default:
-        break;
+        return filtered.sort((a, b) => a.name.localeCompare(b.name));
     }
+  }, [products, searchTerm, selectedCategory, sortBy, showSoldOut]);
 
-    return filtered;
-  }, [products, searchTerm, selectedCategory, sortBy]);
-
-  // Sort categories to show Ackies/Lizards first, then Feeders, then rest
   const sortedCategories = useMemo(() => {
+    const getCategoryRank = (categoryName: string): number => {
+      const name = categoryName.toLowerCase();
+      if (name.includes('reptile') || name.includes('lizard') || name.includes('animal')) return 0;
+      if (name.includes('feeder') || name.includes('food')) return 1;
+      if (name.includes('enclosure') || name.includes('supply') || name.includes('equipment')) return 2;
+      return 3; // Other categories
+    };
+
     return [...categories].sort((a, b) => {
-      const aName = a.name.toLowerCase();
-      const bName = b.name.toLowerCase();
-      
-      // Ackies/Lizards/Reptiles first
-      if (aName.includes('ackie') || aName.includes('lizard') || aName.includes('reptile')) {
-        if (bName.includes('ackie') || bName.includes('lizard') || bName.includes('reptile')) {
-          return a.name.localeCompare(b.name);
-        }
-        return -1;
+      const rankA = getCategoryRank(a.name);
+      const rankB = getCategoryRank(b.name);
+      if (rankA !== rankB) {
+        return rankA - rankB;
       }
-      if (bName.includes('ackie') || bName.includes('lizard') || bName.includes('reptile')) {
-        return 1;
-      }
-      
-      // Feeders second
-      if (aName.includes('feeder') || aName.includes('food')) {
-        if (bName.includes('feeder') || bName.includes('food')) {
-          return a.name.localeCompare(b.name);
-        }
-        return -1;
-      }
-      if (bName.includes('feeder') || bName.includes('food')) {
-        return 1;
-      }
-      
-      // Rest alphabetically
-      return a.name.localeCompare(b.name);
+      return a.name.localeCompare(b.name); // Alphabetical sort for categories with the same rank
     });
   }, [categories]);
 
-  // Sort products to show Ackies first
-  const sortedProducts = useMemo(() => {
-    return [...filteredProducts].sort((a, b) => {
-      const aName = a.name.toLowerCase();
-      const bName = b.name.toLowerCase();
-      
-      // Ackies first
-      if (aName.includes('ackie')) {
-        if (bName.includes('ackie')) {
-          return a.name.localeCompare(b.name);
-        }
-        return -1;
-      }
-      if (bName.includes('ackie')) {
-        return 1;
-      }
-      
-      // Other reptiles second
-      if (aName.includes('monitor') || aName.includes('python') || aName.includes('dragon') || aName.includes('snake')) {
-        if (bName.includes('monitor') || bName.includes('python') || bName.includes('dragon') || bName.includes('snake')) {
-          return a.name.localeCompare(b.name);
-        }
-        return -1;
-      }
-      if (bName.includes('monitor') || bName.includes('python') || bName.includes('dragon') || bName.includes('snake')) {
-        return 1;
-      }
-      
-      // Rest alphabetically
-      return a.name.localeCompare(b.name);
-    });
-  }, [filteredProducts]);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const headerVariants = {
-    hidden: { opacity: 0, y: -50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: "easeOut" as const
-      }
-    }
-  };
-
-  const statsVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut" as const
-      }
-    }
-  };
-
-  // Count unique species based on product names
-  const uniqueSpecies = useMemo(() => {
-    const speciesNames = new Set<string>();
-    
-    products.forEach(product => {
-      const name = product.name.toLowerCase();
-      
-      // Identify species from product names
-      if (name.includes('ackie') || name.includes('monitor')) {
-        speciesNames.add('Ackie Monitor');
-      } else if (name.includes('ball python') || name.includes('python')) {
-        speciesNames.add('Ball Python');
-      } else if (name.includes('bearded dragon')) {
-        speciesNames.add('Bearded Dragon');
-      } else if (name.includes('roach')) {
-        // Count different types of roaches as separate species
-        if (name.includes('dubia')) {
-          speciesNames.add('Dubia Roach');
-        } else if (name.includes('hisser') || name.includes('hissing')) {
-          speciesNames.add('Hissing Roach');
-        } else {
-          speciesNames.add('Roach');
-        }
-      }
-    });
-    
-    return speciesNames.size;
-  }, [products]);
-
+  // --- Render Logic ---
   if (isLoading) {
     return <LoadingScreen message="Loading Available Ackies..." />;
   }
@@ -222,12 +170,12 @@ export default function TraditionalProductsPage() {
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4">
-        {/* Header Section */}
+        {/* Header */}
         <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-center mb-12"
-          variants={headerVariants}
-          initial="hidden"
-          animate="visible"
         >
           <h1 className="text-6xl md:text-7xl font-extrabold mb-6 text-cosmic-shimmer">
             Traditional Browse
@@ -236,56 +184,25 @@ export default function TraditionalProductsPage() {
             Browse our selection of healthy, captive-bred Red Ackie Monitors and 
             essential supplies for their care - classic style!
           </p>
-          
-          {/* Link to Adventure Mode */}
-          <div className="mb-8">
-            <Button
-              asChild
-              size="lg"
-              className="btn-cosmic shadow-cosmic hover:shadow-nebula transition-all duration-300 hover:scale-105"
-            >
-              <Link href="/products" className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                Try Adventure Mode
-              </Link>
-            </Button>
-          </div>
+          <Button asChild size="lg" className="btn-cosmic shadow-cosmic hover:shadow-nebula transition-all duration-300 hover:scale-105">
+            <Link href="/products" className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              Try Adventure Mode
+            </Link>
+          </Button>
         </motion.div>
 
         {/* Stats Section */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
-          variants={statsVariants}
-          initial="hidden"
-          animate="visible"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12"
         >
-          <motion.div 
-            className="card-cosmic rounded-2xl p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
-            whileHover={{ y: -5 }}
-          >
-            <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-hot-pink to-nebula-rose mb-2">
-              {uniqueSpecies}
-            </div>
-            <div className="text-stellar-silver/70">Species Available</div>
-          </motion.div>
-          <motion.div 
-            className="card-cosmic rounded-2xl p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
-            whileHover={{ y: -5 }}
-          >
-            <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-cyan to-nebula-blue mb-2">
-              {categories.length}
-            </div>
-            <div className="text-stellar-silver/70">Categories</div>
-          </motion.div>
-          <motion.div 
-            className="card-cosmic rounded-2xl p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
-            whileHover={{ y: -5 }}
-          >
-            <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-amber to-nebula-orange mb-2">
-              {products.filter(p => p.stock > 0).length}
-            </div>
-            <div className="text-stellar-silver/70">Available Now</div>
-          </motion.div>
+          <StatCard value={stats.species} label="Species Available" color="from-nebula-hot-pink to-nebula-rose" />
+          <StatCard value={stats.categories} label="Categories" color="from-nebula-cyan to-nebula-blue" />
+          <StatCard value={stats.completedOrders} label="Completed Orders" color="from-emerald-400 to-green-400" />
+          <StatCard value={stats.soldOut} label="Sold Out" color="from-nebula-amber to-nebula-orange" />
         </motion.div>
 
         {/* Controls Section */}
@@ -296,7 +213,6 @@ export default function TraditionalProductsPage() {
           transition={{ delay: 0.5 }}
         >
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stellar-silver/50 w-5 h-5" />
               <Input
@@ -306,8 +222,6 @@ export default function TraditionalProductsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
-            {/* Filters */}
             <div className="flex items-center gap-3 flex-wrap">
               <Select onValueChange={setSelectedCategory} defaultValue="all">
                 <SelectTrigger className="input-cosmic w-[180px] bg-space-dark/50 border-nebula-violet/30 text-stellar-white hover:border-nebula-hot-pink/50 transition-all duration-300">
@@ -323,7 +237,6 @@ export default function TraditionalProductsPage() {
                   ))}
                 </SelectContent>
               </Select>
-
               <Select onValueChange={setSortBy} defaultValue="name">
                 <SelectTrigger className="input-cosmic w-[150px] bg-space-dark/50 border-nebula-violet/30 text-stellar-white hover:border-nebula-hot-pink/50 transition-all duration-300">
                   <SelectValue placeholder="Sort by" />
@@ -334,8 +247,6 @@ export default function TraditionalProductsPage() {
                   <SelectItem value="price-high">Price: High to Low</SelectItem>
                 </SelectContent>
               </Select>
-
-              {/* View Mode Toggle */}
               <div className="flex items-center gap-2">
                 <Button
                   variant={viewMode === "grid" ? "default" : "outline"}
@@ -364,241 +275,87 @@ export default function TraditionalProductsPage() {
                   List
                 </Button>
               </div>
-            </div>
-          </div>
-
-          {/* Results Info */}
-          <div className="mt-4 pt-4 border-t border-nebula-violet/20">
-            <div className="flex items-center justify-between text-sm text-stellar-silver/70">
-              <span>Showing {sortedProducts.length} of {products.length} products</span>
-              {searchTerm && (
-                <span>
-                  Results for "<span className="text-nebula-hot-pink">{searchTerm}</span>"
-                </span>
-              )}
+              <div className="flex items-center">
+                <Button
+                  variant={showSoldOut ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowSoldOut(!showSoldOut)}
+                  className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
+                    showSoldOut 
+                      ? "bg-gradient-to-r from-nebula-orange to-nebula-amber text-white shadow-lg hover:shadow-xl" 
+                      : "border-stellar-silver/50 text-stellar-silver hover:bg-stellar-silver/10 hover:border-stellar-silver"
+                  }`}
+                >
+                  {showSoldOut ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                  {showSoldOut ? "Hide Sold Out" : "Show Sold Out"}
+                </Button>
+              </div>
             </div>
           </div>
         </motion.div>
 
         {/* Products Grid/List */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <AnimatePresence mode="wait">
-            {selectedCategory === "all" ? (
-              // Show products grouped by category
-              sortedCategories.map((category) => {
-                const categoryProducts = sortedProducts.filter(
-                  product => product.categories?.id === category.id
-                );
-                
-                if (categoryProducts.length === 0) return null;
-                
-                return (
-                  <motion.div
-                    key={category.id}
-                    variants={{
-                      hidden: { opacity: 0, y: 20 },
-                      visible: { opacity: 1, y: 0 },
-                    }}
-                    className="mb-12"
-                  >
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-nebula-violet to-nebula-magenta flex items-center justify-center">
-                        <Heart className="w-4 h-4 text-white" />
-                      </div>
-                      <h3 className="text-xl font-bold text-stellar-white">
-                        {category.name}
-                      </h3>
-                      <div className="flex-1 h-px bg-gradient-to-r from-nebula-violet/50 to-transparent" />
-                      <span className="text-stellar-silver text-sm">
-                        {categoryProducts.length} item{categoryProducts.length > 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    
-                    <div className={`grid gap-6 ${
-                      viewMode === "grid" 
-                        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                        : "grid-cols-1"
-                    }`}>
-                      {categoryProducts.map((product) => (
-                        viewMode === "list" ? (
-                          <motion.div
-                            key={product.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="card-cosmic rounded-xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-cosmic transition-all duration-300 group"
-                          >
-                            {/* Large Image for List View */}
-                            <div className="relative w-full md:w-80 h-64 md:h-48 rounded-lg overflow-hidden bg-gradient-to-br from-nebula-deep-purple/10 to-nebula-magenta/10 flex-shrink-0">
-                              <img
-                                src={product.image_url || "/placeholder.png"}
-                                alt={product.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                              {product.stock === 0 && (
-                                <div className="absolute top-3 right-3 bg-emerald-500/90 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                                  SOLD!
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 flex flex-col">
-                              <div className="flex-1">
-                                <h3 className="text-2xl font-bold text-stellar-white mb-2 group-hover:text-nebula-hot-pink transition-colors">
-                                  {product.name}
-                                </h3>
-                                <p className="text-stellar-silver mb-4">
-                                  {product.categories?.name || "Uncategorized"}
-                                </p>
-                                <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-gold via-nebula-amber to-nebula-orange mb-4">
-                                  ${Number(product.price).toFixed(2)}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between">
-                                <div className="text-sm text-stellar-silver">
-                                                              {product.stock === 0 ? (
-                              <span className="text-emerald-500 font-semibold">
-                                SOLD!
-                              </span>
-                            ) : (
-                                    <span className="text-nebula-cyan">
-                                      {product.stock} available
-                                    </span>
-                                  )}
-                                </div>
-                                <Button
-                                  asChild
-                                  size="sm"
-                                  className="btn-cosmic"
-                                  disabled={product.stock === 0}
-                                >
-                                  <Link href={`/products/${product.id}`}>
-                                    View Details
-                                  </Link>
-                                </Button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ) : (
-                          <ProductCard key={product.id} product={product} />
-                        )
-                      ))}
-                    </div>
-                  </motion.div>
-                );
-              })
-            ) : (
-              // Show products for selected category
-              <div className={`grid gap-6 ${
-                viewMode === "grid" 
-                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                  : "grid-cols-1"
-              }`}>
-                {sortedProducts.map((product) => (
-                  viewMode === "list" ? (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="card-cosmic rounded-xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-cosmic transition-all duration-300 group"
-                    >
-                      {/* Large Image for List View */}
-                      <div className="relative w-full md:w-80 h-64 md:h-48 rounded-lg overflow-hidden bg-gradient-to-br from-nebula-deep-purple/10 to-nebula-magenta/10 flex-shrink-0">
-                        <img
-                          src={product.image_url || "/placeholder.png"}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        {product.stock === 0 && (
-                          <div className="absolute top-3 right-3 bg-emerald-500/90 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                            SOLD!
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 flex flex-col">
-                        <div className="flex-1">
-                          <h3 className="text-2xl font-bold text-stellar-white mb-2 group-hover:text-nebula-hot-pink transition-colors">
-                            {product.name}
-                          </h3>
-                          <p className="text-stellar-silver mb-4">
-                            {product.categories?.name || "Uncategorized"}
-                          </p>
-                          <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-gold via-nebula-amber to-nebula-orange mb-4">
-                            ${Number(product.price).toFixed(2)}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm text-stellar-silver">
-                                                      {product.stock === 0 ? (
-                            <span className="text-emerald-500 font-semibold">
-                              SOLD!
-                            </span>
-                          ) : (
-                              <span className="text-nebula-cyan">
-                                {product.stock} available
-                              </span>
-                            )}
-                          </div>
-                          <Button
-                            asChild
-                            size="sm"
-                            className="btn-cosmic"
-                            disabled={product.stock === 0}
-                          >
-                            <Link href={`/products/${product.id}`}>
-                              View Details
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <ProductCard key={product.id} product={product} />
-                  )
-                ))}
-              </div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* No Results */}
-        {sortedProducts.length === 0 && (
-          <motion.div
-            className="text-center py-16"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="text-6xl mb-4">🦎</div>
-            <h3 className="text-2xl font-bold text-stellar-white mb-2">
-              No products found
-            </h3>
-            <p className="text-stellar-silver/70 mb-6">
-              Try adjusting your search or browse our other categories
-            </p>
-            <Button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("all");
-              }}
-              className="btn-cosmic"
+        <AnimatePresence mode="wait">
+          {filteredProducts.length > 0 ? (
+            <motion.div
+              key={selectedCategory}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Clear Filters
-            </Button>
-          </motion.div>
-        )}
+              {selectedCategory === 'all' ? (
+                sortedCategories.map(category => {
+                  const categoryProducts = filteredProducts.filter(p => p.categories?.id === category.id);
+                  if (categoryProducts.length === 0) return null;
+                  return (
+                    <div key={category.id} className="mb-12">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-nebula-violet to-nebula-magenta flex items-center justify-center">
+                           <Heart className="w-4 h-4 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-stellar-white">{category.name}</h3>
+                         <div className="flex-1 h-px bg-gradient-to-r from-nebula-violet/50 to-transparent" />
+                        <span className="text-stellar-silver text-sm">
+                          {categoryProducts.length} item{categoryProducts.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"}`}>
+                        {categoryProducts.map(product => <ProductCard key={product.id} product={product} />)}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"}`}>
+                  {filteredProducts.map(product => <ProductCard key={product.id} product={product} />)}
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-16"
+            >
+              <h3 className="text-2xl font-bold text-stellar-white">No products found</h3>
+              <p className="text-stellar-silver/70">Try adjusting your filters.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
-} 
+}
+
+// --- Sub-components ---
+const StatCard = ({ value, label, color }: { value: number; label: string; color: string }) => (
+  <motion.div 
+    className="card-cosmic rounded-2xl p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
+    whileHover={{ y: -5 }}
+  >
+    <div className={`text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${color} mb-2`}>
+      {value}
+    </div>
+    <div className="text-stellar-silver/70">{label}</div>
+  </motion.div>
+); 

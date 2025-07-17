@@ -61,65 +61,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen pt-16 md:pt-24 pb-8 md:pb-12 relative overflow-hidden">
-      {/* Enhanced Background */}
-      <div className="absolute inset-0 bg-space-gradient opacity-60" />
-      <div className="stars opacity-40" />
-      <div className="nebula-particles" />
-      
-      {/* Improved Background Effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Static positioned orbs that don't interfere with content */}
-        <motion.div
-          className="absolute w-24 h-24 md:w-32 md:h-32 rounded-full opacity-15 top-20 left-4 md:left-10"
-          style={{
-            background: 'radial-gradient(circle, #7c3aed30 0%, transparent 70%)',
-          }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.15, 0.25, 0.15],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-        />
-        <motion.div
-          className="absolute w-20 h-20 md:w-24 md:h-24 rounded-full opacity-10 top-40 right-4 md:right-20"
-          style={{
-            background: 'radial-gradient(circle, #db277730 0%, transparent 70%)',
-          }}
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.1, 0.2, 0.1],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            repeatType: "reverse",
-            delay: 2,
-          }}
-        />
-        <motion.div
-          className="absolute w-16 h-16 md:w-20 md:h-20 rounded-full opacity-8 bottom-32 left-1/4"
-          style={{
-            background: 'radial-gradient(circle, #06b6d430 0%, transparent 70%)',
-          }}
-          animate={{
-            scale: [1, 1.15, 1],
-            opacity: [0.08, 0.15, 0.08],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            repeatType: "reverse",
-            delay: 4,
-          }}
-        />
-      </div>
-
-      <div className="container mx-auto px-4 relative z-10">
+    <div className="pb-8 md:pb-12 relative overflow-hidden">
+      <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}

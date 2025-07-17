@@ -216,7 +216,7 @@ export default function Header() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-space-dark/95 backdrop-blur-lg border-t border-nebula-violet/20"
+            className="md:hidden bg-space-dark/95 backdrop-blur-lg border-t border-nebula-violet/20 overflow-x-auto"
           >
             <div className="container mx-auto px-4 py-6 space-y-4">
               <motion.div
@@ -248,6 +248,23 @@ export default function Header() {
                   <Link href="/care-requirements">Care Guide</Link>
                 </Button>
               </motion.div>
+
+              {session?.user?.role === 'admin' && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Button 
+                    asChild 
+                    variant="ghost" 
+                    className="w-full text-left text-stellar-white hover:text-nebula-amber hover:bg-nebula-violet/30 transition-all duration-300 justify-start text-lg"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Link href="/admin/dashboard">Admin Panel</Link>
+                  </Button>
+                </motion.div>
+              )}
 
               <motion.div
                 initial={{ opacity: 0, x: -20 }}

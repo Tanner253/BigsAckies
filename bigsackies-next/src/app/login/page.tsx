@@ -58,7 +58,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 pt-24 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(6)].map((_, i) => (
@@ -73,18 +73,23 @@ export default function LoginPage() {
               top: `${Math.random() * 100}%`,
             }}
             animate={{
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-              scale: [1, 1.2, 1],
+              x: [0, 30, 0],
+              y: [0, -30, 0],
+              scale: [1, 1.1, 1],
             }}
             transition={{
-              duration: 8 + Math.random() * 4,
+              duration: 8 + i * 2,
               repeat: Infinity,
               repeatType: "reverse",
             }}
           />
         ))}
       </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 bg-space-gradient opacity-80" />
+      <div className="stars opacity-40" />
+      <div className="nebula-particles" />
 
       {/* Floating Decorative Elements */}
       <div className="absolute inset-0 pointer-events-none">
@@ -133,10 +138,10 @@ export default function LoginPage() {
 
       {/* Main Content */}
       <motion.div
-        className="relative z-10 w-full max-w-md"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
+        className="relative z-10 w-full max-w-md"
       >
         <Card className="card-cosmic backdrop-blur-sm">
           <CardHeader className="space-y-2 text-center">

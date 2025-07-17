@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Rocket, Star, Sparkles } from "lucide-react";
+import { useState, useEffect } from 'react';
 
 interface LoadingScreenProps {
   message?: string;
@@ -12,6 +13,31 @@ export default function LoadingScreen({
   message = "Traveling through the cosmos...", 
   className = "" 
 }: LoadingScreenProps) {
+  const [orbs, setOrbs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const colors = ['#7c3aed', '#db2777', '#ec4899', '#06b6d4', '#fbbf24'];
+    const generatedOrbs = [...Array(5)].map((_, i) => ({
+      style: {
+        background: `radial-gradient(circle, ${colors[i]}30 0%, transparent 70%)`,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      },
+      animate: {
+        x: [0, Math.random() * 100 - 50],
+        y: [0, Math.random() * 100 - 50],
+        scale: [1, 1.5, 1],
+      },
+      transition: {
+        duration: 8 + Math.random() * 4,
+        repeat: Infinity,
+        repeatType: "reverse" as const,
+        delay: i * 0.5,
+      },
+    }));
+    setOrbs(generatedOrbs);
+  }, []);
+
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-space-black/95 backdrop-blur-sm ${className}`}>
       <div className="text-center">
@@ -38,26 +64,6 @@ export default function LoadingScreen({
               <Rocket size={64} />
             </motion.div>
             
-            {/* Rocket Trail */}
-            <motion.div
-              className="absolute top-12 left-1/2 transform -translate-x-1/2"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-            >
-              <motion.div
-                className="w-2 h-16 bg-gradient-to-b from-nebula-amber via-nebula-orange to-transparent rounded-full"
-                animate={{
-                  scaleY: [1, 1.5, 1],
-                  opacity: [0.8, 1, 0.8],
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            </motion.div>
           </div>
         </motion.div>
 
@@ -83,7 +89,7 @@ export default function LoadingScreen({
           transition={{ delay: 0.6, duration: 0.8 }}
           className="mb-8"
         >
-          <div className="w-64 h-2 bg-space-dark rounded-full overflow-hidden">
+          <div className="w-full max-w-xs h-2 bg-space-dark rounded-full overflow-hidden mx-auto">
             <motion.div
               className="h-full bg-gradient-to-r from-nebula-violet via-nebula-hot-pink to-nebula-cyan"
               animate={{
@@ -99,14 +105,14 @@ export default function LoadingScreen({
         </motion.div>
 
         {/* Floating Icons */}
-        <div className="relative">
+        <div className="relative w-32 h-16 mx-auto">
           {[Star, Sparkles, Star].map((Icon, index) => (
             <motion.div
               key={index}
               className="absolute text-nebula-cyan/30"
               style={{
-                left: `${index * 30 - 30}px`,
-                top: `${Math.sin(index) * 20}px`,
+                left: `${index * 40 + 16}px`,
+                top: `${Math.sin(index) * 10}px`,
               }}
               animate={{
                 y: [0, -15, 0],
@@ -139,28 +145,13 @@ export default function LoadingScreen({
 
       {/* Background Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(5)].map((_, i) => (
+        {orbs.map((orb, i) => (
           <motion.div
             key={i}
             className="absolute w-32 h-32 rounded-full opacity-20"
-            style={{
-              background: `radial-gradient(circle, ${
-                ['#7c3aed', '#db2777', '#ec4899', '#06b6d4', '#fbbf24'][i]
-              }30 0%, transparent 70%)`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 8 + Math.random() * 4,
-              repeat: Infinity,
-              repeatType: "reverse",
-              delay: i * 0.5,
-            }}
+            style={orb.style}
+            animate={orb.animate}
+            transition={orb.transition}
           />
         ))}
       </div>

@@ -37,18 +37,20 @@ export default async function AdminSpeciesPage() {
     <div className="space-y-8">
       {/* Enhanced Header */}
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-nebula-deep-purple to-nebula-violet rounded-full blur-md opacity-50 animate-pulse-glow"></div>
-            <div className="relative bg-gradient-to-r from-nebula-deep-purple to-nebula-violet p-3 rounded-full">
-              <Settings className="w-6 h-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-nebula-deep-purple to-nebula-violet rounded-full blur-md opacity-50 animate-pulse-glow"></div>
+              <div className="relative bg-gradient-to-r from-nebula-deep-purple to-nebula-violet p-3 rounded-full">
+                <Settings className="w-6 h-6 text-white" />
+              </div>
             </div>
-          </div>
-          <div>
-            <h1 className="text-5xl font-bold gradient-text">Species Management</h1>
-            <p className="text-stellar-silver/80 text-lg">
-              Define and organize your animal species
-            </p>
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text">Species Management</h1>
+              <p className="text-sm sm:text-base text-stellar-silver/80">
+                Define and organize your animal species
+              </p>
+            </div>
           </div>
         </div>
         
@@ -83,8 +85,8 @@ export default async function AdminSpeciesPage() {
       {/* Enhanced Add Species Form */}
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold gradient-text">Add New Species</h2>
-          <p className="text-stellar-silver/70 text-lg">
+          <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Add New Species</h2>
+          <p className="text-base sm:text-lg text-stellar-silver/70">
             Create a new species entry for your animal catalog
           </p>
         </div>
@@ -134,7 +136,7 @@ export default async function AdminSpeciesPage() {
             </div>
             
             <div className="mt-6 flex justify-end">
-              <Button type="submit" className="btn-cosmic">
+              <Button type="submit" className="btn-cosmic w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Species
               </Button>
@@ -145,10 +147,10 @@ export default async function AdminSpeciesPage() {
 
       {/* Enhanced Species Table */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h2 className="text-3xl font-bold gradient-text">Species Directory</h2>
-            <p className="text-stellar-silver/70 text-lg">
+            <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Species Directory</h2>
+            <p className="text-base sm:text-lg text-stellar-silver/70">
               All registered species in your system
             </p>
           </div>
@@ -186,45 +188,48 @@ export default async function AdminSpeciesPage() {
                 </div>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-nebula-violet/30 hover:bg-nebula-violet/5">
-                    <TableHead className="text-stellar-silver font-semibold">ID</TableHead>
-                    <TableHead className="text-stellar-silver font-semibold">Species Name</TableHead>
-                    <TableHead className="text-stellar-silver font-semibold">Scientific Name</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {species.map((s) => (
-                    <TableRow 
-                      key={s.id} 
-                      className="border-b border-nebula-violet/20 hover:bg-nebula-violet/5 transition-colors duration-200"
-                    >
-                      <TableCell className="text-stellar-white font-medium">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-nebula-deep-purple to-nebula-violet flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">
-                              {s.id}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-stellar-white font-medium">
-                        <div className="flex items-center gap-2">
-                          <Hash className="w-4 h-4 text-nebula-cyan" />
-                          {s.name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-stellar-silver">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-nebula-orange" />
-                          {s.description || 'No scientific name provided'}
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table className="min-w-full">
+                  <TableHeader>
+                    <TableRow className="border-b border-nebula-violet/30 hover:bg-nebula-violet/5">
+                      <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">ID</TableHead>
+                      <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Species Name</TableHead>
+                      <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Scientific Name</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {species.map((s) => (
+                      <TableRow 
+                        key={s.id} 
+                        className="border-b border-nebula-violet/20 hover:bg-nebula-violet/5 transition-colors duration-200"
+                      >
+                        <TableCell className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-nebula-deep-purple to-nebula-violet flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-sm font-bold">
+                                {s.id}
+                              </span>
+                            </div>
+                            <span className="text-stellar-white font-medium sm:hidden">{s.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-stellar-white font-medium px-4 py-3 whitespace-nowrap hidden sm:table-cell">
+                          <div className="flex items-center gap-2">
+                            <Hash className="w-4 h-4 text-nebula-cyan" />
+                            {s.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-stellar-silver px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-nebula-orange" />
+                            {s.description || 'N/A'}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
         </div>

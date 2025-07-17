@@ -61,18 +61,20 @@ export default async function AdminOrdersPage() {
     <div className="space-y-8">
       {/* Enhanced Header */}
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-nebula-orange to-nebula-gold rounded-full blur-md opacity-50 animate-pulse-glow"></div>
-            <div className="relative bg-gradient-to-r from-nebula-orange to-nebula-gold p-3 rounded-full">
-              <ShoppingCart className="w-6 h-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-nebula-orange to-nebula-gold rounded-full blur-md opacity-50 animate-pulse-glow"></div>
+              <div className="relative bg-gradient-to-r from-nebula-orange to-nebula-gold p-3 rounded-full">
+                <ShoppingCart className="w-6 h-6 text-white" />
+              </div>
             </div>
-          </div>
-          <div>
-            <h1 className="text-5xl font-bold gradient-text">Order Management</h1>
-            <p className="text-stellar-silver/80 text-lg">
-              Track and manage all customer orders
-            </p>
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text">Order Management</h1>
+              <p className="text-sm sm:text-base text-stellar-silver/80">
+                Track and manage all customer orders
+              </p>
+            </div>
           </div>
         </div>
         
@@ -118,10 +120,10 @@ export default async function AdminOrdersPage() {
 
       {/* Enhanced Orders Table */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h2 className="text-3xl font-bold gradient-text">Recent Orders</h2>
-            <p className="text-stellar-silver/70 text-lg">
+            <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Recent Orders</h2>
+            <p className="text-base sm:text-lg text-stellar-silver/70">
               All customer orders and transactions
             </p>
           </div>
@@ -143,71 +145,73 @@ export default async function AdminOrdersPage() {
               </h3>
             </div>
             
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-nebula-violet/30 hover:bg-nebula-violet/5">
-                  <TableHead className="text-stellar-silver font-semibold">Customer</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Email</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Amount</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Status</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Date</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow 
-                    key={order.id} 
-                    className="border-b border-nebula-violet/20 hover:bg-nebula-violet/5 transition-colors duration-200"
-                  >
-                    <TableCell className="text-stellar-white font-medium">
-                      {order.users?.name || 'Guest'}
-                    </TableCell>
-                    <TableCell className="text-stellar-silver">
-                      {order.users?.email || 'guest@example.com'}
-                    </TableCell>
-                    <TableCell className="text-nebula-gold font-semibold">
-                      {formatCurrency(Number(order.total_amount))}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {order.status.toLowerCase() === 'succeeded' || order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'delivered' ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-400" />
-                        )}
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          order.status.toLowerCase() === 'succeeded' || order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'delivered'
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-stellar-silver">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-nebula-cyan" />
-                        {new Date(order.created_at!).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        asChild
-                        className="border-nebula-violet/50 text-stellar-silver hover:bg-nebula-violet/20 hover:text-white hover:border-nebula-magenta/50 transition-all duration-300"
-                      >
-                        <Link href={`/admin/orders/${order.id}`}>
-                          <Eye className="w-3 h-3 mr-1" />
-                          View Order
-                        </Link>
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table className="min-w-full">
+                <TableHeader>
+                  <TableRow className="border-b border-nebula-violet/30 hover:bg-nebula-violet/5">
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Customer</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Email</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Amount</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Date</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow 
+                      key={order.id} 
+                      className="border-b border-nebula-violet/20 hover:bg-nebula-violet/5 transition-colors duration-200"
+                    >
+                      <TableCell className="text-stellar-white font-medium px-4 py-3 whitespace-nowrap">
+                        {order.users?.name || 'Guest'}
+                      </TableCell>
+                      <TableCell className="text-stellar-silver px-4 py-3 whitespace-nowrap">
+                        {order.users?.email || 'guest@example.com'}
+                      </TableCell>
+                      <TableCell className="text-nebula-gold font-semibold px-4 py-3 whitespace-nowrap">
+                        {formatCurrency(Number(order.total_amount))}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {order.status.toLowerCase() === 'succeeded' || order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'delivered' ? (
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-400" />
+                          )}
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            order.status.toLowerCase() === 'succeeded' || order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'delivered'
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-stellar-silver px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-nebula-cyan" />
+                          {new Date(order.created_at!).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right px-4 py-3 whitespace-nowrap">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          asChild
+                          className="border-nebula-violet/50 text-stellar-silver hover:bg-nebula-violet/20 hover:text-white hover:border-nebula-magenta/50 transition-all duration-300"
+                        >
+                          <Link href={`/admin/orders/${order.id}`}>
+                            <Eye className="w-3 h-3 mr-1" />
+                            View Order
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       </div>

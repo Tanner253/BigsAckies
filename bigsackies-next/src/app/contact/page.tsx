@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNotifications } from "@/components/NotificationSystem";
-import { Send, Mail, User, Book, MessageSquare, Instagram, Youtube } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Instagram, Youtube, Github, Send, User, Book, MessageSquare } from "lucide-react";
 
 // Schema for form validation
 const formSchema = z.object({
@@ -182,8 +182,8 @@ export default function ContactPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <Mail size={20} className="text-nebula-cyan" />
-                  <a href="mailto:contact@biggsackies.com" className="text-stellar-silver hover:text-nebula-cyan transition">
-                    contact@biggsackies.com
+                  <a href="mailto:percivaltanner@gmail.com" className="text-stellar-silver hover:text-nebula-cyan transition">
+                    percivaltanner@gmail.com
                   </a>
                 </div>
                 {/* Add phone or address if available */}
@@ -192,11 +192,14 @@ export default function ContactPage() {
             <div className="card-cosmic p-8 rounded-2xl">
               <h3 className="text-2xl font-bold mb-4 gradient-text">Follow Us</h3>
               <div className="flex items-center space-x-4">
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-stellar-silver hover:text-nebula-hot-pink transition">
+                <a href="https://www.instagram.com/BiggsAckies/" target="_blank" rel="noopener noreferrer" className="text-stellar-silver hover:text-nebula-hot-pink transition">
                   <Instagram size={24} />
                 </a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-stellar-silver hover:text-nebula-rose transition">
+                <a href="https://www.youtube.com/@osknyo" target="_blank" rel="noopener noreferrer" className="text-stellar-silver hover:text-nebula-rose transition">
                   <Youtube size={24} />
+                </a>
+                <a href="https://github.com/Tanner253" target="_blank" rel="noopener noreferrer" className="text-stellar-silver hover:text-nebula-cyan transition">
+                  <Github size={24} />
                 </a>
               </div>
             </div>

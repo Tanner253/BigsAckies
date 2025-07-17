@@ -64,23 +64,25 @@ export default async function AdminCustomersPage() {
     <div className="space-y-8">
       {/* Enhanced Header */}
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-nebula-magenta to-nebula-hot-pink rounded-full blur-md opacity-50 animate-pulse-glow"></div>
-            <div className="relative bg-gradient-to-r from-nebula-magenta to-nebula-hot-pink p-3 rounded-full">
-              <Users className="w-6 h-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-nebula-magenta to-nebula-hot-pink rounded-full blur-md opacity-50 animate-pulse-glow"></div>
+              <div className="relative bg-gradient-to-r from-nebula-magenta to-nebula-hot-pink p-3 rounded-full">
+                <Users className="w-6 h-6 text-white" />
+              </div>
             </div>
-          </div>
-          <div>
-            <h1 className="text-5xl font-bold gradient-text">Customer Management</h1>
-            <p className="text-stellar-silver/80 text-lg">
-              Track and understand your customer base
-            </p>
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text">Customer Management</h1>
+              <p className="text-sm sm:text-base text-stellar-silver/80">
+                Track and understand your customer base
+              </p>
+            </div>
           </div>
         </div>
         
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="card-cosmic p-4 rounded-xl border border-nebula-violet/30">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-gradient-to-r from-nebula-magenta to-nebula-hot-pink">
@@ -133,10 +135,10 @@ export default async function AdminCustomersPage() {
 
       {/* Enhanced Customers Table */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h2 className="text-3xl font-bold gradient-text">Customer Directory</h2>
-            <p className="text-stellar-silver/70 text-lg">
+            <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Customer Directory</h2>
+            <p className="text-base sm:text-lg text-stellar-silver/70">
               All registered customers and their activity
             </p>
           </div>
@@ -158,60 +160,62 @@ export default async function AdminCustomersPage() {
               </h3>
             </div>
             
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-nebula-violet/30 hover:bg-nebula-violet/5">
-                  <TableHead className="text-stellar-silver font-semibold">Name</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Email</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Orders</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Total Value</TableHead>
-                  <TableHead className="text-stellar-silver font-semibold">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow 
-                    key={user.id} 
-                    className="border-b border-nebula-violet/20 hover:bg-nebula-violet/5 transition-colors duration-200"
-                  >
-                    <TableCell className="text-stellar-white font-medium">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-nebula-magenta to-nebula-hot-pink flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">
-                            {user.name?.charAt(0).toUpperCase() || '?'}
-                          </span>
-                        </div>
-                        {user.name}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-stellar-silver">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-nebula-cyan" />
-                        {user.email}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-stellar-white">
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="w-4 h-4 text-nebula-orange" />
-                        <span className="font-medium">{formatNumber(user.orderCount)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-nebula-gold font-semibold">
-                      {formatCurrency(user.totalValue)}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                        user.orderCount > 0 
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                          : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                      }`}>
-                        {user.orderCount > 0 ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table className="min-w-full">
+                <TableHeader>
+                  <TableRow className="border-b border-nebula-violet/30 hover:bg-nebula-violet/5">
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Name</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Email</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Orders</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Total Value</TableHead>
+                    <TableHead className="text-stellar-silver font-semibold px-4 py-3 whitespace-nowrap">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow 
+                      key={user.id} 
+                      className="border-b border-nebula-violet/20 hover:bg-nebula-violet/5 transition-colors duration-200"
+                    >
+                      <TableCell className="text-stellar-white font-medium px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-nebula-magenta to-nebula-hot-pink flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-sm font-bold">
+                              {user.name?.charAt(0).toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          {user.name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-stellar-silver px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-nebula-cyan" />
+                          {user.email}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-stellar-white px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <ShoppingCart className="w-4 h-4 text-nebula-orange" />
+                          <span className="font-medium">{formatNumber(user.orderCount)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-nebula-gold font-semibold px-4 py-3 whitespace-nowrap">
+                        {formatCurrency(user.totalValue)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                          user.orderCount > 0 
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                            : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                        }`}>
+                          {user.orderCount > 0 ? 'Active' : 'Inactive'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       </div>

@@ -110,8 +110,8 @@ export default function OrderConfirmationPage() {
             <div className="mt-8 pt-6 border-t border-nebula-violet/20">
               <p className="text-stellar-silver/70 text-sm">
                 Need help? Contact us at{" "}
-                <a href="mailto:contact@biggsackies.com" className="text-nebula-cyan hover:text-nebula-hot-pink">
-                  contact@biggsackies.com
+                <a href="mailto:percivaltanner@gmail.com" className="text-nebula-cyan hover:text-nebula-hot-pink">
+                  percivaltanner@gmail.com
                 </a>
               </p>
             </div>

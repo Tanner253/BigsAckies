@@ -63,11 +63,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <Card className="w-full max-w-sm">
+    <div className="min-h-screen flex justify-center items-center p-4 pt-24 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-space-gradient opacity-60" />
+      <div className="stars opacity-30" />
+      <div className="nebula-particles" />
+      
+      <Card className="w-full max-w-sm relative z-10 card-cosmic">
         <CardHeader>
-          <CardTitle>Create an Account</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-stellar-white">Create an Account</CardTitle>
+          <CardDescription className="text-stellar-silver">
             Enter your details to get started.
           </CardDescription>
         </CardHeader>

@@ -41,13 +41,13 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   price: z.coerce.number().min(0, "Price must be a positive number"),
-  stock: z.coerce.number().int("Stock must be a whole number"),
+  stock: z.coerce.number().int("Stock must be a whole number").optional(),
   categoryId: z.string().min(1, "Category is required"),
   is_animal: z.boolean().default(false),
   laid_date: z.string().optional(),
-  male_quantity: z.coerce.number().int().min(0).default(0),
-  female_quantity: z.coerce.number().int().min(0).default(0),
-  unknown_quantity: z.coerce.number().int().min(0).default(0),
+  male_quantity: z.coerce.number().int().min(0).optional(),
+  female_quantity: z.coerce.number().int().min(0).optional(),
+  unknown_quantity: z.coerce.number().int().min(0).optional(),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -76,6 +76,7 @@ export default function ProductForm({
       ? {
           ...initialData,
           price: Number(initialData.price),
+          stock: initialData.stock || 0,
           categoryId: initialData.category_id?.toString(),
           is_animal: initialData.is_animal || false,
           laid_date: initialData.laid_date ? new Date(initialData.laid_date).toISOString().split('T')[0] : "",
@@ -254,7 +255,8 @@ export default function ProductForm({
                               step="1" 
                               placeholder="0"
                               className="input-cosmic bg-space-dark/50 border-nebula-violet/30 text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-magenta/50 focus:ring-nebula-magenta/25"
-                              {...field} 
+                              {...field}
+                              value={field.value ?? ""}
                             />
                           </FormControl>
                           <FormMessage className="text-red-400" />
@@ -312,7 +314,7 @@ export default function ProductForm({
             </div>
 
             {/* Image Upload Section */}
-            <div className="space-y-6">
+            <div className="space-y-6 lg:row-start-1 lg:col-start-3">
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-nebula-violet/20 to-nebula-deep-purple/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
@@ -420,13 +422,19 @@ export default function ProductForm({
                             <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                             Male Quantity
                           </label>
-                          <input
-                            type="number"
+                          <FormField
+                            control={form.control}
                             name="male_quantity"
-                            min="0"
-                            defaultValue={initialData?.male_quantity || 0}
-                            className="w-full px-3 py-2 bg-space-dark/50 border border-nebula-gold/30 rounded-lg text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-gold/50 focus:ring-2 focus:ring-nebula-gold/25 transition-all duration-300"
-                            placeholder="0"
+                            render={({ field }) => (
+                              <Input
+                                type="number"
+                                min="0"
+                                className="input-cosmic bg-space-dark/50 border-nebula-violet/30 text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-magenta/50 focus:ring-nebula-magenta/25"
+                                placeholder="0"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            )}
                           />
                         </div>
                         <div className="space-y-2">
@@ -434,13 +442,19 @@ export default function ProductForm({
                             <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
                             Female Quantity
                           </label>
-                          <input
-                            type="number"
+                          <FormField
+                            control={form.control}
                             name="female_quantity"
-                            min="0"
-                            defaultValue={initialData?.female_quantity || 0}
-                            className="w-full px-3 py-2 bg-space-dark/50 border border-nebula-gold/30 rounded-lg text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-gold/50 focus:ring-2 focus:ring-nebula-gold/25 transition-all duration-300"
-                            placeholder="0"
+                            render={({ field }) => (
+                              <Input
+                                type="number"
+                                min="0"
+                                className="input-cosmic bg-space-dark/50 border-nebula-violet/30 text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-magenta/50 focus:ring-nebula-magenta/25"
+                                placeholder="0"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            )}
                           />
                         </div>
                         <div className="space-y-2">
@@ -448,13 +462,19 @@ export default function ProductForm({
                             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                             Unknown Gender
                           </label>
-                          <input
-                            type="number"
+                          <FormField
+                            control={form.control}
                             name="unknown_quantity"
-                            min="0"
-                            defaultValue={initialData?.unknown_quantity || 0}
-                            className="w-full px-3 py-2 bg-space-dark/50 border border-nebula-gold/30 rounded-lg text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-gold/50 focus:ring-2 focus:ring-nebula-gold/25 transition-all duration-300"
-                            placeholder="0"
+                            render={({ field }) => (
+                              <Input
+                                type="number"
+                                min="0"
+                                className="input-cosmic bg-space-dark/50 border-nebula-violet/30 text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-magenta/50 focus:ring-nebula-magenta/25"
+                                placeholder="0"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            )}
                           />
                         </div>
                       </div>
@@ -464,11 +484,17 @@ export default function ProductForm({
                           <div className="w-2 h-2 bg-nebula-gold rounded-full"></div>
                           Laid Date (for clutches)
                         </label>
-                        <input
-                          type="date"
+                        <FormField
+                          control={form.control}
                           name="laid_date"
-                          defaultValue={initialData?.laid_date ? new Date(initialData.laid_date).toISOString().split('T')[0] : ""}
-                          className="w-full px-3 py-2 bg-space-dark/50 border border-nebula-gold/30 rounded-lg text-stellar-white focus:border-nebula-gold/50 focus:ring-2 focus:ring-nebula-gold/25 transition-all duration-300"
+                          render={({ field }) => (
+                            <Input
+                              type="date"
+                              className="input-cosmic bg-space-dark/50 border-nebula-violet/30 text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-magenta/50 focus:ring-nebula-magenta/25"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
+                          )}
                         />
                         <p className="text-stellar-silver/60 text-sm">
                           Select the date when the clutch was laid (optional)
@@ -497,12 +523,12 @@ export default function ProductForm({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 justify-end pt-6 border-t border-nebula-violet/30">
+          <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t border-nebula-violet/30">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
-              className="border-nebula-violet/50 text-stellar-silver hover:bg-nebula-violet/20 hover:text-white transition-all duration-300"
+              className="w-full sm:w-auto border-nebula-violet/50 text-stellar-silver hover:bg-nebula-violet/20 hover:text-white transition-all duration-300"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -510,7 +536,7 @@ export default function ProductForm({
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="btn-cosmic"
+              className="btn-cosmic w-full sm:w-auto"
             >
               {isLoading ? (
                 <>

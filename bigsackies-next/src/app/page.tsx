@@ -3,12 +3,59 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Heart, Shield, Award, Users, ArrowRight, ChevronDown, Home, Star, Sparkles } from "lucide-react";
+import { Heart, Shield, Award, Users, ArrowRight, ChevronDown, Home, Star, Sparkles, Briefcase, Code, Zap } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import HireMeModal from "@/components/HireMeModal";
 
 export default function HomePage() {
+  const [showHireMeModal, setShowHireMeModal] = useState(false);
+
   return (
     <div className="relative min-h-screen overflow-hidden">
+      {/* Hire Me Banner */}
+      <motion.section
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative pt-20 pb-4 bg-gradient-to-r from-purple-900/80 via-pink-900/80 to-blue-900/80 backdrop-blur-sm border-b border-purple-500/30"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20 animate-pulse" />
+        
+        <div className="relative z-10 container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-md opacity-50 animate-pulse" />
+                <div className="relative bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-full">
+                  <Code className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-lg md:text-xl font-bold text-white">
+                  Need a Website or App?
+                </h2>
+                <p className="text-sm text-purple-200">
+                  Full-stack developer available for hire • Next.js, React, Unity & more
+                </p>
+              </div>
+            </div>
+            
+            <Button
+              onClick={() => setShowHireMeModal(true)}
+              className="relative overflow-hidden group bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 border border-white/20"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <div className="relative flex items-center gap-2">
+                <Briefcase className="w-5 h-5" />
+                <span>Hire Me</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </Button>
+          </div>
+        </div>
+      </motion.section>
+
       {/* Hero Section */}
       <section className="relative h-screen pt-20">
         {/* Enhanced Background */}
@@ -560,6 +607,35 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Get Involved Section */}
+      <section className="py-16 md:py-24 bg-space-gradient">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 gradient-text">
+              Join the Adventure!
+            </h2>
+            <p className="text-base md:text-lg lg:text-xl text-stellar-silver max-w-3xl mx-auto mb-8">
+              Interested in getting involved? Contact me to fund my breeding project for a percentage of equity on sales! 
+              I also accept donations to help support the care and keeping of these amazing animals.
+            </p>
+            <Button 
+              asChild 
+              className="btn-cosmic text-white font-bold text-lg md:text-xl py-4 md:py-6 px-8 md:px-12 rounded-full hover:scale-105 transition-transform duration-300 shadow-cosmic"
+            >
+              <Link href="/contact">
+                <Heart className="w-5 h-5 md:w-6 md:h-6 mr-2" />
+                Get Involved
+              </Link>
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Final CTA Section */}
       <section className="py-16 md:py-24 relative">
         <div className="absolute inset-0 bg-nebula-deep-purple/30" />
@@ -603,6 +679,11 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
+      <HireMeModal 
+        isOpen={showHireMeModal} 
+        onClose={() => setShowHireMeModal(false)} 
+        showButton={false}
+      />
     </div>
   );
 }

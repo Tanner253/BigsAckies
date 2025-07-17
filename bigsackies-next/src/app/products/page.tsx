@@ -71,8 +71,16 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
         try {
           const res = await fetch('/api/products-data');
-        const { products } = await res.json();
-          setProducts(products);
+          const { products } = await res.json();
+          
+          const productsWithCalculatedStock = products.map((p: any) => ({
+            ...p,
+            stock: p.is_animal 
+              ? (p.male_quantity || 0) + (p.female_quantity || 0) + (p.unknown_quantity || 0)
+              : (p.stock || 0),
+          }));
+
+          setProducts(productsWithCalculatedStock);
         } catch (error) {
         console.error("Failed to fetch products", error);
         } finally {
@@ -90,6 +98,16 @@ export default function ProductsPage() {
       userChoices,
       availableCategories: [...new Set(products.map(p => p.categories?.name).filter(Boolean))]
     });
+
+    if (userChoices.experienceLevel === 'beginner') {
+      filtered = filtered.filter(p => {
+        const name = p.name.toLowerCase();
+        // Beginner-friendly animals and essential supplies
+        return name.includes('ball python') || name.includes('bearded dragon') || 
+               name.includes('dubia roach') || name.includes('enclosure') || name.includes('heat') ||
+               name.includes('light');
+      });
+    }
 
     // Filter based on user choices - made more flexible
     if (userChoices.lookingFor === 'live-animals') {
