@@ -103,6 +103,13 @@ export default function Header() {
             </motion.div>
           )}
 
+          {/* CA Address */}
+          <div className="hidden lg:flex items-center px-3 py-1 bg-nebula-violet/20 rounded-full border border-nebula-violet/30">
+            <span className="text-xs text-stellar-white/80 font-mono select-all">
+              CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
+            </span>
+          </div>
+
           {/* Auth Section */}
           <div className="flex items-center space-x-4">
             {isLoading ? (
@@ -265,6 +272,18 @@ export default function Header() {
                     Cart
                   </Link>
                 </Button>
+              </motion.div>
+
+              {/* CA Address - Mobile */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+                className="px-4 py-2 bg-nebula-violet/20 rounded-lg border border-nebula-violet/30 mx-2"
+              >
+                <span className="text-xs text-stellar-white/80 font-mono select-all block">
+                  CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
+                </span>
               </motion.div>
 
               {isLoading ? (
