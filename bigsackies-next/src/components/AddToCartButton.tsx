@@ -3,13 +3,18 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
-import { ShoppingCart, Plus, Minus, Check, Star, Sparkles } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Check, Star, Sparkles, AlertCircle } from "lucide-react";
 import { useNotifications } from "./NotificationSystem";
 
 interface AddToCartButtonProps {
   productId: number;
   productName?: string;
   price?: number;
+  stock?: number;
+  isAnimal?: boolean;
+  maleQuantity?: number;
+  femaleQuantity?: number;
+  unknownQuantity?: number;
   className?: string;
   size?: "sm" | "default" | "lg";
 }
@@ -18,6 +23,11 @@ export default function AddToCartButton({
   productId,
   productName = "Product",
   price = 0,
+  stock = 0,
+  isAnimal = false,
+  maleQuantity = 0,
+  femaleQuantity = 0,
+  unknownQuantity = 0,
   className = "",
   size = "default"
 }: AddToCartButtonProps) {
@@ -26,7 +36,34 @@ export default function AddToCartButton({
   const [isAdded, setIsAdded] = useState(false);
   const { addNotification } = useNotifications();
 
+  // Calculate available stock
+  const availableStock = isAnimal 
+    ? (maleQuantity || 0) + (femaleQuantity || 0) + (unknownQuantity || 0)
+    : stock || 0;
+
+  const isOutOfStock = availableStock <= 0;
+
   const handleAddToCart = async () => {
+    if (isOutOfStock) {
+      addNotification({
+        type: "error",
+        title: "Out of Stock",
+        message: "This item is currently out of stock.",
+        duration: 4000
+      });
+      return;
+    }
+
+    if (quantity > availableStock) {
+      addNotification({
+        type: "error",
+        title: "Insufficient Stock",
+        message: `Only ${availableStock} units available.`,
+        duration: 4000
+      });
+      return;
+    }
+
     setIsAdding(true);
     
     try {
@@ -42,7 +79,8 @@ export default function AddToCartButton({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add item to cart');
+        const errorData = await response.text();
+        throw new Error(errorData || 'Failed to add item to cart');
       }
 
       // Add success notification
@@ -64,7 +102,7 @@ export default function AddToCartButton({
       addNotification({
         type: "error",
         title: "Failed to Add",
-        message: "Unable to add item to cart. Please try again.",
+        message: error instanceof Error ? error.message : "Unable to add item to cart. Please try again.",
         duration: 4000
       });
     } finally {
@@ -80,8 +118,37 @@ export default function AddToCartButton({
     added: { scale: 1.1 }
   };
 
+  // Show out of stock message if no stock available
+  if (isOutOfStock) {
+    return (
+      <div className={`flex flex-col space-y-4 ${className}`}>
+        <div className="flex items-center justify-center space-x-2 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+          <AlertCircle size={20} className="text-red-400" />
+          <span className="text-red-400 font-medium">Out of Stock</span>
+        </div>
+        <div className="text-center text-stellar-silver/70 text-sm">
+          This item is currently unavailable
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex flex-col space-y-4 ${className}`}>
+      {/* Stock Information */}
+      <div className="text-center text-stellar-silver/70 text-sm">
+        {availableStock <= 5 && availableStock > 0 && (
+          <span className="text-orange-400 font-medium">
+            Only {availableStock} left in stock!
+          </span>
+        )}
+        {availableStock > 5 && (
+          <span className="text-green-400">
+            In Stock ({availableStock} available)
+          </span>
+        )}
+      </div>
+
       {/* Quantity Selector */}
       <div className="flex items-center space-x-4">
         <span className="text-stellar-silver text-sm font-medium">Quantity:</span>
@@ -107,8 +174,9 @@ export default function AddToCartButton({
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => setQuantity(quantity + 1)}
-            className="w-8 h-8 rounded-full bg-nebula-violet/20 border border-nebula-violet/30 flex items-center justify-center hover:bg-nebula-violet/30 transition-colors"
+            onClick={() => setQuantity(Math.min(availableStock, quantity + 1))}
+            disabled={quantity >= availableStock}
+            className="w-8 h-8 rounded-full bg-nebula-violet/20 border border-nebula-violet/30 flex items-center justify-center hover:bg-nebula-violet/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus size={14} className="text-stellar-white" />
           </motion.button>
@@ -126,12 +194,13 @@ export default function AddToCartButton({
       >
         <Button
           onClick={handleAddToCart}
-          disabled={isAdding || isAdded}
+          disabled={isAdding || isAdded || isOutOfStock}
           size={size}
           className={`
             relative overflow-hidden btn-cosmic w-full font-semibold
             ${isAdded ? 'bg-gradient-to-r from-green-600 to-emerald-600' : ''}
             ${isAdding ? 'cursor-not-allowed' : ''}
+            ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}
           `}
         >
           {/* Background Animation */}

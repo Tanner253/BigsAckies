@@ -141,18 +141,20 @@ export default async function AdminProductsPage({
     <div className="space-y-8">
       {/* Enhanced Header */}
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-nebula-cyan to-nebula-blue rounded-full blur-md opacity-50 animate-pulse-glow"></div>
-            <div className="relative bg-gradient-to-r from-nebula-cyan to-nebula-blue p-3 rounded-full">
-              <Package className="w-6 h-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-nebula-cyan to-nebula-blue rounded-full blur-md opacity-50 animate-pulse-glow"></div>
+              <div className="relative bg-gradient-to-r from-nebula-cyan to-nebula-blue p-3 rounded-full">
+                <Package className="w-6 h-6 text-white" />
+              </div>
             </div>
-          </div>
-          <div>
-            <h1 className="text-5xl font-bold gradient-text">Product Catalog</h1>
-            <p className="text-stellar-silver/80 text-lg">
-              Manage your inventory and animal collection with visual overview
-            </p>
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text">Product Catalog</h1>
+              <p className="text-sm sm:text-base text-stellar-silver/80">
+                Manage your inventory and animal collection
+              </p>
+            </div>
           </div>
         </div>
         
@@ -205,29 +207,29 @@ export default async function AdminProductsPage({
 
       {/* Enhanced Products Grid/Table Hybrid */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold gradient-text">Your Products</h2>
-            <p className="text-stellar-silver/70 text-lg">
-              Visual overview of all products and animals in your catalog
+            <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Your Products</h2>
+            <p className="text-base sm:text-lg text-stellar-silver/70">
+              A visual overview of your entire catalog
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-nebula-gold" />
-              <span className="text-stellar-silver/70">Live Inventory</span>
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-nebula-gold" />
+              <span className="text-xs sm:text-sm text-stellar-silver/70">Live Inventory</span>
             </div>
-            <Button asChild className="btn-cosmic">
+            <Button asChild className="btn-cosmic text-sm">
               <Link href="/admin/products/new">
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Product
+                <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                New
               </Link>
             </Button>
           </div>
         </div>
         
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {products.map((product) => (
             <div key={product.id} className="relative group">
               {/* Animated glow effect */}

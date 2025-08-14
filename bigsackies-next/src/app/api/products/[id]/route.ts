@@ -1,19 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id, 10);
+    const { id } = await params;
+    const parsedId = parseInt(id, 10);
 
-    if (isNaN(id)) {
+    if (isNaN(parsedId)) {
       return new NextResponse("Invalid ID", { status: 400 });
     }
 
     const product = await prisma.products.findUnique({
-      where: { id },
+      where: { id: parsedId },
       include: {
         categories: true,
       },

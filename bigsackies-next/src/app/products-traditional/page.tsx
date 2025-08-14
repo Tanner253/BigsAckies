@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Grid, List, Heart, RotateCcw, Sparkles } from "lucide-react";
+import { Search, Filter, Grid, List, Heart, RotateCcw, Sparkles, Eye, EyeOff } from "lucide-react";
 import LoadingScreen from "@/components/LoadingScreen";
 import Link from "next/link";
 
@@ -39,15 +39,18 @@ export default function TraditionalProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("name");
+  const [showSoldOut, setShowSoldOut] = useState(false);
+  const [completedOrders, setCompletedOrders] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const res = await fetch('/api/products-data');
-        const { products, categories } = await res.json();
+        const { products, categories, completedOrders } = await res.json();
         setProducts(products);
         setCategories(categories);
+        setCompletedOrders(completedOrders);
       } catch (error) {
         console.error("Failed to fetch products page data", error);
       } finally {
@@ -66,6 +69,9 @@ export default function TraditionalProductsPage() {
         selectedCategory === "all"
           ? true
           : product.categories?.id.toString() === selectedCategory
+      )
+      .filter((product) =>
+        showSoldOut ? true : product.stock > 0
       );
 
     // Sort products
@@ -84,7 +90,7 @@ export default function TraditionalProductsPage() {
     }
 
     return filtered;
-  }, [products, searchTerm, selectedCategory, sortBy]);
+  }, [products, searchTerm, selectedCategory, sortBy, showSoldOut]);
 
   // Sort categories to show Ackies/Lizards first, then Feeders, then rest
   const sortedCategories = useMemo(() => {
@@ -151,6 +157,19 @@ export default function TraditionalProductsPage() {
       return a.name.localeCompare(b.name);
     });
   }, [filteredProducts]);
+
+  // Calculate stock statistics
+  const stockStats = useMemo(() => {
+    const totalProducts = products.length;
+    const inStockProducts = products.filter(product => product.stock > 0).length;
+    const soldOutProducts = products.filter(product => product.stock === 0).length;
+    
+    return {
+      total: totalProducts,
+      inStock: inStockProducts,
+      soldOut: soldOutProducts
+    };
+  }, [products]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -254,63 +273,72 @@ export default function TraditionalProductsPage() {
 
         {/* Stats Section */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12"
           variants={statsVariants}
           initial="hidden"
           animate="visible"
         >
           <motion.div 
-            className="card-cosmic rounded-2xl p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
+            className="card-cosmic rounded-2xl p-4 md:p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
             whileHover={{ y: -5 }}
           >
-            <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-hot-pink to-nebula-rose mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-hot-pink to-nebula-rose mb-2">
               {uniqueSpecies}
             </div>
-            <div className="text-stellar-silver/70">Species Available</div>
+            <div className="text-xs md:text-base text-stellar-silver/70">Species Available</div>
           </motion.div>
           <motion.div 
-            className="card-cosmic rounded-2xl p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
+            className="card-cosmic rounded-2xl p-4 md:p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
             whileHover={{ y: -5 }}
           >
-            <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-cyan to-nebula-blue mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-cyan to-nebula-blue mb-2">
               {categories.length}
             </div>
-            <div className="text-stellar-silver/70">Categories</div>
+            <div className="text-xs md:text-base text-stellar-silver/70">Categories</div>
           </motion.div>
           <motion.div 
-            className="card-cosmic rounded-2xl p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
+            className="card-cosmic rounded-2xl p-4 md:p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
             whileHover={{ y: -5 }}
           >
-            <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-amber to-nebula-orange mb-2">
-              {products.filter(p => p.stock > 0).length}
+            <div className="text-2xl md:text-3xl font-bold text-green-400 mb-2">
+              {completedOrders}
             </div>
-            <div className="text-stellar-silver/70">Available Now</div>
+            <div className="text-xs md:text-base text-stellar-silver/70">Completed Orders</div>
+          </motion.div>
+          <motion.div 
+            className="card-cosmic rounded-2xl p-4 md:p-6 text-center hover:shadow-cosmic transition-all duration-300 hover:scale-105"
+            whileHover={{ y: -5 }}
+          >
+            <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-nebula-amber to-nebula-orange mb-2">
+              {stockStats.soldOut}
+            </div>
+            <div className="text-xs md:text-base text-stellar-silver/70">Sold Out</div>
           </motion.div>
         </motion.div>
 
         {/* Controls Section */}
         <motion.div
-          className="card-cosmic rounded-2xl p-6 mb-8 backdrop-blur-sm border border-nebula-violet/30 hover:border-nebula-hot-pink/50 transition-all duration-300"
+          className="card-cosmic rounded-2xl p-4 md:p-6 mb-8 backdrop-blur-sm border border-nebula-violet/30 hover:border-nebula-hot-pink/50 transition-all duration-300"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+          <div className="flex flex-col gap-4">
             {/* Search */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stellar-silver/50 w-5 h-5" />
               <Input
                 placeholder="Search by name or species..."
-                className="input-cosmic pl-12 bg-space-dark/50 border-nebula-violet/30 text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-hot-pink/50 focus:shadow-nebula transition-all duration-300"
+                className="input-cosmic w-full pl-12 bg-space-dark/50 border-nebula-violet/30 text-stellar-white placeholder-stellar-silver/50 focus:border-nebula-hot-pink/50 focus:shadow-nebula transition-all duration-300"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="grid grid-cols-2 md:flex md:flex-row md:items-center gap-2 md:gap-3">
               <Select onValueChange={setSelectedCategory} defaultValue="all">
-                <SelectTrigger className="input-cosmic w-[180px] bg-space-dark/50 border-nebula-violet/30 text-stellar-white hover:border-nebula-hot-pink/50 transition-all duration-300">
+                <SelectTrigger className="input-cosmic w-full md:w-[180px] bg-space-dark/50 border-nebula-violet/30 text-stellar-white hover:border-nebula-hot-pink/50 transition-all duration-300">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
@@ -325,7 +353,7 @@ export default function TraditionalProductsPage() {
               </Select>
 
               <Select onValueChange={setSortBy} defaultValue="name">
-                <SelectTrigger className="input-cosmic w-[150px] bg-space-dark/50 border-nebula-violet/30 text-stellar-white hover:border-nebula-hot-pink/50 transition-all duration-300">
+                <SelectTrigger className="input-cosmic w-full md:w-[150px] bg-space-dark/50 border-nebula-violet/30 text-stellar-white hover:border-nebula-hot-pink/50 transition-all duration-300">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent className="bg-space-dark border-nebula-violet/30">
@@ -335,11 +363,11 @@ export default function TraditionalProductsPage() {
                 </SelectContent>
               </Select>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-2">
+              {/* View Mode Toggle and Sold Out Toggle */}
+              <div className="col-span-2 flex items-center justify-center gap-2">
                 <Button
                   variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
+                  size="icon"
                   onClick={() => setViewMode("grid")}
                   className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
                     viewMode === "grid" 
@@ -347,12 +375,11 @@ export default function TraditionalProductsPage() {
                       : "border-stellar-silver/50 text-stellar-silver hover:bg-stellar-silver/10 hover:border-stellar-silver"
                   }`}
                 >
-                  <Grid className="w-4 h-4 mr-2" />
-                  Grid
+                  <Grid className="w-5 h-5" />
                 </Button>
                 <Button
                   variant={viewMode === "list" ? "default" : "outline"}
-                  size="sm"
+                  size="icon"
                   onClick={() => setViewMode("list")}
                   className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
                     viewMode === "list" 
@@ -360,8 +387,20 @@ export default function TraditionalProductsPage() {
                       : "border-stellar-silver/50 text-stellar-silver hover:bg-stellar-silver/10 hover:border-stellar-silver"
                   }`}
                 >
-                  <List className="w-4 h-4 mr-2" />
-                  List
+                  <List className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant={showSoldOut ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowSoldOut(!showSoldOut)}
+                  className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
+                    showSoldOut 
+                      ? "bg-gradient-to-r from-nebula-orange to-nebula-amber text-white shadow-lg hover:shadow-xl" 
+                      : "border-stellar-silver/50 text-stellar-silver hover:bg-stellar-silver/10 hover:border-stellar-silver"
+                  }`}
+                >
+                  {showSoldOut ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                  <span className="truncate">{showSoldOut ? "Hide Sold Out" : "Show Sold Out"}</span>
                 </Button>
               </div>
             </div>
@@ -370,7 +409,14 @@ export default function TraditionalProductsPage() {
           {/* Results Info */}
           <div className="mt-4 pt-4 border-t border-nebula-violet/20">
             <div className="flex items-center justify-between text-sm text-stellar-silver/70">
-              <span>Showing {sortedProducts.length} of {products.length} products</span>
+              <div className="flex items-center gap-4">
+                <span>Showing {sortedProducts.length} products</span>
+                {!showSoldOut && (
+                  <span className="text-nebula-amber">
+                    (sold out items hidden)
+                  </span>
+                )}
+              </div>
               {searchTerm && (
                 <span>
                   Results for "<span className="text-nebula-hot-pink">{searchTerm}</span>"

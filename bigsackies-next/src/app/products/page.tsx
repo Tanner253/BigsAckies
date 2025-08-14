@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,7 +45,7 @@ type UserChoices = {
 
 type Scene = 'welcome' | 'experience' | 'category' | 'animal-type' | 'budget' | 'swipe' | 'results';
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [currentScene, setCurrentScene] = useState<Scene>('welcome');
@@ -71,8 +71,16 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
         try {
           const res = await fetch('/api/products-data');
-        const { products } = await res.json();
-          setProducts(products);
+          const { products } = await res.json();
+          
+          const productsWithCalculatedStock = products.map((p: any) => ({
+            ...p,
+            stock: p.is_animal 
+              ? (p.male_quantity || 0) + (p.female_quantity || 0) + (p.unknown_quantity || 0)
+              : (p.stock || 0),
+          }));
+
+          setProducts(productsWithCalculatedStock);
         } catch (error) {
         console.error("Failed to fetch products", error);
         } finally {
@@ -90,6 +98,16 @@ export default function ProductsPage() {
       userChoices,
       availableCategories: [...new Set(products.map(p => p.categories?.name).filter(Boolean))]
     });
+
+    if (userChoices.experienceLevel === 'beginner') {
+      filtered = filtered.filter(p => {
+        const name = p.name.toLowerCase();
+        // Beginner-friendly animals and essential supplies
+        return name.includes('ball python') || name.includes('bearded dragon') || 
+               name.includes('dubia roach') || name.includes('enclosure') || name.includes('heat') ||
+               name.includes('light');
+      });
+    }
 
     // Filter based on user choices - made more flexible
     if (userChoices.lookingFor === 'live-animals') {
@@ -1044,4 +1062,19 @@ export default function ProductsPage() {
       </div>
     </div>
   );
-} 
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-24 pb-12 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading-cosmic mb-4" />
+          <p className="text-stellar-silver">Loading products...</p>
+        </div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
+  );
+}

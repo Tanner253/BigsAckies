@@ -90,10 +90,12 @@ export default function TermsPage() {
                     <Mail size={24} />
                     Contact Us
                 </h2>
-                <p className="text-stellar-silver">If you have any questions about these Terms, please contact us at:</p>
-                <a href="mailto:contact@biggsackies.com" className="text-nebula-cyan hover:text-nebula-pink transition-colors text-lg">
-                    contact@biggsackies.com
-                </a>
+                <p className="text-stellar-silver/80 text-center">
+              Questions about these terms? Contact us at{" "}
+              <a href="mailto:percivaltanner@gmail.com" className="text-nebula-cyan hover:text-nebula-pink transition-colors text-lg">
+                percivaltanner@gmail.com
+              </a>
+            </p>
             </div>
              <div className="text-sm text-stellar-silver/50 text-right">
                 <p>Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>

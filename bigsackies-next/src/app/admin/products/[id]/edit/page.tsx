@@ -12,6 +12,7 @@ export default async function EditProductPage({
     where: { id: productId },
   });
   const categories = await prisma.categories.findMany();
+  const species = await prisma.species.findMany();
 
   // Convert Decimal fields to number for client-side consumption
   const productForForm = product ? {
@@ -50,6 +51,7 @@ export default async function EditProductPage({
       <ProductForm
         initialData={productForForm}
         categories={categories}
+        species={species}
         onSave={updateProduct}
       />
     </div>
