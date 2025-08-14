@@ -79,46 +79,13 @@ export default function Header() {
             
             <div className="h-8 w-px bg-nebula-violet/30 mx-2"></div>
 
-<<<<<<< HEAD
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button 
-              asChild 
-              variant="ghost" 
-              className="text-stellar-white hover:text-nebula-cyan hover:bg-nebula-violet/30 transition-all duration-300 font-medium text-lg"
-            >
-              <Link href="/care-requirements">Care Guide</Link>
-            </Button>
-          </motion.div>
+            {/* CA Address */}
+            <div className="hidden lg:flex items-center px-3 py-1 bg-nebula-violet/20 rounded-full border border-nebula-violet/30">
+              <span className="text-xs text-stellar-white/80 font-mono select-all">
+                CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
+              </span>
+            </div>
 
-          {session?.user?.role === 'admin' && (
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
-                asChild 
-                variant="ghost" 
-                className="text-stellar-white hover:text-nebula-amber hover:bg-nebula-violet/30 transition-all duration-300 font-medium text-lg"
-              >
-                <Link href="/admin/dashboard">Admin Panel</Link>
-              </Button>
-            </motion.div>
-          )}
-
-          {/* CA Address */}
-          <div className="hidden lg:flex items-center px-3 py-1 bg-nebula-violet/20 rounded-full border border-nebula-violet/30">
-            <span className="text-xs text-stellar-white/80 font-mono select-all">
-              CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
-            </span>
-          </div>
-
-          {/* Auth Section */}
-          <div className="flex items-center space-x-4">
-=======
->>>>>>> 7ef3aedb805ae5caabd32e0aa1d37e39b9832470
             {isLoading ? (
               <div className="w-8 h-8 border-2 border-t-transparent border-nebula-violet rounded-full animate-spin"></div>
             ) : session ? (
@@ -150,23 +117,6 @@ export default function Header() {
             </Button>
           </div>
 
-<<<<<<< HEAD
-              {/* CA Address - Mobile */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 }}
-                className="px-4 py-2 bg-nebula-violet/20 rounded-lg border border-nebula-violet/30 mx-2"
-              >
-                <span className="text-xs text-stellar-white/80 font-mono select-all block">
-                  CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
-                </span>
-              </motion.div>
-
-              {isLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="loading-cosmic" />
-=======
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-2">
             <Button asChild variant="ghost" size="icon" className="relative">
@@ -216,6 +166,13 @@ export default function Header() {
                   <NavLinks isMobile />
                 </nav>
 
+                {/* CA Address - Mobile */}
+                <div className="px-4 py-2 bg-nebula-violet/20 rounded-lg border border-nebula-violet/30 mx-2 mb-4">
+                  <span className="text-xs text-stellar-white/80 font-mono select-all block">
+                    CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
+                  </span>
+                </div>
+
                 <div className="mt-auto space-y-2 pt-4 border-t border-nebula-violet/20">
                     {isLoading ? (
                       <div className="flex justify-center"><div className="w-8 h-8 border-2 border-t-transparent border-nebula-violet rounded-full animate-spin"></div></div>
@@ -235,8 +192,8 @@ export default function Header() {
                     ) : (
                         <>
                              <Button asChild variant="ghost" className="w-full justify-start gap-3">
-                                <Link href="/login">Login</Link>
-                            </Button>
+                                 <Link href="/login">Login</Link>
+                             </Button>
                             <Button asChild className="w-full btn-cosmic">
                                 <Link href="/register">Register</Link>
                             </Button>
@@ -248,7 +205,6 @@ export default function Header() {
                             <span>Cart</span>
                         </Link>
                     </Button>
->>>>>>> 7ef3aedb805ae5caabd32e0aa1d37e39b9832470
                 </div>
               </div>
             </motion.aside>
