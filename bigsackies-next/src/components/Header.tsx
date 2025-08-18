@@ -79,13 +79,6 @@ export default function Header() {
             
             <div className="h-8 w-px bg-nebula-violet/30 mx-2"></div>
 
-            {/* CA Address */}
-            <div className="hidden lg:flex items-center px-3 py-1 bg-nebula-violet/20 rounded-full border border-nebula-violet/30">
-              <span className="text-xs text-stellar-white/80 font-mono select-all">
-                CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
-              </span>
-            </div>
-
             {isLoading ? (
               <div className="w-8 h-8 border-2 border-t-transparent border-nebula-violet rounded-full animate-spin"></div>
             ) : session ? (
@@ -165,13 +158,6 @@ export default function Header() {
                 <nav className="flex-1 mt-6 space-y-2">
                   <NavLinks isMobile />
                 </nav>
-
-                {/* CA Address - Mobile */}
-                <div className="px-4 py-2 bg-nebula-violet/20 rounded-lg border border-nebula-violet/30 mx-2 mb-4">
-                  <span className="text-xs text-stellar-white/80 font-mono select-all block">
-                    CA: 3Cj4eDNpTZFg1TFoxai4coAw2WxCy1w5wxcfyE51pump
-                  </span>
-                </div>
 
                 <div className="mt-auto space-y-2 pt-4 border-t border-nebula-violet/20">
                     {isLoading ? (
