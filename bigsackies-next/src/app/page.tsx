@@ -3,55 +3,323 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Heart, Shield, Award, Users, ArrowRight, ChevronDown, Home, Star, Sparkles, Briefcase, Code, Zap } from "lucide-react";
+import { Heart, Shield, Award, Users, ArrowRight, ChevronDown, Home, Star, Sparkles, Briefcase, Code, Zap, Rocket, DollarSign, Copy, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import HireMeModal from "@/components/HireMeModal";
 
 export default function HomePage() {
   const [showHireMeModal, setShowHireMeModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+  
+  // Contract Address - replace with actual CA when available
+  const contractAddress = "TBA"; // To Be Announced
+  
+  const copyToClipboard = async () => {
+    if (contractAddress === "TBA") return;
+    
+    try {
+      await navigator.clipboard.writeText(contractAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Hire Me Banner */}
+      {/* Pump Fun Section */}
       <motion.section
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="relative py-3 bg-gradient-to-r from-purple-900/80 via-pink-900/80 to-blue-900/80 backdrop-blur-sm border-b border-purple-500/30"
+        className="relative py-8 bg-gradient-to-r from-space-black via-nebula-deep-purple/50 to-space-black backdrop-blur-sm border-b border-green-500/30 overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20 animate-pulse" />
+        {/* Cosmic Background with Green Accents */}
+        <div className="absolute inset-0 bg-space-gradient opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500/10 to-transparent animate-pulse" />
+        
+        {/* Stars and Cosmic Elements */}
+        <div className="stars opacity-30" />
+        
+        {/* Floating Elements - More Cosmic */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{
+                left: `${5 + i * 8}%`,
+                top: `${10 + (i % 4) * 25}%`,
+              }}
+              animate={{
+                y: [0, -30, 0],
+                x: [0, Math.sin(i) * 20, 0],
+                rotate: [0, 360],
+                scale: [0.8, 1.2, 0.8],
+              }}
+              transition={{
+                duration: 4 + i * 0.3,
+                repeat: Infinity,
+                delay: i * 0.1,
+                ease: "easeInOut",
+              }}
+            >
+              {i % 4 === 0 && <div className="w-2 h-2 bg-green-400 rounded-full opacity-60 shadow-lg shadow-green-400/50" />}
+              {i % 4 === 1 && <Rocket className="w-4 h-4 text-green-400 opacity-70" />}
+              {i % 4 === 2 && <div className="text-lg opacity-50">🦎</div>}
+              {i % 4 === 3 && <div className="w-1 h-1 bg-stellar-silver rounded-full opacity-40" />}
+            </motion.div>
+          ))}
+        </div>
         
         <div className="relative z-10 container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-shrink-0">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-md opacity-50 animate-pulse" />
-                <div className="relative bg-gradient-to-r from-purple-500 to-pink-500 p-2 rounded-full">
-                  <Code className="w-5 h-5 text-white" />
+          <div className="text-center space-y-6">
+            {/* Main Header with Cosmic Styling */}
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 10 }}
+              className="flex items-center justify-center gap-4"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500 rounded-full blur-xl opacity-50 animate-pulse" />
+                <Rocket className="relative w-8 h-8 md:w-12 md:h-12 text-green-400" />
+              </div>
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500 rounded-full blur-lg opacity-30" />
+                <span className="relative text-4xl md:text-6xl">🦎</span>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500 rounded-full blur-xl opacity-50 animate-pulse" />
+                <DollarSign className="relative w-8 h-8 md:w-12 md:h-12 text-green-400" />
+              </div>
+            </motion.div>
+            
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="text-2xl md:text-4xl lg:text-5xl font-bold gradient-text text-center leading-tight"
+            >
+              This is the animal runner pump is looking for!
+            </motion.h1>
+            
+            {/* Main Content Cards */}
+            <div className="grid md:grid-cols-3 gap-6 max-w-7xl mx-auto">
+              {/* Biggs Photo Card - Featured */}
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, duration: 0.8 }}
+                className="md:col-span-1"
+              >
+                <div className="card-cosmic p-4 rounded-xl border-2 border-green-500/30 bg-gradient-to-br from-green-500/10 to-transparent">
+                  <div className="aspect-square bg-gradient-to-br from-nebula-deep-purple/30 to-nebula-magenta/30 rounded-lg overflow-hidden mb-4 border border-green-500/20">
+                    <Image
+                      src="/IMG_20240829_141121_408.jpg"
+                      alt="Biggs - The Original Pump Runner"
+                      width={400}
+                      height={400}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-bold text-green-400 mb-1">
+                      Meet Biggs! 🦎
+                    </h3>
+                    <p className="text-stellar-silver text-sm">
+                      The legendary free-range genius behind it all
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Baby Monitor Lizards Card */}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.9, duration: 0.8 }}
+                className="md:col-span-1"
+              >
+                <div className="card-cosmic p-6 rounded-xl border border-green-500/20 h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                      <span className="text-xl">🦎</span>
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold text-stellar-white">
+                      Baby Monitors Available!
+                    </h3>
+                  </div>
+                  <div className="space-y-2 text-stellar-silver">
+                    <p className="text-lg font-semibold text-green-400">
+                      <span className="font-bold text-white">14 in stock</span> 
+                      <span className="text-stellar-silver/70"> (7 not listed)</span>
+                    </p>
+                    <p className="text-sm">
+                      Available since <span className="text-green-400 font-medium">September 6th</span>
+                    </p>
+                    <p className="text-sm text-stellar-silver/80">
+                      Hand-raised, premium quality Ackie Monitors ready for loving homes
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Conservation & Tokenomics Card */}
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.1, duration: 0.8 }}
+                className="md:col-span-1"
+              >
+                <div className="card-cosmic p-6 rounded-xl border border-green-500/20 h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                      <Heart className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold text-stellar-white">
+                      Conservation Mission
+                    </h3>
+                  </div>
+                  <div className="space-y-3 text-stellar-silver">
+                    <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
+                      <p className="text-green-400 font-semibold text-sm mb-1">🌿 80% for Conservation</p>
+                      <p className="text-xs text-stellar-silver/80">
+                        Creator funds donated to reptile conservation efforts
+                      </p>
+                    </div>
+                    <div className="bg-nebula-deep-purple/20 rounded-lg p-3 border border-purple-500/20">
+                      <p className="text-purple-400 font-semibold text-sm mb-1">⚙️ 20% for Operations</p>
+                      <p className="text-xs text-stellar-silver/80">
+                        Supporting our breeding program and care
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Supply Lock Promise */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3, duration: 0.8 }}
+              className="max-w-4xl mx-auto"
+            >
+              <div className="card-cosmic p-6 rounded-xl border-2 border-green-500/30 bg-gradient-to-r from-green-500/5 via-transparent to-green-500/5">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Shield className="w-6 h-6 text-green-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-green-400">
+                    Creator Commitment
+                  </h3>
+                  <Shield className="w-6 h-6 text-green-400" />
+                </div>
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-xs text-white font-bold">10%</span>
+                        </div>
+                        <p className="text-green-400 font-semibold text-sm">Creator Buy-In</p>
+                      </div>
+                      <p className="text-stellar-silver text-xs">
+                        I will be purchasing <span className="text-white font-semibold">10% of the supply</span> - putting my money where my mouth is!
+                      </p>
+                    </div>
+                    
+                    <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-xs">📹</span>
+                        </div>
+                        <p className="text-purple-400 font-semibold text-sm">Biggs on Stream!</p>
+                      </div>
+                      <p className="text-stellar-silver text-xs">
+                        Biggs will make special <span className="text-white font-semibold">live stream appearances</span> at major market cap milestones!
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-green-500/20 pt-4">
+                    <p className="text-stellar-silver text-center text-sm md:text-base">
+                      <span className="text-white font-semibold">100% supply will be locked for 6 months</span> once we hit{" "}
+                      <span className="text-green-400 font-bold">100k market cap</span> - ensuring project stability and community trust
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="text-left">
-                <h2 className="text-base md:text-lg font-bold text-white">
-                  Need a Website or App?
-                </h2>
-                <p className="text-xs md:text-sm text-purple-200">
-                  Full-stack developer available for hire • Next.js, React, Unity & more
-                </p>
-              </div>
-            </div>
+            </motion.div>
             
-            <Button
-              onClick={() => setShowHireMeModal(true)}
-              className="relative overflow-hidden group bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 border border-white/20 text-sm w-full md:w-auto mt-2 md:mt-0"
+            {/* Contract Address Section - Redesigned */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.3, duration: 0.8 }}
+              className="max-w-md mx-auto"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              <div className="relative flex items-center justify-center gap-2">
-                <Briefcase className="w-4 h-4" />
-                <span>Hire Me</span>
-                <ArrowRight className="w-4 h-4" />
+              <div className="card-cosmic p-4 rounded-xl border border-green-500/30">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                    <Code className="w-3 h-3 text-white" />
+                  </div>
+                  <p className="text-stellar-white font-semibold">Contract Address</p>
+                </div>
+                <div className="flex items-center gap-2 bg-space-black/50 rounded-lg p-3 border border-green-500/20">
+                  <code className="text-green-400 text-sm flex-1 text-center font-mono">
+                    {contractAddress}
+                  </code>
+                  <Button
+                    onClick={copyToClipboard}
+                    disabled={contractAddress === "TBA"}
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 hover:bg-green-500/10 disabled:opacity-50 border border-green-500/20"
+                  >
+                    {copied ? (
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-green-400" />
+                    )}
+                  </Button>
+                </div>
+                {contractAddress === "TBA" && (
+                  <p className="text-green-400/70 text-xs mt-2 text-center">Launch coming soon! 🚀</p>
+                )}
               </div>
-            </Button>
+            </motion.div>
+            
+            {/* Action Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.5, duration: 0.8 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4"
+            >
+              <Button 
+                asChild 
+                className="btn-cosmic bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 border border-green-500/30"
+              >
+                <Link href="/products">
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Shop Baby Monitors
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
+              
+              <Button 
+                asChild 
+                variant="outline"
+                className="border-green-500/50 text-green-400 hover:bg-green-500/10 hover:text-green-300 font-semibold py-3 px-8 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/20"
+              >
+                <Link href="/about">
+                  <Heart className="w-5 h-5 mr-2" />
+                  Our Conservation Mission
+                </Link>
+              </Button>
+            </motion.div>
           </div>
         </div>
       </motion.section>
