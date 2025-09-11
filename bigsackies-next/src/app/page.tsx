@@ -13,9 +13,11 @@ export default function HomePage() {
   const [copied, setCopied] = useState(false);
   
   // Contract Address - replace with actual CA when available
-  const contractAddress = "C4sevg7UpbTddBh46gnCrPMdtYEhBeeFJkwsUTqepump";
+  const contractAddress = "LAUNCHING (9/11)"; // Launch date
   
   const copyToClipboard = async () => {
+    if (contractAddress === "LAUNCHING (9/11)") return;
+    
     try {
       await navigator.clipboard.writeText(contractAddress);
       setCopied(true);
@@ -271,7 +273,7 @@ export default function HomePage() {
                   </code>
                   <Button
                     onClick={copyToClipboard}
-                    disabled={false}
+                    disabled={contractAddress === "LAUNCHING (9/11)"}
                     size="sm"
                     variant="ghost"
                     className="h-8 w-8 p-0 hover:bg-green-500/10 disabled:opacity-50 border border-green-500/20"
@@ -283,7 +285,9 @@ export default function HomePage() {
                     )}
                   </Button>
                 </div>
-                {/* Removed TBA check */}
+                {contractAddress === "TBA" && (
+                  <p className="text-green-400/70 text-xs mt-2 text-center">Launch coming soon! 🚀</p>
+                )}
               </div>
             </motion.div>
             
