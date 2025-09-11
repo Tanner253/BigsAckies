@@ -184,16 +184,16 @@ export default function HomePage() {
                     </h3>
                   </div>
                   <div className="space-y-3 text-stellar-silver">
-                    <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
-                      <p className="text-green-400 font-semibold text-sm mb-1">🌿 80% for Conservation</p>
+                    <div className="bg-nebula-deep-purple/20 rounded-lg p-3 border border-purple-500/20">
+                      <p className="text-purple-400 font-semibold text-sm mb-1">🏠 80% for Home Breeding</p>
                       <p className="text-xs text-stellar-silver/80">
-                        Creator funds donated to reptile conservation efforts
+                        Supporting our home breeding operation and care
                       </p>
                     </div>
-                    <div className="bg-nebula-deep-purple/20 rounded-lg p-3 border border-purple-500/20">
-                      <p className="text-purple-400 font-semibold text-sm mb-1">⚙️ 20% for Operations</p>
+                    <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
+                      <p className="text-green-400 font-semibold text-sm mb-1">🌿 20% for Conservation</p>
                       <p className="text-xs text-stellar-silver/80">
-                        Supporting our breeding program and care
+                        Creator funds donated to reptile conservation efforts
                       </p>
                     </div>
                   </div>
@@ -242,13 +242,6 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="border-t border-green-500/20 pt-4">
-                    <p className="text-stellar-silver text-center text-sm md:text-base">
-                      <span className="text-white font-semibold">100% supply will be locked for 6 months</span> once we hit{" "}
-                      <span className="text-green-400 font-bold">100k market cap</span> - ensuring project stability and community trust
-                    </p>
-                  </div>
                 </div>
               </div>
             </motion.div>
@@ -285,9 +278,9 @@ export default function HomePage() {
                     )}
                   </Button>
                 </div>
-                {contractAddress === "TBA" && (
-                  <p className="text-green-400/70 text-xs mt-2 text-center">Launch coming soon! 🚀</p>
-                )}
+                  {contractAddress === "LAUNCHING (9/11)" && (
+                    <p className="text-green-400/70 text-xs mt-2 text-center">Ready for takeoff! 🚀</p>
+                  )}
               </div>
             </motion.div>
             
